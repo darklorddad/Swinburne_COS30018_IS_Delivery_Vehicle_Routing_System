@@ -339,28 +339,22 @@ def main():
                         # Revert to the snapshot
                         if streamlit.session_state.config_data_snapshot is not None:
                             streamlit.session_state.config_data = copy.deepcopy(streamlit.session_state.config_data_snapshot)
-                        else: # Should not happen if snapshot is always set on entering edit mode
-                            # If for some reason snapshot is None, and config_data exists,
-                            # it's safer not to clear config_data to avoid data loss.
-                            # If config_data is also None, then it's already "cleared".
-                            # However, config_data_snapshot should always be set when entering edit mode.
-                            # If snapshot is None, and it's a new config, it should be cleared.
-                            if streamlit.session_state.config_data_snapshot is None and \
-                               streamlit.session_state.last_uploaded_filename is None:
+                        else: 
+                            # This case implies config_data_snapshot is None.
+                            # If it's a new config and has no snapshot, it means it was never properly initialized for editing or saved.
+                            # Clearing it is the safest if there's no state to revert to.
+                            if streamlit.session_state.last_uploaded_filename is None:
                                 streamlit.session_state.config_data = None
-                        
-                        was_new_config = streamlit.session_state.last_uploaded_filename is None
+                                streamlit.session_state.config_filename = "config.json" # Reset default filename
+                                # streamlit.session_state.config_data_snapshot is already None
+                            # If it's a loaded config and snapshot is missing, config_data retains current (unsaved) edits.
+                            # This is an anomaly, but avoids data loss.
                         
                         streamlit.session_state.edit_mode = False
                         streamlit.session_state.action_selected = None 
                         
-                        if was_new_config: # If it was a "new" config, clear it from memory upon cancel.
-                            streamlit.session_state.config_data = None
-                            streamlit.session_state.config_filename = "config.json" # Reset default filename
-                            # last_uploaded_filename is already None
-                            streamlit.session_state.processed_file_id = None 
-                            streamlit.session_state.config_data_snapshot = None # Clear snapshot too
-                        # If it was a loaded config, config_data (reverted to snapshot) and snapshot remain.
+                        # The configuration (reverted to snapshot, or as is if snapshot was missing for loaded config) remains in memory.
+                        # A "new" config is NOT cleared here. It's only cleared on "Save & Download".
                         
                         streamlit.rerun()
 
