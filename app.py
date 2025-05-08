@@ -219,7 +219,7 @@ def main():
                                 ]
                                 streamlit.rerun()
                         
-                        # streamlit.markdown("---") # Line above table - Removed
+                        streamlit.markdown(styled_hr, unsafe_allow_html=True) # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["parcels"], use_container_width=True)
                     else:
                         streamlit.info("No parcels added yet.")
@@ -265,7 +265,7 @@ def main():
                                 ]
                                 streamlit.rerun()
                         
-                        # streamlit.markdown("---") # Line above table - Removed
+                        streamlit.markdown(styled_hr, unsafe_allow_html=True) # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["agents"], use_container_width=True)
                     else:
                         streamlit.info("No delivery agents added yet.")
