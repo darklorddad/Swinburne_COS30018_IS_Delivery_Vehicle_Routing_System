@@ -343,14 +343,25 @@ def main():
                             # If for some reason snapshot is None, and config_data exists,
                             # it's safer not to clear config_data to avoid data loss.
                             # If config_data is also None, then it's already "cleared".
-                            pass # Keep current config_data if snapshot is missing
+                            # However, config_data_snapshot should always be set when entering edit mode.
+                            # If snapshot is None, and it's a new config, it should be cleared.
+                            if streamlit.session_state.config_data_snapshot is None and \
+                               streamlit.session_state.last_uploaded_filename is None:
+                                streamlit.session_state.config_data = None
+                        
+                        was_new_config = streamlit.session_state.last_uploaded_filename is None
                         
                         streamlit.session_state.edit_mode = False
                         streamlit.session_state.action_selected = None 
                         
-                        # No longer clearing config_data or snapshot here,
-                        # so a "new" config remains in memory if cancelled.
-                        # The snapshot ensures that only changes from the *current* edit session are reverted.
+                        if was_new_config: # If it was a "new" config, clear it from memory upon cancel.
+                            streamlit.session_state.config_data = None
+                            streamlit.session_state.config_filename = "config.json" # Reset default filename
+                            # last_uploaded_filename is already None
+                            streamlit.session_state.processed_file_id = None 
+                            streamlit.session_state.config_data_snapshot = None # Clear snapshot too
+                        # If it was a loaded config, config_data (reverted to snapshot) and snapshot remain.
+                        
                         streamlit.rerun()
 
                 with col_save_edits_action:
