@@ -270,29 +270,29 @@ def main():
                 
                 # streamlit.markdown("---") # Separator before bottom actions - Removed
                 # --- Bottom Actions: Status (Left), Save & Back (Right) ---
-                col_status, col_actions_grp = streamlit.columns([2,2]) # Adjust ratio as needed, e.g., [3,1] or [2,1] for more space to status
+                # Use three columns to avoid nesting issues for buttons
+                col_status, col_save_action, col_back_action = streamlit.columns([2,1,1]) # Adjust ratios as needed, e.g., [2,1,1]
 
                 with col_status:
                     streamlit.caption(f"Status: Editing '{streamlit.session_state.config_filename}'.")
 
-                with col_actions_grp:
-                    col_save_btn, col_back_btn = streamlit.columns(2) # Nested columns for side-by-side buttons
-                    with col_save_btn:
-                        config_json_string = config_manager.config_to_json_string(streamlit.session_state.config_data)
-                        streamlit.download_button(
-                            label="Save Configuration",
-                            data=config_json_string,
-                            file_name=streamlit.session_state.config_filename,
-                            mime="application/json",
-                            key="save_config_btn_edit_mode",
-                            help="Saves the current configuration to a JSON file.",
-                            use_container_width=True
-                        )
-                    with col_back_btn:
-                        if streamlit.button("Back to Main Menu", key="back_to_main_btn", use_container_width=True):
-                            streamlit.session_state.edit_mode = False
-                            streamlit.session_state.action_selected = None 
-                            streamlit.rerun()
+                with col_save_action:
+                    config_json_string = config_manager.config_to_json_string(streamlit.session_state.config_data)
+                    streamlit.download_button(
+                        label="Save Configuration",
+                        data=config_json_string,
+                        file_name=streamlit.session_state.config_filename,
+                        mime="application/json",
+                        key="save_config_btn_edit_mode",
+                        help="Saves the current configuration to a JSON file.",
+                        use_container_width=True
+                    )
+                
+                with col_back_action:
+                    if streamlit.button("Back to Main Menu", key="back_to_main_btn", use_container_width=True):
+                        streamlit.session_state.edit_mode = False
+                        streamlit.session_state.action_selected = None 
+                        streamlit.rerun()
             
         with tab_run:
             streamlit.header("Run Optimization")
