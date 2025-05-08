@@ -3,19 +3,17 @@ import config_manager # Our new module for backend config logic
 
 # Define a default configuration template
 DEFAULT_CONFIG_TEMPLATE = {
-    "project_name": "New VRP Project",
-    "description": "A default configuration for the Delivery Vehicle Routing System.",
+    "project_name": "new_project_config", # Will be used as default filename
     "warehouse_location": [0.0, 0.0], # Example: [latitude, longitude] or [x, y]
     "parcels": [
         # Example structure:
-        # { "id": "P001", "location": [2.5, 3.1], "weight": 10, "required_vehicle_type": "standard" }
+        # { "id": "P001", "location": [2.5, 3.1], "weight": 10 }
     ],
     "agents": [
         # Example structure:
-        # { "id": "DA01", "capacity_items": 10, "capacity_weight": 100, "vehicle_type": "standard", 
-        #   "start_location": [0.0, 0.0], "end_location": [0.0, 0.0] }
+        # { "id": "DA01", "capacity_weight": 100 }
     ],
-    "optimization_settings": {
+    "optimization_settings": { # Kept for future use, not directly edited in this UI iteration
         "algorithm": "YourCustomAlgorithm", # Placeholder, user should define
         "max_iterations": 1000,
         "time_limit_seconds": 300
@@ -154,100 +152,89 @@ def main():
 
                 streamlit.subheader(f"Editing Configuration: {streamlit.session_state.config_filename}")
                 
-                # --- General Configuration ---
-                streamlit.markdown("#### General Settings")
-                project_name = streamlit.text_input(
-                    "Project Name", 
-                    value=streamlit.session_state.config_data.get("project_name", ""),
-                    key="proj_name_input"
-                )
-                streamlit.session_state.config_data["project_name"] = project_name
-
-                description = streamlit.text_input(
-                    "Description", 
-                    value=streamlit.session_state.config_data.get("description", ""),
-                    key="desc_input"
-                )
-                streamlit.session_state.config_data["description"] = description
-
-                wh_loc = streamlit.session_state.config_data.get("warehouse_location", [0.0, 0.0])
-                col_wh_lat, col_wh_lon = streamlit.columns(2)
-                wh_lat = col_wh_lat.number_input("Warehouse Latitude/X", value=float(wh_loc[0]), key="wh_lat_input", format="%.4f")
-                wh_lon = col_wh_lon.number_input("Warehouse Longitude/Y", value=float(wh_loc[1]), key="wh_lon_input", format="%.4f")
-                streamlit.session_state.config_data["warehouse_location"] = [wh_lat, wh_lon]
-
-                streamlit.markdown("---")
-
-                # --- Parcels Management ---
-                streamlit.markdown("#### Parcels Management")
-                if "parcels" not in streamlit.session_state.config_data: # Ensure parcels list exists
-                    streamlit.session_state.config_data["parcels"] = []
-
-                col_p_id, col_p_loc_x, col_p_loc_y, col_p_add = streamlit.columns([2,1,1,1])
-                new_parcel_id = col_p_id.text_input("Parcel ID", key="new_parcel_id")
-                new_parcel_loc_x = col_p_loc_x.number_input("Location X", key="new_parcel_loc_x", format="%.4f")
-                new_parcel_loc_y = col_p_loc_y.number_input("Location Y", key="new_parcel_loc_y", format="%.4f")
-                
-                if col_p_add.button("Add Parcel", key="add_parcel_btn"):
-                    if new_parcel_id and not any(p['id'] == new_parcel_id for p in streamlit.session_state.config_data["parcels"]):
-                        streamlit.session_state.config_data["parcels"].append({
-                            "id": new_parcel_id,
-                            "location": [new_parcel_loc_x, new_parcel_loc_y]
-                            # Add other parcel fields from DEFAULT_CONFIG_TEMPLATE if needed e.g. weight, required_vehicle_type
-                        })
-                        streamlit.rerun()
-                    elif not new_parcel_id:
-                        streamlit.warning("Parcel ID cannot be empty.")
-                    else:
-                        streamlit.warning(f"Parcel ID '{new_parcel_id}' already exists.")
-                
-                if streamlit.session_state.config_data["parcels"]:
-                    streamlit.dataframe(streamlit.session_state.config_data["parcels"], use_container_width=True)
-                    parcel_ids_to_remove = [p['id'] for p in streamlit.session_state.config_data["parcels"]]
-                    selected_parcel_to_remove = streamlit.selectbox(
-                        "Select Parcel ID to Remove", 
-                        options=[""] + parcel_ids_to_remove, # Add empty option for no selection
-                        key="remove_parcel_select"
+                with streamlit.expander("General Settings", expanded=True):
+                    # Use project_name from config_data for the input field, but update session_state.config_filename
+                    # This keeps config_data structure consistent if "project_name" is a meaningful field internally.
+                    # For saving, session_state.config_filename is used.
+                    current_filename_base = streamlit.session_state.config_data.get("project_name", streamlit.session_state.config_filename.replace(".json", ""))
+                    
+                    new_filename_base = streamlit.text_input(
+                        "Filename (without .json extension)", 
+                        value=current_filename_base,
+                        key="filename_input"
                     )
-                    if streamlit.button("Remove Selected Parcel", key="remove_parcel_btn") and selected_parcel_to_remove:
-                        streamlit.session_state.config_data["parcels"] = [
-                            p for p in streamlit.session_state.config_data["parcels"] if p['id'] != selected_parcel_to_remove
-                        ]
-                        streamlit.rerun()
-                else:
-                    streamlit.info("No parcels added yet.")
-                
-                streamlit.markdown("---")
+                    # Update project_name in config_data and config_filename in session_state
+                    streamlit.session_state.config_data["project_name"] = new_filename_base
+                    streamlit.session_state.config_filename = f"{new_filename_base}.json" if not new_filename_base.endswith(".json") else new_filename_base
 
-                # --- Agents Management ---
-                streamlit.markdown("#### Delivery Agents Management")
-                if "agents" not in streamlit.session_state.config_data: # Ensure agents list exists
-                    streamlit.session_state.config_data["agents"] = []
 
-                with streamlit.expander("Add New Agent", expanded=False):
-                    new_agent_id = streamlit.text_input("Agent ID", key="new_agent_id")
-                    col_cap_item, col_cap_weight = streamlit.columns(2)
-                    new_agent_cap_items = col_cap_item.number_input("Capacity (Items)", min_value=0, step=1, key="new_agent_cap_items")
-                    new_agent_cap_weight = col_cap_weight.number_input("Capacity (Weight)", min_value=0.0, format="%.2f", key="new_agent_cap_weight")
-                    new_agent_vehicle_type = streamlit.text_input("Vehicle Type", value="standard", key="new_agent_vehicle_type")
+                    wh_loc = streamlit.session_state.config_data.get("warehouse_location", [0.0, 0.0])
+                    col_wh_lat, col_wh_lon = streamlit.columns(2)
+                    wh_lat = col_wh_lat.number_input("Warehouse Latitude/X", value=float(wh_loc[0]), key="wh_lat_input", format="%.4f")
+                    wh_lon = col_wh_lon.number_input("Warehouse Longitude/Y", value=float(wh_loc[1]), key="wh_lon_input", format="%.4f")
+                    streamlit.session_state.config_data["warehouse_location"] = [wh_lat, wh_lon]
+
+                with streamlit.expander("Parcels Management", expanded=True):
+                    if "parcels" not in streamlit.session_state.config_data:
+                        streamlit.session_state.config_data["parcels"] = []
+
+                    col_p_id, col_p_loc_x, col_p_loc_y, col_p_weight = streamlit.columns([2,1,1,1])
+                    new_parcel_id = col_p_id.text_input("Parcel ID", key="new_parcel_id")
+                    new_parcel_loc_x = col_p_loc_x.number_input("Location X", key="new_parcel_loc_x", format="%.4f")
+                    new_parcel_loc_y = col_p_loc_y.number_input("Location Y", key="new_parcel_loc_y", format="%.4f")
+                    new_parcel_weight = col_p_weight.number_input("Weight", key="new_parcel_weight", min_value=0.0, format="%.2f")
                     
-                    col_start_x, col_start_y = streamlit.columns(2)
-                    new_agent_start_x = col_start_x.number_input("Start Location X", format="%.4f", key="new_agent_start_x")
-                    new_agent_start_y = col_start_y.number_input("Start Location Y", format="%.4f", key="new_agent_start_y")
+                    if streamlit.button("Add Parcel", key="add_parcel_btn", use_container_width=True):
+                        if new_parcel_id and not any(p['id'] == new_parcel_id for p in streamlit.session_state.config_data["parcels"]):
+                            streamlit.session_state.config_data["parcels"].append({
+                                "id": new_parcel_id,
+                                "location": [new_parcel_loc_x, new_parcel_loc_y],
+                                "weight": new_parcel_weight
+                            })
+                            # Clear inputs after adding by rerunning (Streamlit's default behavior for new keys might also clear them)
+                            streamlit.rerun() 
+                        elif not new_parcel_id:
+                            streamlit.warning("Parcel ID cannot be empty.")
+                        else:
+                            streamlit.warning(f"Parcel ID '{new_parcel_id}' already exists.")
                     
-                    col_end_x, col_end_y = streamlit.columns(2)
-                    new_agent_end_x = col_end_x.number_input("End Location X", format="%.4f", key="new_agent_end_x")
-                    new_agent_end_y = col_end_y.number_input("End Location Y", format="%.4f", key="new_agent_end_y")
+                    # Section for Removing Parcels (below add, above table)
+                    if streamlit.session_state.config_data["parcels"]:
+                        col_select_remove_parcel, col_btn_remove_parcel = streamlit.columns([3,1])
+                        with col_select_remove_parcel:
+                            parcel_ids_to_remove = [p['id'] for p in streamlit.session_state.config_data["parcels"]]
+                            selected_parcel_to_remove = streamlit.selectbox(
+                                "Select Parcel ID to Remove", 
+                                options=[""] + parcel_ids_to_remove,
+                                key="remove_parcel_select"
+                            )
+                        with col_btn_remove_parcel:
+                            # Add some space to align button better if needed, or use container width
+                            streamlit.write("") # Placeholder for alignment or use CSS
+                            if streamlit.button("Remove Parcel", key="remove_parcel_btn_inline", use_container_width=True) and selected_parcel_to_remove:
+                                streamlit.session_state.config_data["parcels"] = [
+                                    p for p in streamlit.session_state.config_data["parcels"] if p['id'] != selected_parcel_to_remove
+                                ]
+                                streamlit.rerun()
+                        
+                        streamlit.dataframe(streamlit.session_state.config_data["parcels"], use_container_width=True)
+                    else:
+                        streamlit.info("No parcels added yet.")
 
-                    if streamlit.button("Add Agent", key="add_agent_btn"):
+                with streamlit.expander("Delivery Agents Management", expanded=True):
+                    if "agents" not in streamlit.session_state.config_data:
+                        streamlit.session_state.config_data["agents"] = []
+
+                    # Simplified Add New Agent section
+                    col_a_id, col_a_cap_weight = streamlit.columns([2,1])
+                    new_agent_id = col_a_id.text_input("Agent ID", key="new_agent_id_simplified")
+                    new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (Weight)", min_value=0.0, format="%.2f", key="new_agent_cap_weight_simplified")
+
+                    if streamlit.button("Add Agent", key="add_agent_btn_simplified", use_container_width=True):
                         if new_agent_id and not any(a['id'] == new_agent_id for a in streamlit.session_state.config_data["agents"]):
                             streamlit.session_state.config_data["agents"].append({
                                 "id": new_agent_id,
-                                "capacity_items": new_agent_cap_items,
-                                "capacity_weight": new_agent_cap_weight,
-                                "vehicle_type": new_agent_vehicle_type,
-                                "start_location": [new_agent_start_x, new_agent_start_y],
-                                "end_location": [new_agent_end_x, new_agent_end_y]
+                                "capacity_weight": new_agent_cap_weight
                             })
                             streamlit.rerun()
                         elif not new_agent_id:
@@ -255,24 +242,29 @@ def main():
                         else:
                             streamlit.warning(f"Agent ID '{new_agent_id}' already exists.")
 
-                if streamlit.session_state.config_data["agents"]:
-                    streamlit.dataframe(streamlit.session_state.config_data["agents"], use_container_width=True)
-                    agent_ids_to_remove = [a['id'] for a in streamlit.session_state.config_data["agents"]]
-                    selected_agent_to_remove = streamlit.selectbox(
-                        "Select Agent ID to Remove", 
-                        options=[""] + agent_ids_to_remove, # Add empty option for no selection
-                        key="remove_agent_select"
-                    )
-                    if streamlit.button("Remove Selected Agent", key="remove_agent_btn") and selected_agent_to_remove:
-                        streamlit.session_state.config_data["agents"] = [
-                            a for a in streamlit.session_state.config_data["agents"] if a['id'] != selected_agent_to_remove
-                        ]
-                        streamlit.rerun()
-                else:
-                    streamlit.info("No delivery agents added yet.")
-
-                streamlit.markdown("---")
+                    # Section for Removing Agents (below add, above table)
+                    if streamlit.session_state.config_data["agents"]:
+                        col_select_remove_agent, col_btn_remove_agent = streamlit.columns([3,1])
+                        with col_select_remove_agent:
+                            agent_ids_to_remove = [a['id'] for a in streamlit.session_state.config_data["agents"]]
+                            selected_agent_to_remove = streamlit.selectbox(
+                                "Select Agent ID to Remove", 
+                                options=[""] + agent_ids_to_remove,
+                                key="remove_agent_select_simplified"
+                            )
+                        with col_btn_remove_agent:
+                            streamlit.write("") # Placeholder for alignment
+                            if streamlit.button("Remove Agent", key="remove_agent_btn_inline_simplified", use_container_width=True) and selected_agent_to_remove:
+                                streamlit.session_state.config_data["agents"] = [
+                                    a for a in streamlit.session_state.config_data["agents"] if a['id'] != selected_agent_to_remove
+                                ]
+                                streamlit.rerun()
+                        
+                        streamlit.dataframe(streamlit.session_state.config_data["agents"], use_container_width=True)
+                    else:
+                        streamlit.info("No delivery agents added yet.")
                 
+                streamlit.markdown("---") # Separator before bottom actions
                 # --- Bottom Actions: Save, Back, Status ---
                 col_save, col_back, col_status = streamlit.columns([1,1,2])
                 with col_save:
