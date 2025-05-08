@@ -202,22 +202,17 @@ def main():
                     
                     # Section for Removing Parcels (below add, above table)
                     if streamlit.session_state.config_data["parcels"]:
-                        col_select_remove_parcel, col_btn_remove_parcel = streamlit.columns([3,1])
-                        with col_select_remove_parcel:
-                            parcel_ids_to_remove = [p['id'] for p in streamlit.session_state.config_data["parcels"]]
-                            selected_parcel_to_remove = streamlit.selectbox(
-                                "Select Parcel ID to Remove", 
-                                options=[""] + parcel_ids_to_remove,
-                                key="remove_parcel_select"
-                            )
-                        with col_btn_remove_parcel:
-                            # Add an empty paragraph to mimic the label's height for alignment
-                            streamlit.markdown("<p style='margin-bottom: 0.15rem;'>&nbsp;</p>", unsafe_allow_html=True) 
-                            if streamlit.button("Remove Parcel", key="remove_parcel_btn_inline", use_container_width=True) and selected_parcel_to_remove:
-                                streamlit.session_state.config_data["parcels"] = [
-                                    p for p in streamlit.session_state.config_data["parcels"] if p['id'] != selected_parcel_to_remove
-                                ]
-                                streamlit.rerun()
+                        parcel_ids_to_remove = [p['id'] for p in streamlit.session_state.config_data["parcels"]]
+                        selected_parcel_to_remove = streamlit.selectbox(
+                            "Select Parcel ID to Remove", 
+                            options=[""] + parcel_ids_to_remove,
+                            key="remove_parcel_select"
+                        )
+                        if streamlit.button("Remove Selected Parcel", key="remove_parcel_btn_new_row", use_container_width=True) and selected_parcel_to_remove:
+                            streamlit.session_state.config_data["parcels"] = [
+                                p for p in streamlit.session_state.config_data["parcels"] if p['id'] != selected_parcel_to_remove
+                            ]
+                            streamlit.rerun()
                         
                         streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["parcels"], use_container_width=True)
@@ -248,22 +243,17 @@ def main():
 
                     # Section for Removing Agents (below add, above table)
                     if streamlit.session_state.config_data["agents"]:
-                        col_select_remove_agent, col_btn_remove_agent = streamlit.columns([3,1])
-                        with col_select_remove_agent:
-                            agent_ids_to_remove = [a['id'] for a in streamlit.session_state.config_data["agents"]]
-                            selected_agent_to_remove = streamlit.selectbox(
-                                "Select Agent ID to Remove", 
-                                options=[""] + agent_ids_to_remove,
-                                key="remove_agent_select_simplified"
-                            )
-                        with col_btn_remove_agent:
-                            # Add an empty paragraph to mimic the label's height for alignment
-                            streamlit.markdown("<p style='margin-bottom: 0.15rem;'>&nbsp;</p>", unsafe_allow_html=True)
-                            if streamlit.button("Remove Agent", key="remove_agent_btn_inline_simplified", use_container_width=True) and selected_agent_to_remove:
-                                streamlit.session_state.config_data["agents"] = [
-                                    a for a in streamlit.session_state.config_data["agents"] if a['id'] != selected_agent_to_remove
-                                ]
-                                streamlit.rerun()
+                        agent_ids_to_remove = [a['id'] for a in streamlit.session_state.config_data["agents"]]
+                        selected_agent_to_remove = streamlit.selectbox(
+                            "Select Agent ID to Remove", 
+                            options=[""] + agent_ids_to_remove,
+                            key="remove_agent_select_simplified"
+                        )
+                        if streamlit.button("Remove Selected Agent", key="remove_agent_btn_new_row", use_container_width=True) and selected_agent_to_remove:
+                            streamlit.session_state.config_data["agents"] = [
+                                a for a in streamlit.session_state.config_data["agents"] if a['id'] != selected_agent_to_remove
+                            ]
+                            streamlit.rerun()
                         
                         streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["agents"], use_container_width=True)
