@@ -1,6 +1,30 @@
 import streamlit
-import json # Though primarily used by config_manager, good for type hints or direct use if needed
 import config_manager # Our new module for backend config logic
+
+# Define a default configuration template
+DEFAULT_CONFIG_TEMPLATE = {
+    "project_name": "New VRP Project",
+    "description": "A default configuration for the Delivery Vehicle Routing System.",
+    "warehouse_location": [0.0, 0.0], # Example: [latitude, longitude] or [x, y]
+    "parcels": [
+        # Example structure:
+        # { "id": "P001", "location": [2.5, 3.1], "weight": 10, "required_vehicle_type": "standard" }
+    ],
+    "agents": [
+        # Example structure:
+        # { "id": "DA01", "capacity_items": 10, "capacity_weight": 100, "vehicle_type": "standard", 
+        #   "start_location": [0.0, 0.0], "end_location": [0.0, 0.0] }
+    ],
+    "optimization_settings": {
+        "algorithm": "YourCustomAlgorithm", # Placeholder, user should define
+        "max_iterations": 1000,
+        "time_limit_seconds": 300
+    },
+    "map_settings": { # For visualization
+        "provider": "OpenStreetMap", 
+        "default_zoom": 12
+    }
+}
 
 def main():
     streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
@@ -18,6 +42,8 @@ def main():
     if "config_editor_key" not in streamlit.session_state:
         # This will store the live content of the text_area, updated by user input
         streamlit.session_state.config_editor_key = streamlit.session_state.config_edit_buffer
+    if "processed_file_id" not in streamlit.session_state:
+        streamlit.session_state.processed_file_id = None
 
 
     # Dynamically build CSS based on header visibility state
@@ -57,82 +83,102 @@ def main():
 
         with tab_config:
             streamlit.header("Configuration Management")
+
+            # --- Action Buttons: Create New or Clear ---
+            col_action_1, col_action_2 = streamlit.columns(2)
+            with col_action_1:
+                if streamlit.button("✨ Create New Blank Configuration", key="create_new_config_btn", help="Load a default template to start a new configuration."):
+                    streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy() # Use a copy
+                    streamlit.session_state.config_filename = "new_config.json"
+                    streamlit.session_state.config_edit_buffer = config_manager.config_to_json_string(streamlit.session_state.config_data)
+                    streamlit.session_state.config_editor_key = streamlit.session_state.config_edit_buffer
+                    streamlit.session_state.processed_file_id = None # No file is "active" from uploader
+                    streamlit.session_state.last_uploaded_filename = None 
+                    streamlit.success("New blank configuration loaded into editor.")
+                    streamlit.experimental_rerun()
             
+            with col_action_2:
+                if streamlit.session_state.config_data is not None:
+                    if streamlit.button("🗑️ Clear Configuration & Start Over", key="clear_config_btn", help="Clears the current configuration and editor."):
+                        streamlit.session_state.config_data = None
+                        streamlit.session_state.config_filename = "config.json" # Reset default
+                        streamlit.session_state.config_edit_buffer = ""
+                        streamlit.session_state.config_editor_key = ""
+                        streamlit.session_state.processed_file_id = None
+                        streamlit.session_state.last_uploaded_filename = None
+                        # Clear the uploader state by resetting its key if necessary, or rely on user action
+                        # For now, just clearing our state. The uploader widget might still show a file.
+                        streamlit.info("Configuration cleared.")
+                        streamlit.experimental_rerun()
+
+            # --- File Uploader ---
+            streamlit.subheader("Load Configuration from File")
             uploaded_file = streamlit.file_uploader(
-                "Upload Configuration File (JSON)", type=["json"], key="config_uploader"
+                "Upload a JSON configuration file. This will replace any current configuration in the editor.",
+                type=["json"],
+                key="config_uploader" # Keep a consistent key
             )
 
             if uploaded_file is not None:
-                # Process uploaded file only once or if it changes
-                # Note: Streamlit reruns script on widget interaction.
-                # A common pattern is to process file then set it to None or use a flag.
-                # For simplicity here, we process if uploaded_file is present.
-                # Consider adding a button "Load selected file" for more control.
-                
-                # To prevent reprocessing on every rerun if file is already loaded and shown:
-                # Check if this is a new upload or if config_data is already from this file.
-                # This simple check might not be perfect for all scenarios.
-                # A more robust way is to store a hash or timestamp of the loaded file.
-                if streamlit.session_state.config_data is None or \
-                   streamlit.session_state.get("last_uploaded_filename") != uploaded_file.name:
-
+                # Check if this is a new file upload that hasn't been processed yet
+                if uploaded_file.file_id != streamlit.session_state.processed_file_id:
                     loaded_config = config_manager.load_config_from_uploaded_file(uploaded_file)
                     if loaded_config is not None:
                         streamlit.session_state.config_data = loaded_config
                         streamlit.session_state.config_filename = uploaded_file.name
                         streamlit.session_state.config_edit_buffer = config_manager.config_to_json_string(loaded_config)
-                        streamlit.session_state.config_editor_key = streamlit.session_state.config_edit_buffer # Initialize text area content
-                        streamlit.session_state.last_uploaded_filename = uploaded_file.name # Track last loaded file
-                        streamlit.success(f"Configuration '{uploaded_file.name}' loaded successfully.")
-                        # Force a rerun to update the text_area with the new value,
-                        # if not already handled by Streamlit's flow for session_state changes.
-                        # streamlit.experimental_rerun() # Usually not needed if state change correctly triggers UI update
+                        streamlit.session_state.config_editor_key = streamlit.session_state.config_edit_buffer
+                        streamlit.session_state.processed_file_id = uploaded_file.file_id # Mark as processed
+                        streamlit.session_state.last_uploaded_filename = uploaded_file.name
+                        streamlit.success(f"Configuration '{uploaded_file.name}' loaded successfully into editor.")
+                        streamlit.experimental_rerun() # Rerun to update UI immediately
                     else:
                         streamlit.error(f"Failed to load or parse '{uploaded_file.name}'. Ensure it's valid JSON.")
-                        # Clear potentially stale data if load fails
-                        streamlit.session_state.config_data = None
-                        streamlit.session_state.config_edit_buffer = ""
-                        streamlit.session_state.config_editor_key = ""
+                        # Don't change processed_file_id on error, so user can't retry same broken file without re-upload
+                        # Or, set processed_file_id to a unique error marker if needed:
+                        # streamlit.session_state.processed_file_id = f"error_{uploaded_file.file_id}"
+            
+            streamlit.markdown("---")
 
-
+            # --- Editor and Actions (only if config_data is present) ---
             if streamlit.session_state.config_data is not None:
                 streamlit.subheader("Edit Configuration")
                 
-                # The text_area's content is now managed by streamlit.session_state.config_editor_key
-                # The 'value' parameter is used for initial setting or when programmatically changing it.
-                # The 'key' parameter makes its current content accessible via session_state.
-                edited_text = streamlit.text_area(
+                edited_text = streamlit.text_area( # Renamed from edited_text to avoid confusion, though not strictly necessary
                     "Configuration (JSON format):",
-                    value=streamlit.session_state.config_edit_buffer, # Display the buffer
+                    value=streamlit.session_state.config_edit_buffer,
                     height=400,
-                    key="config_editor_key", # User edits update streamlit.session_state.config_editor_key
-                    help="Edit the JSON configuration directly. Click 'Apply Changes' to update."
+                    key="config_editor_key",
+                    help="Edit the JSON configuration directly. Click 'Apply Changes' to validate and update."
                 )
 
-                if streamlit.button("Apply Changes from Editor"):
-                    parsed_config_from_text = config_manager.json_string_to_config(streamlit.session_state.config_editor_key)
-                    if parsed_config_from_text is not None:
-                        streamlit.session_state.config_data = parsed_config_from_text
-                        # Refresh buffer with potentially reformatted JSON
-                        streamlit.session_state.config_edit_buffer = config_manager.config_to_json_string(parsed_config_from_text)
-                        # Update the text_area's displayed content to the canonical form by resetting its key's value
-                        streamlit.session_state.config_editor_key = streamlit.session_state.config_edit_buffer
-                        streamlit.success("Configuration updated from editor and applied.")
-                        streamlit.experimental_rerun() # Rerun to ensure text_area reflects the canonical buffer
-                    else:
-                        streamlit.error("Invalid JSON in editor. Please correct and try again.")
-
-                streamlit.download_button(
-                    label="Download Configuration File",
-                    data=streamlit.session_state.config_edit_buffer, # Download the content of the editor
-                    file_name=streamlit.session_state.config_filename,
-                    mime="application/json"
-                )
+                col_apply, col_download = streamlit.columns(2)
+                with col_apply:
+                    if streamlit.button("💾 Apply Changes from Editor", key="apply_config_changes_btn"):
+                        parsed_config_from_text = config_manager.json_string_to_config(streamlit.session_state.config_editor_key)
+                        if parsed_config_from_text is not None:
+                            streamlit.session_state.config_data = parsed_config_from_text
+                            streamlit.session_state.config_edit_buffer = config_manager.config_to_json_string(parsed_config_from_text)
+                            # Ensure editor key is also updated to reflect canonical form
+                            streamlit.session_state.config_editor_key = streamlit.session_state.config_edit_buffer 
+                            streamlit.success("Configuration updated from editor and applied.")
+                            streamlit.experimental_rerun() 
+                        else:
+                            streamlit.error("Invalid JSON in editor. Please correct and try again.")
                 
-                streamlit.subheader("Current Loaded Configuration")
-                streamlit.json(streamlit.session_state.config_data) # Display the active config object
+                with col_download:
+                    streamlit.download_button(
+                        label="📥 Download Configuration File",
+                        data=streamlit.session_state.config_edit_buffer, # Download the applied/buffered version
+                        file_name=streamlit.session_state.config_filename,
+                        mime="application/json",
+                        key="download_config_btn"
+                    )
+                
+                streamlit.subheader("Current Active Configuration Preview")
+                streamlit.json(streamlit.session_state.config_data)
             else:
-                streamlit.info("Upload a configuration file (JSON) to get started.")
+                streamlit.info("Create a new configuration or upload a file to get started with editing.")
 
         with tab_run:
             streamlit.header("Run Optimization")
