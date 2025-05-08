@@ -6,7 +6,7 @@ def main():
     st.title("🚚 Delivery Vehicle Routing System")
 
     # Create columns to center the main content
-    col1, col2, col3 = st.columns([1, 6, 1]) # Adjust ratios as needed for centering
+    col1, col2, col3 = st.columns([2, 4, 2]) # Adjust ratios to make middle narrower
 
     with col2: # This will be our "card" area
         with st.container():
