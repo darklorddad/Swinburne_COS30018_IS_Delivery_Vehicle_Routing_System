@@ -12,16 +12,7 @@ DEFAULT_CONFIG_TEMPLATE = {
     "agents": [
         # Example structure:
         # { "id": "DA01", "capacity_weight": 100 }
-    ],
-    "optimization_settings": { # Kept for future use, not directly edited in this UI iteration
-        "algorithm": "YourCustomAlgorithm", # Placeholder, user should define
-        "max_iterations": 1000,
-        "time_limit_seconds": 300
-    },
-    "map_settings": { # For visualization
-        "provider": "OpenStreetMap", 
-        "default_zoom": 12
-    }
+    ]
 }
 
 def main():
