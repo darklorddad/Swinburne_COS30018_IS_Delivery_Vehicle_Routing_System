@@ -153,7 +153,7 @@ def main():
                 # streamlit.subheader(f"Editing Configuration: {streamlit.session_state.config_filename}") # Removed
                 
                 with streamlit.expander("General Settings", expanded=True):
-                    streamlit.markdown("---")
+                    # streamlit.markdown("---") # Removed
                     # Use project_name from config_data for the input field, but update session_state.config_filename
                     # This keeps config_data structure consistent if "project_name" is a meaningful field internally.
                     # For saving, session_state.config_filename is used.
@@ -176,7 +176,7 @@ def main():
                     streamlit.session_state.config_data["warehouse_location"] = [wh_lat, wh_lon]
 
                 with streamlit.expander("Parcels Management", expanded=True):
-                    streamlit.markdown("---")
+                    # streamlit.markdown("---") # Removed
                     if "parcels" not in streamlit.session_state.config_data:
                         streamlit.session_state.config_data["parcels"] = []
 
@@ -219,12 +219,13 @@ def main():
                                 ]
                                 streamlit.rerun()
                         
+                        streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["parcels"], use_container_width=True)
                     else:
                         streamlit.info("No parcels added yet.")
 
                 with streamlit.expander("Delivery Agents Management", expanded=True):
-                    streamlit.markdown("---")
+                    # streamlit.markdown("---") # Removed
                     if "agents" not in streamlit.session_state.config_data:
                         streamlit.session_state.config_data["agents"] = []
 
@@ -264,18 +265,21 @@ def main():
                                 ]
                                 streamlit.rerun()
                         
+                        streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["agents"], use_container_width=True)
                     else:
                         streamlit.info("No delivery agents added yet.")
                 
                 # streamlit.markdown("---") # Separator before bottom actions - Removed
-                # --- Bottom Actions: Status (Left), Save & Back (Right) ---
-                # Use three columns to avoid nesting issues for buttons
-                col_status, col_save_action, col_back_action = streamlit.columns([2,1,1]) # Adjust ratios as needed, e.g., [2,1,1]
+                # --- Bottom Actions: Back (Left), Save (Right) ---
+                col_back_action, col_save_action = streamlit.columns([1,1]) # Equal width for both buttons
 
-                with col_status:
-                    streamlit.caption(f"Status: Editing '{streamlit.session_state.config_filename}'.")
-
+                with col_back_action:
+                    if streamlit.button("Back to Main Menu", key="back_to_main_btn", use_container_width=True):
+                        streamlit.session_state.edit_mode = False
+                        streamlit.session_state.action_selected = None 
+                        streamlit.rerun()
+                
                 with col_save_action:
                     config_json_string = config_manager.config_to_json_string(streamlit.session_state.config_data)
                     streamlit.download_button(
@@ -287,12 +291,6 @@ def main():
                         help="Saves the current configuration to a JSON file.",
                         use_container_width=True
                     )
-                
-                with col_back_action:
-                    if streamlit.button("Back to Main Menu", key="back_to_main_btn", use_container_width=True):
-                        streamlit.session_state.edit_mode = False
-                        streamlit.session_state.action_selected = None 
-                        streamlit.rerun()
             
         with tab_run:
             streamlit.header("Run Optimization")
