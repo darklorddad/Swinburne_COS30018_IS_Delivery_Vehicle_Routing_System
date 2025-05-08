@@ -3,11 +3,9 @@ import streamlit as st
 def main():
     st.set_page_config(layout="wide", page_title="Delivery Vehicle Routing System")
 
-    # Custom CSS for app styling (hides decoration/header, sets dark background, custom font)
+    # Custom CSS for app styling (hides decoration/header, sets dark background)
     custom_css = """
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-
         /* Hide Streamlit's default top decoration bar */
         [data-testid="stDecoration"] {
             display: none !important;
