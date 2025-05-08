@@ -210,7 +210,7 @@ def main():
                             )
                         with col_btn_remove_parcel:
                             # Add an empty paragraph to mimic the label's height for alignment
-                            streamlit.markdown("<p>&nbsp;</p>", unsafe_allow_html=True) 
+                            streamlit.markdown("<p style='margin-bottom: 0.15rem;'>&nbsp;</p>", unsafe_allow_html=True) 
                             if streamlit.button("Remove Parcel", key="remove_parcel_btn_inline", use_container_width=True) and selected_parcel_to_remove:
                                 streamlit.session_state.config_data["parcels"] = [
                                     p for p in streamlit.session_state.config_data["parcels"] if p['id'] != selected_parcel_to_remove
@@ -254,7 +254,7 @@ def main():
                             )
                         with col_btn_remove_agent:
                             # Add an empty paragraph to mimic the label's height for alignment
-                            streamlit.markdown("<p>&nbsp;</p>", unsafe_allow_html=True)
+                            streamlit.markdown("<p style='margin-bottom: 0.15rem;'>&nbsp;</p>", unsafe_allow_html=True)
                             if streamlit.button("Remove Agent", key="remove_agent_btn_inline_simplified", use_container_width=True) and selected_agent_to_remove:
                                 streamlit.session_state.config_data["agents"] = [
                                     a for a in streamlit.session_state.config_data["agents"] if a['id'] != selected_agent_to_remove
