@@ -80,15 +80,15 @@ def main():
         ])
 
         with tab_config:
-            streamlit.header("Configuration Management")
+            # streamlit.header("Configuration Management") # Removed
 
             if not streamlit.session_state.edit_mode:
                 # --- Initial View: Choose Action ---
-                streamlit.subheader("Start New or Load Existing Configuration")
+                # streamlit.subheader("Start New or Load Existing Configuration") # Removed
                 
                 col_create_btn, col_load_btn = streamlit.columns(2)
                 with col_create_btn:
-                    if streamlit.button("Create New Configuration", key="create_new_config_action_btn", help="Start with a default template.", use_container_width=True):
+                    if streamlit.button("New Configuration", key="create_new_config_action_btn", help="Start with a default template.", use_container_width=True):
                         streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
                         streamlit.session_state.config_filename = "new_config.json"
                         streamlit.session_state.processed_file_id = None 
@@ -98,7 +98,7 @@ def main():
                         streamlit.rerun()
                 
                 with col_load_btn:
-                    if streamlit.button("Load Configuration from File", key="load_config_action_btn", help="Upload a JSON configuration file.", use_container_width=True):
+                    if streamlit.button("Load Configuration", key="load_config_action_btn", help="Upload a JSON configuration file.", use_container_width=True):
                         streamlit.session_state.action_selected = "load"
                         streamlit.rerun()
 
@@ -150,7 +150,7 @@ def main():
                     streamlit.rerun()
                     return
 
-                streamlit.subheader(f"Editing Configuration: {streamlit.session_state.config_filename}")
+                # streamlit.subheader(f"Editing Configuration: {streamlit.session_state.config_filename}") # Removed
                 
                 with streamlit.expander("General Settings", expanded=True):
                     # Use project_name from config_data for the input field, but update session_state.config_filename
@@ -265,7 +265,7 @@ def main():
                     else:
                         streamlit.info("No delivery agents added yet.")
                 
-                streamlit.markdown("---") # Separator before bottom actions
+                # streamlit.markdown("---") # Separator before bottom actions - Removed
                 # --- Bottom Actions: Save, Back, Status ---
                 col_save, col_back, col_status = streamlit.columns([1,1,2])
                 with col_save:
