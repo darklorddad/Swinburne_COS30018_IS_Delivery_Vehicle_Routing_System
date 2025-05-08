@@ -31,16 +31,20 @@ def main():
     with col2: # This will be our "card" area
         st.title("Delivery Vehicle Routing System")
 
-        tab1, tab2 = st.tabs(["Dashboard", "Input Parameters"])
+        tab_setup, tab_run, tab_results = st.tabs(["Setup & Inputs", "Run Optimization", "Dashboard & Results"])
 
-        with tab1:
+        with tab_setup:
+            st.header("Setup & Inputs")
+            st.write("Configure parameters, load delivery lists, and specify vehicle capacities here.")
+
+        with tab_run:
+            st.header("Run Optimization")
+            st.write("Initiate the route optimization process here. Progress and logs may be displayed.")
+
+        with tab_results:
             # Placeholder for future UI elements
-            st.header("Dashboard")
+            st.header("Dashboard & Results")
             st.write("Route visualizations and results will appear here.")
-
-        with tab2:
-            st.header("Input Parameters")
-            st.write("Configuration options will be available here.")
 
 
 if __name__ == "__main__":
