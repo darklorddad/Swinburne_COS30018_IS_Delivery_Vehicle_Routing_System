@@ -153,15 +153,35 @@ def main():
                                 if streamlit.session_state.uploaded_file_buffer.file_id != streamlit.session_state.get("processed_file_id_for_buffer"):
                                     loaded_config = config_manager.load_config_from_uploaded_file(streamlit.session_state.uploaded_file_buffer)
                                     if loaded_config is not None:
+                                        # Stash current config (if any) before overwriting with loaded one
+                                        if streamlit.session_state.config_data is not None:
+                                            streamlit.session_state.fallback_config_state = {
+                                                'data': copy.deepcopy(streamlit.session_state.config_data),
+                                                'filename': streamlit.session_state.config_filename,
+                                                'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot),
+                                                'last_uploaded': streamlit.session_state.last_uploaded_filename,
+                                                'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
+                                            }
+                                        else:
+                                            streamlit.session_state.fallback_config_state = None
+
+                                        # Load the new config
                                         streamlit.session_state.config_data = loaded_config
                                         streamlit.session_state.config_filename = streamlit.session_state.uploaded_file_buffer.name
                                         streamlit.session_state.processed_file_id = streamlit.session_state.uploaded_file_buffer.file_id
-                                        streamlit.session_state.last_uploaded_filename = streamlit.session_state.uploaded_file_buffer.name
-                                        streamlit.session_state.new_config_saved_to_memory_at_least_once = False # It's a loaded config
-                                        streamlit.session_state.fallback_config_state = None # Clear any fallback
+                                        streamlit.session_state.last_uploaded_filename = streamlit.session_state.uploaded_file_buffer.name # Mark as loaded
+                                        streamlit.session_state.new_config_saved_to_memory_at_least_once = False # Reset this flag for the newly loaded config
+                                        # Snapshot will be set if/when "Edit Configuration" is clicked for this loaded config.
+                                        # For now, config_data_snapshot might be from a previous config, but it's not relevant until edit mode.
                                         
                                         streamlit.session_state.edit_mode = False 
                                         streamlit.session_state.action_selected = None 
+                                        # Fallback is cleared because the load action is now committed.
+                                        # However, the logic above already set it based on the state *before* this load.
+                                        # The critical part is that if this load is followed by a "New Config" -> "Cancel",
+                                        # the fallback set *before* "New Config" should be used.
+                                        # So, we clear fallback_config_state *after* a successful load, as this load is a new baseline.
+                                        streamlit.session_state.fallback_config_state = None
                                         streamlit.session_state.uploaded_file_buffer = None 
                                         streamlit.session_state.processed_file_id_for_buffer = streamlit.session_state.processed_file_id 
                                         streamlit.success(f"Configuration '{streamlit.session_state.config_filename}' loaded successfully.")
@@ -190,16 +210,14 @@ def main():
                     col_create_btn, col_load_btn = streamlit.columns(2)
                     with col_create_btn:
                         if streamlit.button("New Configuration", key="create_new_config_action_btn", help="Start with a default template.", use_container_width=True):
-                            # Check if current config_data is a "new, saved-to-memory" one to stash as fallback
-                            if streamlit.session_state.config_data is not None and \
-                               streamlit.session_state.last_uploaded_filename is None and \
-                               streamlit.session_state.new_config_saved_to_memory_at_least_once:
+                            # If there's any config in memory (loaded or new-saved), stash it as fallback
+                            if streamlit.session_state.config_data is not None:
                                 streamlit.session_state.fallback_config_state = {
                                     'data': copy.deepcopy(streamlit.session_state.config_data),
                                     'filename': streamlit.session_state.config_filename,
-                                    'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot),
-                                    'last_uploaded': streamlit.session_state.last_uploaded_filename, # Should be None
-                                    'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once # Should be True
+                                    'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot), # Snapshot of the config being stashed
+                                    'last_uploaded': streamlit.session_state.last_uploaded_filename,
+                                    'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
                                 }
                             else:
                                 streamlit.session_state.fallback_config_state = None
