@@ -271,7 +271,14 @@ def main():
                         streamlit.rerun()
                 
                 with col_save_action:
-                    config_json_string = config_manager.config_to_json_string(streamlit.session_state.config_data)
+                    # Prepare a dictionary with only the keys to be saved
+                    config_to_save = {
+                        "project_name": streamlit.session_state.config_data.get("project_name"),
+                        "warehouse_location": streamlit.session_state.config_data.get("warehouse_location"),
+                        "parcels": streamlit.session_state.config_data.get("parcels", []),
+                        "agents": streamlit.session_state.config_data.get("agents", [])
+                    }
+                    config_json_string = config_manager.config_to_json_string(config_to_save)
                     streamlit.download_button(
                         label="Save Configuration",
                         data=config_json_string,
