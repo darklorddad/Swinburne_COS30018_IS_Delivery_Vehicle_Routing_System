@@ -340,20 +340,17 @@ def main():
                         if streamlit.session_state.config_data_snapshot is not None:
                             streamlit.session_state.config_data = copy.deepcopy(streamlit.session_state.config_data_snapshot)
                         else: # Should not happen if snapshot is always set on entering edit mode
-                            streamlit.session_state.config_data = None
-
-
-                        was_new_config = streamlit.session_state.last_uploaded_filename is None
+                            # If for some reason snapshot is None, and config_data exists,
+                            # it's safer not to clear config_data to avoid data loss.
+                            # If config_data is also None, then it's already "cleared".
+                            pass # Keep current config_data if snapshot is missing
                         
                         streamlit.session_state.edit_mode = False
                         streamlit.session_state.action_selected = None 
                         
-                        if was_new_config: # Clear memory of new, unsaved/cancelled config
-                            streamlit.session_state.config_data = None
-                            streamlit.session_state.config_filename = "config.json" 
-                            streamlit.session_state.last_uploaded_filename = None
-                            streamlit.session_state.processed_file_id = None
-                            streamlit.session_state.config_data_snapshot = None
+                        # No longer clearing config_data or snapshot here,
+                        # so a "new" config remains in memory if cancelled.
+                        # The snapshot ensures that only changes from the *current* edit session are reverted.
                         streamlit.rerun()
 
                 with col_save_edits_action:
