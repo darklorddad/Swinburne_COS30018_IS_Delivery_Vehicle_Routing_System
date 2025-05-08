@@ -198,13 +198,19 @@ def main():
                             streamlit.session_state.action_selected = "load" # Switch to load view
                             streamlit.rerun()
                     
-                    # Option to resume editing if a config was loaded (not a new one)
-                    if streamlit.session_state.config_data is not None and streamlit.session_state.last_uploaded_filename is not None:
-                         streamlit.markdown("---") 
-                         streamlit.info(f"A loaded configuration ('{streamlit.session_state.config_filename}') is in memory.")
-                         if streamlit.button("Edit Configuration", key="edit_loaded_config_btn", use_container_width=True):
+                    # Option to edit if a configuration is in memory
+                    if streamlit.session_state.config_data is not None:
+                         streamlit.markdown("---")
+                         config_status_message = f"A loaded configuration ('{streamlit.session_state.config_filename}') is in memory." \
+                             if streamlit.session_state.last_uploaded_filename is not None \
+                             else f"An unsaved new configuration ('{streamlit.session_state.config_filename}') is in memory."
+                         streamlit.info(config_status_message)
+                         if streamlit.button("Edit Configuration", key="edit_config_btn", use_container_width=True): # Unified edit button
                              streamlit.session_state.edit_mode = True
-                             streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data) # Snapshot for loaded config
+                             # Snapshot is already set when entering edit mode or after "Save Edits"
+                             # Ensure snapshot is taken if it's somehow None (e.g. direct state manipulation outside flow)
+                             if streamlit.session_state.config_data_snapshot is None:
+                                 streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
                              streamlit.rerun()
 
             else: # if streamlit.session_state.edit_mode is True
@@ -351,11 +357,12 @@ def main():
                         streamlit.rerun()
 
                 with col_save_edits_action:
-                    if streamlit.button("Save Edits", key="save_edits_btn", use_container_width=True, help="Saves the current changes to memory. Stays in edit mode."):
-                        # Current form values are already in streamlit.session_state.config_data
+                    if streamlit.button("Save Edits", key="save_edits_btn", use_container_width=True, help="Saves current changes to memory and returns to the menu."):
                         streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
-                        streamlit.success("Edits saved to memory.")
-                        # No rerun needed, just update snapshot and stay
+                        streamlit.session_state.edit_mode = False
+                        streamlit.session_state.action_selected = None
+                        streamlit.success("Edits saved to memory.") 
+                        streamlit.rerun()
                 
                 with col_save_download_action:
                     if streamlit.button("Save & Download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu."):
