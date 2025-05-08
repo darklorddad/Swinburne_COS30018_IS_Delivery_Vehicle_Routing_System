@@ -10,6 +10,10 @@ def main():
         [data-testid="stDecoration"] {
             display: none !important;
         }
+        /* Set a darker background color for the app */
+        .stApp {
+            background-color: #1E1E1E !important;
+        }
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
@@ -18,7 +22,7 @@ def main():
     col1, col2, col3 = st.columns([2.5, 5, 2.5]) # Adjust ratios to make middle narrower
 
     with col2: # This will be our "card" area
-        st.title("🚚 Delivery Vehicle Routing System")
+        st.title("Delivery Vehicle Routing System")
         with st.container():
             # Placeholder for future UI elements
             st.header("Dashboard")
