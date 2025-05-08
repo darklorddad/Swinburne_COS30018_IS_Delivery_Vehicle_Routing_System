@@ -21,12 +21,6 @@ def main():
         .stApp {
             background-color: #1E1E1E !important;
         }
-
-        /* Apply custom font */
-        body, .stMarkdown, .stTextInput, .stTextArea, .stSelectbox, .stRadio > label > div,
-        h1, h2, h3, h4, h5, h6, .stButton > button {
-            font-family: 'Roboto', sans-serif !important;
-        }
     </style>
     """
     st.markdown(custom_css, unsafe_allow_html=True)
