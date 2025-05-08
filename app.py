@@ -97,12 +97,12 @@ def main():
                         streamlit.session_state.last_uploaded_filename = None
                         streamlit.session_state.action_selected = None # Clear load action if any
                         streamlit.session_state.edit_mode = True
-                        streamlit.experimental_rerun()
+                        streamlit.rerun()
                 
                 with col_load_btn:
                     if streamlit.button("Load Configuration from File", key="load_config_action_btn", help="Upload a JSON configuration file.", use_container_width=True):
                         streamlit.session_state.action_selected = "load"
-                        streamlit.experimental_rerun()
+                        streamlit.rerun()
 
                 if streamlit.session_state.action_selected == "load":
                     streamlit.markdown("---") # Separator
@@ -125,7 +125,7 @@ def main():
                                 streamlit.session_state.edit_mode = True
                                 streamlit.session_state.action_selected = None # Reset action
                                 streamlit.success(f"Configuration '{uploaded_file.name}' loaded successfully.")
-                                streamlit.experimental_rerun()
+                                streamlit.rerun()
                             else:
                                 streamlit.error(f"Failed to load or parse '{uploaded_file.name}'. Ensure it's valid JSON.")
                                 # Mark as processed with error to avoid re-processing same error without re-upload
@@ -142,14 +142,14 @@ def main():
                      streamlit.info(f"A configuration ('{streamlit.session_state.config_filename}') is already in memory.")
                      if streamlit.button("Resume Editing This Configuration", key="resume_editing_btn", use_container_width=True):
                          streamlit.session_state.edit_mode = True
-                         streamlit.experimental_rerun()
+                         streamlit.rerun()
 
             else: # if streamlit.session_state.edit_mode is True
                 if streamlit.session_state.config_data is None:
                     # Should not happen if logic is correct, but as a fallback:
                     streamlit.warning("No configuration data found. Returning to selection.")
                     streamlit.session_state.edit_mode = False
-                    streamlit.experimental_rerun()
+                    streamlit.rerun()
                     return
 
                 streamlit.subheader(f"Editing Configuration: {streamlit.session_state.config_filename}")
@@ -195,7 +195,7 @@ def main():
                             "location": [new_parcel_loc_x, new_parcel_loc_y]
                             # Add other parcel fields from DEFAULT_CONFIG_TEMPLATE if needed e.g. weight, required_vehicle_type
                         })
-                        streamlit.experimental_rerun()
+                        streamlit.rerun()
                     elif not new_parcel_id:
                         streamlit.warning("Parcel ID cannot be empty.")
                     else:
@@ -213,7 +213,7 @@ def main():
                         streamlit.session_state.config_data["parcels"] = [
                             p for p in streamlit.session_state.config_data["parcels"] if p['id'] != selected_parcel_to_remove
                         ]
-                        streamlit.experimental_rerun()
+                        streamlit.rerun()
                 else:
                     streamlit.info("No parcels added yet.")
                 
@@ -249,7 +249,7 @@ def main():
                                 "start_location": [new_agent_start_x, new_agent_start_y],
                                 "end_location": [new_agent_end_x, new_agent_end_y]
                             })
-                            streamlit.experimental_rerun()
+                            streamlit.rerun()
                         elif not new_agent_id:
                             streamlit.warning("Agent ID cannot be empty.")
                         else:
@@ -267,7 +267,7 @@ def main():
                         streamlit.session_state.config_data["agents"] = [
                             a for a in streamlit.session_state.config_data["agents"] if a['id'] != selected_agent_to_remove
                         ]
-                        streamlit.experimental_rerun()
+                        streamlit.rerun()
                 else:
                     streamlit.info("No delivery agents added yet.")
 
@@ -291,7 +291,7 @@ def main():
                         streamlit.session_state.edit_mode = False
                         streamlit.session_state.action_selected = None # Reset any pending action
                         # Config_data is preserved, allowing "Resume Editing"
-                        streamlit.experimental_rerun()
+                        streamlit.rerun()
                 with col_status:
                     streamlit.caption(f"Status: Editing '{streamlit.session_state.config_filename}'.")
             
