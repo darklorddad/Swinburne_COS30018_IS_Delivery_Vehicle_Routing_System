@@ -1,5 +1,6 @@
 import streamlit
 import config_manager # Our new module for backend config logic
+import json # For safely embedding data into JavaScript for download
 
 # Define a default configuration template
 DEFAULT_CONFIG_TEMPLATE = {
@@ -29,10 +30,17 @@ def main():
         streamlit.session_state.processed_file_id = None
     if "edit_mode" not in streamlit.session_state:
         streamlit.session_state.edit_mode = False
-    if "last_uploaded_filename" not in streamlit.session_state: # Retained for potential use or can be removed if not needed
+    if "last_uploaded_filename" not in streamlit.session_state: 
         streamlit.session_state.last_uploaded_filename = None
-    if "action_selected" not in streamlit.session_state: # To manage create/load flow
+    if "action_selected" not in streamlit.session_state: 
         streamlit.session_state.action_selected = None
+    # For managing custom download flow
+    if "initiate_download" not in streamlit.session_state:
+        streamlit.session_state.initiate_download = False
+    if "pending_download_data" not in streamlit.session_state:
+        streamlit.session_state.pending_download_data = None
+    if "pending_download_filename" not in streamlit.session_state:
+        streamlit.session_state.pending_download_filename = None
 
 
     # Dynamically build CSS based on header visibility state
@@ -71,7 +79,41 @@ def main():
         ])
 
         with tab_config:
-            # streamlit.header("Configuration Management") # Removed
+            # Handle pending download if initiated
+            if streamlit.session_state.get("initiate_download", False):
+                if streamlit.session_state.pending_download_data and streamlit.session_state.pending_download_filename:
+                    # Use JavaScript to trigger the download
+                    streamlit.components.v1.html(
+                        f"""
+                        <html>
+                            <head>
+                                <title>Downloading...</title>
+                                <script>
+                                    window.onload = function() {{
+                                        var link = document.createElement('a');
+                                        link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent({json.dumps(streamlit.session_state.pending_download_data)});
+                                        link.download = {json.dumps(streamlit.session_state.pending_download_filename)};
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        // Consider adding a brief message or a way to signal completion if needed
+                                    }};
+                                </script>
+                            </head>
+                            <body>
+                                <p>Your download is starting...</p>
+                            </body>
+                        </html>
+                        """,
+                        height=100 
+                    )
+                # Reset flags and data
+                streamlit.session_state.initiate_download = False
+                streamlit.session_state.pending_download_data = None
+                streamlit.session_state.pending_download_filename = None
+                # Rerun might be good here to clean up the "Downloading..." message immediately
+                # However, the navigation to main menu is already handled by edit_mode=False
+                # Let's see if a rerun is needed after testing. If the "Downloading..." message persists, add streamlit.rerun().
 
             if not streamlit.session_state.edit_mode:
                 if streamlit.session_state.action_selected == "load":
@@ -122,11 +164,11 @@ def main():
                             streamlit.session_state.action_selected = "load" # Switch to load view
                             streamlit.rerun()
                     
-                    # Option to resume editing if a config is loaded and we are in the main menu
-                    if streamlit.session_state.config_data is not None:
+                    # Option to resume editing if a config was loaded (not a new one)
+                    if streamlit.session_state.config_data is not None and streamlit.session_state.last_uploaded_filename is not None:
                          streamlit.markdown("---") 
-                         streamlit.info(f"A configuration ('{streamlit.session_state.config_filename}') is currently in memory.")
-                         if streamlit.button("Resume Editing This Configuration", key="resume_editing_btn", use_container_width=True):
+                         streamlit.info(f"A loaded configuration ('{streamlit.session_state.config_filename}') is in memory.")
+                         if streamlit.button("Edit Configuration", key="edit_loaded_config_btn", use_container_width=True):
                              streamlit.session_state.edit_mode = True
                              streamlit.rerun()
 
@@ -250,32 +292,48 @@ def main():
                 
                 # streamlit.markdown("---") # Separator before bottom actions - Removed
                 # --- Bottom Actions: Back (Left), Save (Right) ---
-                col_back_action, col_save_action = streamlit.columns([1,1]) # Equal width for both buttons
+                col_cancel_action, col_save_action = streamlit.columns([1,1]) # Equal width for both buttons
 
-                with col_back_action:
-                    if streamlit.button("Back to Main Menu", key="back_to_main_btn", use_container_width=True):
+                with col_cancel_action:
+                    if streamlit.button("Cancel", key="cancel_edit_btn", use_container_width=True):
+                        was_new_config = streamlit.session_state.last_uploaded_filename is None
+                        
                         streamlit.session_state.edit_mode = False
                         streamlit.session_state.action_selected = None 
+                        
+                        if was_new_config: # Clear memory of new, unsaved config
+                            streamlit.session_state.config_data = None
+                            streamlit.session_state.config_filename = "config.json" # Reset default
+                            streamlit.session_state.last_uploaded_filename = None
+                            streamlit.session_state.processed_file_id = None
                         streamlit.rerun()
                 
                 with col_save_action:
-                    # Prepare a dictionary with only the keys to be saved
-                    config_to_save = {
-                        "project_name": streamlit.session_state.config_data.get("project_name"),
-                        "warehouse_location": streamlit.session_state.config_data.get("warehouse_location"),
-                        "parcels": streamlit.session_state.config_data.get("parcels", []),
-                        "agents": streamlit.session_state.config_data.get("agents", [])
-                    }
-                    config_json_string = config_manager.config_to_json_string(config_to_save)
-                    streamlit.download_button(
-                        label="Save Configuration",
-                        data=config_json_string,
-                        file_name=streamlit.session_state.config_filename,
-                        mime="application/json",
-                        key="save_config_btn_edit_mode",
-                        help="Saves the current configuration to a JSON file.",
-                        use_container_width=True
-                    )
+                    if streamlit.button("Save Configuration", key="save_config_regular_btn", use_container_width=True, help="Saves the current configuration and returns to the menu."):
+                        config_to_save = {
+                            "project_name": streamlit.session_state.config_data.get("project_name"),
+                            "warehouse_location": streamlit.session_state.config_data.get("warehouse_location"),
+                            "parcels": streamlit.session_state.config_data.get("parcels", []),
+                            "agents": streamlit.session_state.config_data.get("agents", [])
+                        }
+                        config_json_string = config_manager.config_to_json_string(config_to_save)
+                        
+                        streamlit.session_state.pending_download_data = config_json_string
+                        streamlit.session_state.pending_download_filename = streamlit.session_state.config_filename
+                        streamlit.session_state.initiate_download = True
+
+                        was_new_config_being_saved = streamlit.session_state.last_uploaded_filename is None
+                        
+                        streamlit.session_state.edit_mode = False
+                        streamlit.session_state.action_selected = None
+
+                        if was_new_config_being_saved: # Clear memory of new config after saving
+                            streamlit.session_state.config_data = None
+                            streamlit.session_state.config_filename = "config.json" # Reset default
+                            streamlit.session_state.last_uploaded_filename = None
+                            streamlit.session_state.processed_file_id = None
+                        
+                        streamlit.rerun()
             
         with tab_run:
             streamlit.header("Run Optimization")
