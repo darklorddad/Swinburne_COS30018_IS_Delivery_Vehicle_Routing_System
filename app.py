@@ -6,11 +6,6 @@ def main():
     # Custom CSS for app styling (hides decoration/header, sets dark background)
     custom_css = """
     <style>
-        /* Hide Streamlit's default top decoration bar */
-        [data-testid="stDecoration"] {
-            display: none !important;
-        }
-
         /* Hide Streamlit's default header */
         header[data-testid="stHeader"] {
             display: none !important;
