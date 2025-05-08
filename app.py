@@ -3,12 +3,11 @@ import streamlit as st
 def main():
     st.set_page_config(layout="wide", page_title="Delivery Vehicle Routing System")
 
-    st.title("🚚 Delivery Vehicle Routing System")
-
     # Create columns to center the main content
     col1, col2, col3 = st.columns([2, 4, 2]) # Adjust ratios to make middle narrower
 
     with col2: # This will be our "card" area
+        st.title("🚚 Delivery Vehicle Routing System")
         with st.container():
             # Placeholder for future UI elements
             st.header("Dashboard")
