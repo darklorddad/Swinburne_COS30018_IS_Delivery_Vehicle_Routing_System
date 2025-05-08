@@ -55,11 +55,12 @@ def main():
 
         with tab_settings:
             st.header("UI Settings")
-            st.session_state.show_header = st.toggle(
-                "Show Streamlit Header", 
-                value=st.session_state.show_header,
+            st.toggle(
+                "Show Streamlit Header",
+                key="show_header", # Use key to directly bind to st.session_state.show_header
                 help="Toggle the visibility of the default Streamlit header bar."
             )
+            # st.session_state.show_header is now automatically updated by this toggle.
 
 
 if __name__ == "__main__":
