@@ -152,10 +152,8 @@ def main():
 
                 # streamlit.subheader(f"Editing Configuration: {streamlit.session_state.config_filename}") # Removed
                 
-                styled_hr = "<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; border-top: 1px solid #444;'>"
-
                 with streamlit.expander("General Settings", expanded=True):
-                    streamlit.markdown(styled_hr, unsafe_allow_html=True)
+                    streamlit.markdown("---")
                     # Use project_name from config_data for the input field, but update session_state.config_filename
                     # This keeps config_data structure consistent if "project_name" is a meaningful field internally.
                     # For saving, session_state.config_filename is used.
@@ -178,7 +176,7 @@ def main():
                     streamlit.session_state.config_data["warehouse_location"] = [wh_lat, wh_lon]
 
                 with streamlit.expander("Parcels Management", expanded=True):
-                    streamlit.markdown(styled_hr, unsafe_allow_html=True)
+                    streamlit.markdown("---")
                     if "parcels" not in streamlit.session_state.config_data:
                         streamlit.session_state.config_data["parcels"] = []
 
@@ -221,13 +219,13 @@ def main():
                                 ]
                                 streamlit.rerun()
                         
-                        streamlit.markdown(styled_hr, unsafe_allow_html=True) # Line above table
+                        streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["parcels"], use_container_width=True)
                     else:
                         streamlit.info("No parcels added yet.")
 
                 with streamlit.expander("Delivery Agents Management", expanded=True):
-                    streamlit.markdown(styled_hr, unsafe_allow_html=True)
+                    streamlit.markdown("---")
                     if "agents" not in streamlit.session_state.config_data:
                         streamlit.session_state.config_data["agents"] = []
 
@@ -267,7 +265,7 @@ def main():
                                 ]
                                 streamlit.rerun()
                         
-                        streamlit.markdown(styled_hr, unsafe_allow_html=True) # Line above table
+                        streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["agents"], use_container_width=True)
                     else:
                         streamlit.info("No delivery agents added yet.")
