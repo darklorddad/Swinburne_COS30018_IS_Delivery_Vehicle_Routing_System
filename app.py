@@ -42,6 +42,8 @@ def main():
         streamlit.session_state.edit_mode = False
     if "last_uploaded_filename" not in streamlit.session_state: # Retained for potential use or can be removed if not needed
         streamlit.session_state.last_uploaded_filename = None
+    if "action_selected" not in streamlit.session_state: # To manage create/load flow
+        streamlit.session_state.action_selected = None
 
 
     # Dynamically build CSS based on header visibility state
@@ -83,49 +85,64 @@ def main():
             streamlit.header("Configuration Management")
 
             if not streamlit.session_state.edit_mode:
-                # --- Initial View: Create or Load ---
-                col_create, col_load_header = streamlit.columns([1,2])
-                with col_create:
-                    if streamlit.button("Create New Blank Configuration", key="create_new_config_btn_main", help="Load a default template to start a new configuration."):
+                # --- Initial View: Choose Action ---
+                streamlit.subheader("Start New or Load Existing Configuration")
+                
+                col_create_btn, col_load_btn = streamlit.columns(2)
+                with col_create_btn:
+                    if streamlit.button("Create New Configuration", key="create_new_config_action_btn", help="Start with a default template.", use_container_width=True):
                         streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
                         streamlit.session_state.config_filename = "new_config.json"
                         streamlit.session_state.processed_file_id = None 
                         streamlit.session_state.last_uploaded_filename = None
+                        streamlit.session_state.action_selected = None # Clear load action if any
                         streamlit.session_state.edit_mode = True
                         streamlit.experimental_rerun()
                 
-                with col_load_header:
-                     streamlit.subheader("Load Configuration from File")
+                with col_load_btn:
+                    if streamlit.button("Load Configuration from File", key="load_config_action_btn", help="Upload a JSON configuration file.", use_container_width=True):
+                        streamlit.session_state.action_selected = "load"
+                        streamlit.experimental_rerun()
 
-                uploaded_file = streamlit.file_uploader(
-                    "Upload a JSON configuration file. This will replace any current configuration.",
-                    type=["json"],
-                    key="config_uploader_main" 
-                )
+                if streamlit.session_state.action_selected == "load":
+                    streamlit.markdown("---") # Separator
+                    streamlit.subheader("Upload Configuration File")
+                    uploaded_file = streamlit.file_uploader(
+                        "Select a JSON configuration file. This will replace any current configuration if loaded.",
+                        type=["json"],
+                        key="config_uploader_conditional" 
+                    )
 
-                if uploaded_file is not None:
-                    if uploaded_file.file_id != streamlit.session_state.processed_file_id:
-                        loaded_config = config_manager.load_config_from_uploaded_file(uploaded_file)
-                        if loaded_config is not None:
-                            streamlit.session_state.config_data = loaded_config
-                            streamlit.session_state.config_filename = uploaded_file.name
-                            streamlit.session_state.processed_file_id = uploaded_file.file_id
-                            streamlit.session_state.last_uploaded_filename = uploaded_file.name
-                            streamlit.session_state.edit_mode = True
-                            streamlit.success(f"Configuration '{uploaded_file.name}' loaded successfully.")
-                            streamlit.experimental_rerun()
-                        else:
-                            streamlit.error(f"Failed to load or parse '{uploaded_file.name}'. Ensure it's valid JSON.")
-                            streamlit.session_state.processed_file_id = f"error_{uploaded_file.file_id}" # Mark to avoid re-processing same error
+                    if uploaded_file is not None:
+                        # Process only if it's a new file instance
+                        if uploaded_file.file_id != streamlit.session_state.processed_file_id:
+                            loaded_config = config_manager.load_config_from_uploaded_file(uploaded_file)
+                            if loaded_config is not None:
+                                streamlit.session_state.config_data = loaded_config
+                                streamlit.session_state.config_filename = uploaded_file.name
+                                streamlit.session_state.processed_file_id = uploaded_file.file_id
+                                streamlit.session_state.last_uploaded_filename = uploaded_file.name
+                                streamlit.session_state.edit_mode = True
+                                streamlit.session_state.action_selected = None # Reset action
+                                streamlit.success(f"Configuration '{uploaded_file.name}' loaded successfully.")
+                                streamlit.experimental_rerun()
+                            else:
+                                streamlit.error(f"Failed to load or parse '{uploaded_file.name}'. Ensure it's valid JSON.")
+                                # Mark as processed with error to avoid re-processing same error without re-upload
+                                streamlit.session_state.processed_file_id = f"error_{uploaded_file.file_id}"
+                        # If file_id is same as processed_file_id, do nothing to prevent re-processing on simple reruns
+                        # unless it's an error state, then user must re-upload.
                 
-                if streamlit.session_state.config_data is not None and not streamlit.session_state.edit_mode:
-                     # This case might occur if edit_mode was somehow set to False but config_data exists.
-                     # Provide an option to resume editing or clear.
-                     streamlit.info(f"A configuration '{streamlit.session_state.config_filename}' is loaded but not in edit mode.")
-                     if streamlit.button("Resume Editing"):
+                # Option to resume editing if a config is loaded but user navigated away from edit_mode
+                # and no specific "load" action is currently pending.
+                if streamlit.session_state.config_data is not None and \
+                   not streamlit.session_state.edit_mode and \
+                   streamlit.session_state.action_selected is None:
+                     streamlit.markdown("---") # Separator
+                     streamlit.info(f"A configuration ('{streamlit.session_state.config_filename}') is already in memory.")
+                     if streamlit.button("Resume Editing This Configuration", key="resume_editing_btn", use_container_width=True):
                          streamlit.session_state.edit_mode = True
                          streamlit.experimental_rerun()
-
 
             else: # if streamlit.session_state.edit_mode is True
                 if streamlit.session_state.config_data is None:
@@ -272,8 +289,8 @@ def main():
                 with col_back:
                     if streamlit.button("Back to Main Menu", key="back_to_main_btn"):
                         streamlit.session_state.edit_mode = False
-                        # Decide if config_data should be cleared or preserved when going back
-                        # For now, preserve it. User can explicitly create new or load another.
+                        streamlit.session_state.action_selected = None # Reset any pending action
+                        # Config_data is preserved, allowing "Resume Editing"
                         streamlit.experimental_rerun()
                 with col_status:
                     streamlit.caption(f"Status: Editing '{streamlit.session_state.config_filename}'.")
