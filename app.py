@@ -5,17 +5,19 @@ def main():
 
     st.title("🚚 Delivery Vehicle Routing System")
 
-    st.sidebar.title("Controls")
-    st.sidebar.info(
-        "Use the options below to configure the routing problem and view results."
-    )
+    # Create columns to center the main content
+    col1, col2, col3 = st.columns([1, 6, 1]) # Adjust ratios as needed for centering
 
-    # Placeholder for future UI elements
-    st.header("Dashboard")
-    st.write("Route visualizations and results will appear here.")
+    with col2: # This will be our "card" area
+        with st.container():
+            # Placeholder for future UI elements
+            st.header("Dashboard")
+            st.write("Route visualizations and results will appear here.")
 
-    st.header("Input Parameters")
-    st.write("Configuration options will be available here.")
+            st.markdown("---") # Adds a horizontal line for separation
+
+            st.header("Input Parameters")
+            st.write("Configuration options will be available here.")
 
 
 if __name__ == "__main__":
