@@ -41,6 +41,8 @@ def main():
         streamlit.session_state.pending_download_data = None
     if "pending_download_filename" not in streamlit.session_state:
         streamlit.session_state.pending_download_filename = None
+    if "uploaded_file_buffer" not in streamlit.session_state: # To hold uploaded file before explicit load
+        streamlit.session_state.uploaded_file_buffer = None
 
 
     # Dynamically build CSS based on header visibility state
@@ -101,11 +103,11 @@ def main():
                                 </script>
                             </head>
                             <body>
-                                <p>Your download is starting...</p>
+                                <!-- "Your download is starting..." text removed -->
                             </body>
                         </html>
                         """,
-                        height=100 
+                        height=1 # Minimal height as there's no visible content
                     )
                 # Reset flags and data
                 streamlit.session_state.initiate_download = False
@@ -119,32 +121,61 @@ def main():
                 if streamlit.session_state.action_selected == "load":
                     # --- Load View ---
                     streamlit.subheader("Upload Configuration File")
-                    uploaded_file = streamlit.file_uploader(
-                        "Select a JSON configuration file.",
+                    
+                    # File uploader now stores to a buffer
+                    uploaded_file_widget_val = streamlit.file_uploader(
+                        "Select a JSON configuration file to prepare for loading.",
                         type=["json"],
-                        key="config_uploader_load_view" 
+                        key="config_uploader_buffer_widget" 
                     )
 
-                    if uploaded_file is not None:
-                        if uploaded_file.file_id != streamlit.session_state.processed_file_id:
-                            loaded_config = config_manager.load_config_from_uploaded_file(uploaded_file)
-                            if loaded_config is not None:
-                                streamlit.session_state.config_data = loaded_config
-                                streamlit.session_state.config_filename = uploaded_file.name
-                                streamlit.session_state.processed_file_id = uploaded_file.file_id
-                                streamlit.session_state.last_uploaded_filename = uploaded_file.name
-                                # Crucially, stay in the main menu view after loading
-                                streamlit.session_state.edit_mode = False 
-                                streamlit.session_state.action_selected = None # Reset action
-                                streamlit.success(f"Configuration '{uploaded_file.name}' loaded successfully. You can now resume editing.")
-                                streamlit.rerun()
+                    # If a new file is uploaded by the widget, update the buffer
+                    if uploaded_file_widget_val is not None:
+                        streamlit.session_state.uploaded_file_buffer = uploaded_file_widget_val
+                        # Note: Streamlit reruns on widget change, so uploaded_file_buffer will be set.
+
+                    if streamlit.session_state.uploaded_file_buffer is not None:
+                        streamlit.info(f"File selected: {streamlit.session_state.uploaded_file_buffer.name}")
+                        
+                        if streamlit.button("Load Selected Configuration", key="confirm_load_btn", use_container_width=True):
+                            # Check if this specific buffered file instance has been processed to avoid re-processing on reruns
+                            # if the user doesn't change the file but clicks "Load" multiple times.
+                            # Using processed_file_id for this check.
+                            if streamlit.session_state.uploaded_file_buffer.file_id != streamlit.session_state.get("processed_file_id_for_buffer"):
+                                loaded_config = config_manager.load_config_from_uploaded_file(streamlit.session_state.uploaded_file_buffer)
+                                if loaded_config is not None:
+                                    streamlit.session_state.config_data = loaded_config
+                                    streamlit.session_state.config_filename = streamlit.session_state.uploaded_file_buffer.name
+                                    streamlit.session_state.processed_file_id = streamlit.session_state.uploaded_file_buffer.file_id
+                                    streamlit.session_state.last_uploaded_filename = streamlit.session_state.uploaded_file_buffer.name
+                                    
+                                    streamlit.session_state.edit_mode = False 
+                                    streamlit.session_state.action_selected = None 
+                                    streamlit.session_state.uploaded_file_buffer = None # Clear buffer after successful load
+                                    streamlit.session_state.processed_file_id_for_buffer = streamlit.session_state.processed_file_id # Mark as processed
+                                    streamlit.success(f"Configuration '{streamlit.session_state.config_filename}' loaded successfully.")
+                                    streamlit.rerun()
+                                else:
+                                    streamlit.error(f"Failed to load or parse '{streamlit.session_state.uploaded_file_buffer.name}'. Ensure it's valid JSON.")
+                                    # Mark this attempt as processed to avoid re-processing same error without re-upload or new selection
+                                    streamlit.session_state.processed_file_id_for_buffer = streamlit.session_state.uploaded_file_buffer.file_id 
                             else:
-                                streamlit.error(f"Failed to load or parse '{uploaded_file.name}'. Ensure it's valid JSON.")
-                                streamlit.session_state.processed_file_id = f"error_{uploaded_file.file_id}"
-                    
+                                # File already processed (either successfully or with error), prompt user to re-select if needed or proceed if successful
+                                if streamlit.session_state.config_data and streamlit.session_state.config_filename == streamlit.session_state.uploaded_file_buffer.name:
+                                    streamlit.info(f"'{streamlit.session_state.uploaded_file_buffer.name}' is already loaded. Returning to menu.")
+                                    streamlit.session_state.edit_mode = False 
+                                    streamlit.session_state.action_selected = None 
+                                    streamlit.session_state.uploaded_file_buffer = None
+                                    streamlit.rerun()
+                                else:
+                                     streamlit.warning(f"This file instance was already processed. If it failed, please select a new or corrected file.")
+
+
                     streamlit.markdown("---")
-                    if streamlit.button("Back to Menu", key="back_from_load_action_btn", use_container_width=True):
+                    if streamlit.button("Cancel", key="cancel_load_action_btn", use_container_width=True):
                         streamlit.session_state.action_selected = None
+                        streamlit.session_state.uploaded_file_buffer = None # Clear buffer on cancel
+                        streamlit.session_state.processed_file_id_for_buffer = None # Reset this tracking
                         streamlit.rerun()
 
                 else: # --- Initial View: Choose Action (action_selected is None) ---
