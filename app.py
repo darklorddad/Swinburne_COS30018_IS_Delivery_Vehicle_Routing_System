@@ -74,36 +74,16 @@ def main():
             # streamlit.header("Configuration Management") # Removed
 
             if not streamlit.session_state.edit_mode:
-                # --- Initial View: Choose Action ---
-                # streamlit.subheader("Start New or Load Existing Configuration") # Removed
-                
-                col_create_btn, col_load_btn = streamlit.columns(2)
-                with col_create_btn:
-                    if streamlit.button("New Configuration", key="create_new_config_action_btn", help="Start with a default template.", use_container_width=True):
-                        streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
-                        streamlit.session_state.config_filename = "new_config.json"
-                        streamlit.session_state.processed_file_id = None 
-                        streamlit.session_state.last_uploaded_filename = None
-                        streamlit.session_state.action_selected = None # Clear load action if any
-                        streamlit.session_state.edit_mode = True
-                        streamlit.rerun()
-                
-                with col_load_btn:
-                    if streamlit.button("Load Configuration", key="load_config_action_btn", help="Upload a JSON configuration file.", use_container_width=True):
-                        streamlit.session_state.action_selected = "load"
-                        streamlit.rerun()
-
                 if streamlit.session_state.action_selected == "load":
-                    streamlit.markdown("---") # Separator
+                    # --- Load View ---
                     streamlit.subheader("Upload Configuration File")
                     uploaded_file = streamlit.file_uploader(
-                        "Select a JSON configuration file. This will replace any current configuration if loaded.",
+                        "Select a JSON configuration file.",
                         type=["json"],
-                        key="config_uploader_conditional" 
+                        key="config_uploader_load_view" 
                     )
 
                     if uploaded_file is not None:
-                        # Process only if it's a new file instance
                         if uploaded_file.file_id != streamlit.session_state.processed_file_id:
                             loaded_config = config_manager.load_config_from_uploaded_file(uploaded_file)
                             if loaded_config is not None:
@@ -111,27 +91,44 @@ def main():
                                 streamlit.session_state.config_filename = uploaded_file.name
                                 streamlit.session_state.processed_file_id = uploaded_file.file_id
                                 streamlit.session_state.last_uploaded_filename = uploaded_file.name
-                                streamlit.session_state.edit_mode = True
+                                # Crucially, stay in the main menu view after loading
+                                streamlit.session_state.edit_mode = False 
                                 streamlit.session_state.action_selected = None # Reset action
-                                streamlit.success(f"Configuration '{uploaded_file.name}' loaded successfully.")
+                                streamlit.success(f"Configuration '{uploaded_file.name}' loaded successfully. You can now resume editing.")
                                 streamlit.rerun()
                             else:
                                 streamlit.error(f"Failed to load or parse '{uploaded_file.name}'. Ensure it's valid JSON.")
-                                # Mark as processed with error to avoid re-processing same error without re-upload
                                 streamlit.session_state.processed_file_id = f"error_{uploaded_file.file_id}"
-                        # If file_id is same as processed_file_id, do nothing to prevent re-processing on simple reruns
-                        # unless it's an error state, then user must re-upload.
-                
-                # Option to resume editing if a config is loaded but user navigated away from edit_mode
-                # and no specific "load" action is currently pending.
-                if streamlit.session_state.config_data is not None and \
-                   not streamlit.session_state.edit_mode and \
-                   streamlit.session_state.action_selected is None:
-                     streamlit.markdown("---") # Separator
-                     streamlit.info(f"A configuration ('{streamlit.session_state.config_filename}') is already in memory.")
-                     if streamlit.button("Resume Editing This Configuration", key="resume_editing_btn", use_container_width=True):
-                         streamlit.session_state.edit_mode = True
-                         streamlit.rerun()
+                    
+                    streamlit.markdown("---")
+                    if streamlit.button("Back to Menu", key="back_from_load_action_btn", use_container_width=True):
+                        streamlit.session_state.action_selected = None
+                        streamlit.rerun()
+
+                else: # --- Initial View: Choose Action (action_selected is None) ---
+                    col_create_btn, col_load_btn = streamlit.columns(2)
+                    with col_create_btn:
+                        if streamlit.button("New Configuration", key="create_new_config_action_btn", help="Start with a default template.", use_container_width=True):
+                            streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
+                            streamlit.session_state.config_filename = "new_config.json"
+                            streamlit.session_state.processed_file_id = None 
+                            streamlit.session_state.last_uploaded_filename = None
+                            streamlit.session_state.action_selected = None 
+                            streamlit.session_state.edit_mode = True # Go to edit mode for new config
+                            streamlit.rerun()
+                    
+                    with col_load_btn:
+                        if streamlit.button("Load Configuration", key="load_config_action_btn", help="Upload a JSON configuration file.", use_container_width=True):
+                            streamlit.session_state.action_selected = "load" # Switch to load view
+                            streamlit.rerun()
+                    
+                    # Option to resume editing if a config is loaded and we are in the main menu
+                    if streamlit.session_state.config_data is not None:
+                         streamlit.markdown("---") 
+                         streamlit.info(f"A configuration ('{streamlit.session_state.config_filename}') is currently in memory.")
+                         if streamlit.button("Resume Editing This Configuration", key="resume_editing_btn", use_container_width=True):
+                             streamlit.session_state.edit_mode = True
+                             streamlit.rerun()
 
             else: # if streamlit.session_state.edit_mode is True
                 if streamlit.session_state.config_data is None:
