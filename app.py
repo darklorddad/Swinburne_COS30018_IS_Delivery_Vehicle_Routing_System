@@ -30,13 +30,15 @@ def main():
 
     with col2: # This will be our "card" area
         st.title("Delivery Vehicle Routing System")
-        with st.container():
+
+        tab1, tab2 = st.tabs(["Dashboard", "Input Parameters"])
+
+        with tab1:
             # Placeholder for future UI elements
             st.header("Dashboard")
             st.write("Route visualizations and results will appear here.")
 
-            st.markdown("---") # Adds a horizontal line for separation
-
+        with tab2:
             st.header("Input Parameters")
             st.write("Configuration options will be available here.")
 
