@@ -1,9 +1,8 @@
 import streamlit
-import config_manager # Our new module for backend config logic
-import json # For safely embedding data into JavaScript for download
-import copy # For deep copying configuration data
+import config_manager
+import json
+import copy
 
-# Define a default configuration template
 DEFAULT_CONFIG_TEMPLATE = {
     "project_name": "new_project_config", # Will be used as default filename
     "warehouse_location": [0.0, 0.0], # Example: [latitude, longitude] or [x, y]
@@ -199,7 +198,7 @@ def main():
                 else: # --- Initial View: Choose Action (action_selected is None) ---
                     col_create_btn, col_load_btn = streamlit.columns(2)
                     with col_create_btn:
-                        if streamlit.button("New Configuration", key="create_new_config_action_btn", help="Start with a default template.", use_container_width=True):
+                        if streamlit.button("New configuration", key="create_new_config_action_btn", help="Create a new configuration", use_container_width=True):
                             # If there's any config in memory (loaded or new-saved), stash it as fallback
                             if streamlit.session_state.config_data is not None:
                                 streamlit.session_state.fallback_config_state = {
@@ -224,7 +223,7 @@ def main():
                             streamlit.rerun()
                     
                     with col_load_btn:
-                        if streamlit.button("Load Configuration", key="load_config_action_btn", help="Upload a JSON configuration file.", use_container_width=True):
+                        if streamlit.button("Load configuration", key="load_config_action_btn", help="Load configuration by uploading a JSON configuration file", use_container_width=True):
                             streamlit.session_state.action_selected = "load" # Switch to load view
                             streamlit.rerun()
                     
@@ -276,7 +275,7 @@ def main():
                     current_filename_base = streamlit.session_state.config_data.get("project_name", streamlit.session_state.config_filename.replace(".json", ""))
                     
                     new_filename_base = streamlit.text_input(
-                        "Filename (without .json extension)", 
+                        "Filename", 
                         value=current_filename_base,
                         key="filename_input"
                     )
@@ -298,11 +297,11 @@ def main():
 
                     col_p_id, col_p_loc_x, col_p_loc_y, col_p_weight = streamlit.columns([2,1,1,1])
                     new_parcel_id = col_p_id.text_input("Parcel ID", key="new_parcel_id")
-                    new_parcel_loc_x = col_p_loc_x.number_input("Location X", key="new_parcel_loc_x", format="%.4f")
-                    new_parcel_loc_y = col_p_loc_y.number_input("Location Y", key="new_parcel_loc_y", format="%.4f")
+                    new_parcel_loc_x = col_p_loc_x.number_input("Latitude/X", key="new_parcel_loc_x", format="%.4f")
+                    new_parcel_loc_y = col_p_loc_y.number_input("Longitude/Y", key="new_parcel_loc_y", format="%.4f")
                     new_parcel_weight = col_p_weight.number_input("Weight", key="new_parcel_weight", min_value=0.0, format="%.2f")
                     
-                    if streamlit.button("Add Parcel", key="add_parcel_btn", use_container_width=True):
+                    if streamlit.button("Add parcel", key="add_parcel_btn", use_container_width=True):
                         if new_parcel_id and not any(p['id'] == new_parcel_id for p in streamlit.session_state.config_data["parcels"]):
                             streamlit.session_state.config_data["parcels"].append({
                                 "id": new_parcel_id,
@@ -312,19 +311,19 @@ def main():
                             # Clear inputs after adding by rerunning (Streamlit's default behavior for new keys might also clear them)
                             streamlit.rerun() 
                         elif not new_parcel_id:
-                            streamlit.warning("Parcel ID cannot be empty.")
+                            streamlit.warning("Parcel ID cannot be empty")
                         else:
-                            streamlit.warning(f"Parcel ID '{new_parcel_id}' already exists.")
+                            streamlit.warning(f"Parcel ID '{new_parcel_id}' already exists")
                     
                     # Section for Removing Parcels (below add, above table)
                     if streamlit.session_state.config_data["parcels"]:
                         parcel_ids_to_remove = [p['id'] for p in streamlit.session_state.config_data["parcels"]]
                         selected_parcel_to_remove = streamlit.selectbox(
-                            "Select Parcel ID to Remove", 
+                            "Select parcel ID to remove", 
                             options=[""] + parcel_ids_to_remove,
                             key="remove_parcel_select"
                         )
-                        if streamlit.button("Remove Selected Parcel", key="remove_parcel_btn_new_row", use_container_width=True) and selected_parcel_to_remove:
+                        if streamlit.button("Remove selected parcel", key="remove_parcel_btn_new_row", use_container_width=True) and selected_parcel_to_remove:
                             streamlit.session_state.config_data["parcels"] = [
                                 p for p in streamlit.session_state.config_data["parcels"] if p['id'] != selected_parcel_to_remove
                             ]
@@ -333,7 +332,7 @@ def main():
                         streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["parcels"], use_container_width=True)
                     else:
-                        streamlit.info("No parcels added yet.")
+                        streamlit.info("No parcels added yet")
 
                 with streamlit.expander("Delivery Agents Management", expanded=True):
                     streamlit.markdown("---")
@@ -343,9 +342,9 @@ def main():
                     # Simplified Add New Agent section
                     col_a_id, col_a_cap_weight = streamlit.columns([2,1])
                     new_agent_id = col_a_id.text_input("Agent ID", key="new_agent_id_simplified")
-                    new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (Weight)", min_value=0.0, format="%.2f", key="new_agent_cap_weight_simplified")
+                    new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", min_value=0.0, format="%.2f", key="new_agent_cap_weight_simplified")
 
-                    if streamlit.button("Add Agent", key="add_agent_btn_simplified", use_container_width=True):
+                    if streamlit.button("Add agent", key="add_agent_btn_simplified", use_container_width=True):
                         if new_agent_id and not any(a['id'] == new_agent_id for a in streamlit.session_state.config_data["agents"]):
                             streamlit.session_state.config_data["agents"].append({
                                 "id": new_agent_id,
@@ -353,19 +352,19 @@ def main():
                             })
                             streamlit.rerun()
                         elif not new_agent_id:
-                            streamlit.warning("Agent ID cannot be empty.")
+                            streamlit.warning("Agent ID cannot be empty")
                         else:
-                            streamlit.warning(f"Agent ID '{new_agent_id}' already exists.")
+                            streamlit.warning(f"Agent ID '{new_agent_id}' already exists")
 
                     # Section for Removing Agents (below add, above table)
                     if streamlit.session_state.config_data["agents"]:
                         agent_ids_to_remove = [a['id'] for a in streamlit.session_state.config_data["agents"]]
                         selected_agent_to_remove = streamlit.selectbox(
-                            "Select Agent ID to Remove", 
+                            "Select agent ID to remove", 
                             options=[""] + agent_ids_to_remove,
                             key="remove_agent_select_simplified"
                         )
-                        if streamlit.button("Remove Selected Agent", key="remove_agent_btn_new_row", use_container_width=True) and selected_agent_to_remove:
+                        if streamlit.button("Remove selected agent", key="remove_agent_btn_new_row", use_container_width=True) and selected_agent_to_remove:
                             streamlit.session_state.config_data["agents"] = [
                                 a for a in streamlit.session_state.config_data["agents"] if a['id'] != selected_agent_to_remove
                             ]
@@ -374,7 +373,7 @@ def main():
                         streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["agents"], use_container_width=True)
                     else:
-                        streamlit.info("No delivery agents added yet.")
+                        streamlit.info("No delivery agents added yet")
                 
                 # --- Bottom Actions: Cancel, Save Edits, Save & Download ---
                 col_cancel_action, col_save_edits_action, col_save_download_action = streamlit.columns([1,1,1])
@@ -420,7 +419,7 @@ def main():
                         streamlit.rerun()
 
                 with col_save_edits_action:
-                    if streamlit.button("Save Edits", key="save_edits_btn", use_container_width=True, help="Saves current changes to memory and returns to the menu."):
+                    if streamlit.button("Save", key="save_edits_btn", use_container_width=True, help="Saves current changes to memory and returns to the menu."):
                         streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
                         if streamlit.session_state.last_uploaded_filename is None: 
                             streamlit.session_state.new_config_saved_to_memory_at_least_once = True
@@ -432,7 +431,7 @@ def main():
                         streamlit.rerun()
                 
                 with col_save_download_action:
-                    if streamlit.button("Save & Download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu."):
+                    if streamlit.button("Save and download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu."):
                         config_to_save = {
                             "project_name": streamlit.session_state.config_data.get("project_name"),
                             "warehouse_location": streamlit.session_state.config_data.get("warehouse_location"),
