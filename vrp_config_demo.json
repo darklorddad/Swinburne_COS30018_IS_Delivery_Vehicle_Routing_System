@@ -1,49 +1,55 @@
 {
+  "warehouse_coordinates_x_y": [0.0, 0.0],
   "parcels": [
     {
       "id": "P001",
-      "location": [
+      "coordinates_x_y": [
         2.5,
         3.1
-      ]
+      ],
+      "weight": 1.0
     },
     {
       "id": "P002",
-      "location": [
+      "coordinates_x_y": [
         -1.0,
         4.5
-      ]
+      ],
+      "weight": 1.0
     },
     {
       "id": "P003",
-      "location": [
+      "coordinates_x_y": [
         5.0,
         -2.0
-      ]
+      ],
+      "weight": 1.0
     },
     {
       "id": "P004",
-      "location": [
+      "coordinates_x_y": [
         -3.5,
         -1.5
-      ]
+      ],
+      "weight": 1.0
     },
     {
       "id": "P005",
-      "location": [
+      "coordinates_x_y": [
         1.0,
         1.0
-      ]
+      ],
+      "weight": 1.0
     }
   ],
-  "agents": [
+  "delivery_agents": [
     {
       "id": "DA01",
-      "capacity": 3
+      "capacity_weight": 3.0
     },
     {
       "id": "DA02",
-      "capacity": 2
+      "capacity_weight": 2.0
     }
   ]
 }
