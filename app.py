@@ -5,10 +5,10 @@ import copy
 
 DEFAULT_CONFIG_TEMPLATE = {
     # Filename is managed by streamlit.session_state.config_filename, not in config data content
-    "warehouse_coordinates_x_y": [0.0, 0.0], # Example: [X, Y]
+    "warehouse_coordinates_x_y": [0, 0], # Example: [X, Y]
     "parcels": [
         # Example structure:
-        # { "id": "P001", "coordinates_x_y": [2.5, 3.1], "weight": 10 }
+        # { "id": "P001", "coordinates_x_y": [2, 3], "weight": 10 }
     ],
     "delivery_agents": [
         # Example structure:
@@ -284,10 +284,11 @@ def main():
                     # "project_name" key is no longer used in config_data for the filename.
 
 
-                    wh_coords = streamlit.session_state.config_data.get("warehouse_coordinates_x_y", [0.0, 0.0])
+                    wh_coords = streamlit.session_state.config_data.get("warehouse_coordinates_x_y", [0, 0])
                     col_wh_x, col_wh_y = streamlit.columns(2)
-                    wh_x = col_wh_x.number_input("Warehouse X", value=float(wh_coords[0]), key="wh_x_input", format="%.4f")
-                    wh_y = col_wh_y.number_input("Warehouse Y", value=float(wh_coords[1]), key="wh_y_input", format="%.4f")
+                    # Ensure value is int, format is %d, and step is 1 for +/- buttons
+                    wh_x = col_wh_x.number_input("Warehouse X", value=int(wh_coords[0]), key="wh_x_input", format="%d", step=1)
+                    wh_y = col_wh_y.number_input("Warehouse Y", value=int(wh_coords[1]), key="wh_y_input", format="%d", step=1)
                     streamlit.session_state.config_data["warehouse_coordinates_x_y"] = [wh_x, wh_y]
 
                 with streamlit.expander("Parcels Management", expanded=True):
@@ -297,9 +298,9 @@ def main():
 
                     col_p_id, col_p_x, col_p_y, col_p_weight = streamlit.columns([2,1,1,1]) # Renamed columns for clarity
                     new_parcel_id = col_p_id.text_input("Parcel ID", key="new_parcel_id")
-                    new_parcel_x = col_p_x.number_input("X", key="new_parcel_x", format="%.4f") # Label and key changed
-                    new_parcel_y = col_p_y.number_input("Y", key="new_parcel_y", format="%.4f") # Label and key changed
-                    new_parcel_weight = col_p_weight.number_input("Weight", key="new_parcel_weight", min_value=0.0, format="%.2f")
+                    new_parcel_x = col_p_x.number_input("X", value=0, key="new_parcel_x", format="%d", step=1) # Label and key changed
+                    new_parcel_y = col_p_y.number_input("Y", value=0, key="new_parcel_y", format="%d", step=1) # Label and key changed
+                    new_parcel_weight = col_p_weight.number_input("Weight", value=0, key="new_parcel_weight", min_value=0, format="%d", step=1)
                     
                     if streamlit.button("Add parcel", key="add_parcel_btn", use_container_width=True):
                         if new_parcel_id and not any(p['id'] == new_parcel_id for p in streamlit.session_state.config_data["parcels"]):
@@ -342,7 +343,7 @@ def main():
                     # Simplified Add New Agent section
                     col_a_id, col_a_cap_weight = streamlit.columns([2,1])
                     new_agent_id = col_a_id.text_input("Agent ID", key="new_agent_id_simplified")
-                    new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", min_value=0.0, format="%.2f", key="new_agent_cap_weight_simplified")
+                    new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value=0, min_value=0, format="%d", step=1, key="new_agent_cap_weight_simplified")
 
                     if streamlit.button("Add agent", key="add_agent_btn_simplified", use_container_width=True):
                         if new_agent_id and not any(a['id'] == new_agent_id for a in streamlit.session_state.config_data["delivery_agents"]):
