@@ -452,13 +452,12 @@ def main():
                         streamlit.session_state.edit_mode = False
                         streamlit.session_state.action_selected = None
 
-                        if was_new_config_being_saved: 
-                            streamlit.session_state.config_data = None
-                            streamlit.session_state.config_filename = "config.json" 
-                            streamlit.session_state.last_uploaded_filename = None
-                            streamlit.session_state.processed_file_id = None
-                            streamlit.session_state.config_data_snapshot = None
-                            streamlit.session_state.new_config_saved_to_memory_at_least_once = False 
+                        if was_new_config_being_saved:
+                            # The config_data, config_filename, and config_data_snapshot are already current
+                            # and reflect the state that was just downloaded.
+                            # last_uploaded_filename and processed_file_id correctly remain None for a new config.
+                            streamlit.session_state.new_config_saved_to_memory_at_least_once = True
+                        # If it was a loaded config being saved & downloaded, its state is already correct.
                         
                         streamlit.session_state.fallback_config_state = None # Config saved/downloaded, fallback irrelevant
                         streamlit.rerun()
