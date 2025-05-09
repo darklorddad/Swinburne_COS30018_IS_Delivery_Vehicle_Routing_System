@@ -130,7 +130,7 @@ def main():
                     
                     # File uploader now stores to a buffer
                     uploaded_file_widget_val = streamlit.file_uploader(
-                        "Select a JSON configuration file to prepare for loading.",
+                        "Select a JSON configuration file to prepare for loading",
                         type=["json"],
                         key="config_uploader_buffer_widget" 
                     )
@@ -153,7 +153,7 @@ def main():
 
                     with col_load_action:
                         load_disabled = streamlit.session_state.uploaded_file_buffer is None
-                        if streamlit.button("Load Selected Configuration", key="confirm_load_btn", use_container_width=True, disabled=load_disabled):
+                        if streamlit.button("Load selected configuration", key="confirm_load_btn", use_container_width=True, disabled=load_disabled):
                             if streamlit.session_state.uploaded_file_buffer is not None: 
                                 if streamlit.session_state.uploaded_file_buffer.file_id != streamlit.session_state.get("processed_file_id_for_buffer"):
                                     loaded_config = config_manager.load_config_from_uploaded_file(streamlit.session_state.uploaded_file_buffer)
