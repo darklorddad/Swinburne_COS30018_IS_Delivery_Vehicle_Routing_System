@@ -4,11 +4,11 @@ import json
 import copy
 
 DEFAULT_CONFIG_TEMPLATE = {
-    "project_name": "new_project_config", # Will be used as default filename
-    "warehouse_location": [0.0, 0.0], # Example: [latitude, longitude] or [x, y]
+    # Filename is managed by streamlit.session_state.config_filename, not in config data content
+    "warehouse_coordinates": [0.0, 0.0], # Example: [X, Y]
     "parcels": [
         # Example structure:
-        # { "id": "P001", "location": [2.5, 3.1], "weight": 10 }
+        # { "id": "P001", "coordinates": [2.5, 3.1], "weight": 10 }
     ],
     "agents": [
         # Example structure:
@@ -269,43 +269,43 @@ def main():
                 
                 with streamlit.expander("General Settings", expanded=True):
                     streamlit.markdown("---")
-                    # Use project_name from config_data for the input field, but update session_state.config_filename
-                    # This keeps config_data structure consistent if "project_name" is a meaningful field internally.
-                    # For saving, session_state.config_filename is used.
-                    current_filename_base = streamlit.session_state.config_data.get("project_name", streamlit.session_state.config_filename.replace(".json", ""))
+                    # Edit streamlit.session_state.config_filename directly
+                    # The filename is not stored within config_data.
+                    current_filename_base = streamlit.session_state.config_filename.replace(".json", "")
                     
                     new_filename_base = streamlit.text_input(
                         "Filename", 
                         value=current_filename_base,
                         key="filename_input"
                     )
-                    # Update project_name in config_data and config_filename in session_state
-                    streamlit.session_state.config_data["project_name"] = new_filename_base
-                    streamlit.session_state.config_filename = f"{new_filename_base}.json" if not new_filename_base.endswith(".json") else new_filename_base
+                    if new_filename_base: # Prevent empty filename causing ".json" or an error
+                        new_full_filename = f"{new_filename_base}.json" if not new_filename_base.endswith(".json") else new_filename_base
+                        streamlit.session_state.config_filename = new_full_filename
+                    # "project_name" key is no longer used in config_data for the filename.
 
 
-                    wh_loc = streamlit.session_state.config_data.get("warehouse_location", [0.0, 0.0])
-                    col_wh_lat, col_wh_lon = streamlit.columns(2)
-                    wh_lat = col_wh_lat.number_input("Warehouse Latitude/X", value=float(wh_loc[0]), key="wh_lat_input", format="%.4f")
-                    wh_lon = col_wh_lon.number_input("Warehouse Longitude/Y", value=float(wh_loc[1]), key="wh_lon_input", format="%.4f")
-                    streamlit.session_state.config_data["warehouse_location"] = [wh_lat, wh_lon]
+                    wh_coords = streamlit.session_state.config_data.get("warehouse_coordinates", [0.0, 0.0])
+                    col_wh_x, col_wh_y = streamlit.columns(2)
+                    wh_x = col_wh_x.number_input("Warehouse X", value=float(wh_coords[0]), key="wh_x_input", format="%.4f")
+                    wh_y = col_wh_y.number_input("Warehouse Y", value=float(wh_coords[1]), key="wh_y_input", format="%.4f")
+                    streamlit.session_state.config_data["warehouse_coordinates"] = [wh_x, wh_y]
 
                 with streamlit.expander("Parcels Management", expanded=True):
                     streamlit.markdown("---")
                     if "parcels" not in streamlit.session_state.config_data:
                         streamlit.session_state.config_data["parcels"] = []
 
-                    col_p_id, col_p_loc_x, col_p_loc_y, col_p_weight = streamlit.columns([2,1,1,1])
+                    col_p_id, col_p_x, col_p_y, col_p_weight = streamlit.columns([2,1,1,1]) # Renamed columns for clarity
                     new_parcel_id = col_p_id.text_input("Parcel ID", key="new_parcel_id")
-                    new_parcel_loc_x = col_p_loc_x.number_input("Latitude/X", key="new_parcel_loc_x", format="%.4f")
-                    new_parcel_loc_y = col_p_loc_y.number_input("Longitude/Y", key="new_parcel_loc_y", format="%.4f")
+                    new_parcel_x = col_p_x.number_input("X", key="new_parcel_x", format="%.4f") # Label and key changed
+                    new_parcel_y = col_p_y.number_input("Y", key="new_parcel_y", format="%.4f") # Label and key changed
                     new_parcel_weight = col_p_weight.number_input("Weight", key="new_parcel_weight", min_value=0.0, format="%.2f")
                     
                     if streamlit.button("Add parcel", key="add_parcel_btn", use_container_width=True):
                         if new_parcel_id and not any(p['id'] == new_parcel_id for p in streamlit.session_state.config_data["parcels"]):
                             streamlit.session_state.config_data["parcels"].append({
                                 "id": new_parcel_id,
-                                "location": [new_parcel_loc_x, new_parcel_loc_y],
+                                "coordinates": [new_parcel_x, new_parcel_y], # Use "coordinates" and new variable names
                                 "weight": new_parcel_weight
                             })
                             # Clear inputs after adding by rerunning (Streamlit's default behavior for new keys might also clear them)
@@ -433,9 +433,9 @@ def main():
                 with col_save_download_action:
                     if streamlit.button("Save and download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu."):
                         config_to_save = {
-                            "project_name": streamlit.session_state.config_data.get("project_name"),
-                            "warehouse_location": streamlit.session_state.config_data.get("warehouse_location"),
-                            "parcels": streamlit.session_state.config_data.get("parcels", []),
+                            # "project_name" is removed. Filename is handled by streamlit.session_state.config_filename for the download.
+                            "warehouse_coordinates": streamlit.session_state.config_data.get("warehouse_coordinates"),
+                            "parcels": streamlit.session_state.config_data.get("parcels", []), # Assumes parcels internally use "coordinates"
                             "agents": streamlit.session_state.config_data.get("agents", [])
                         }
                         # Ensure snapshot reflects the state being saved, in case "Edit Configuration" is used later for this saved file (if it were loaded)
