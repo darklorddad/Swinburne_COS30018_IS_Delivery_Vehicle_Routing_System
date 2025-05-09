@@ -242,6 +242,21 @@ def main():
                              if streamlit.session_state.config_data_snapshot is None:
                                  streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
                              streamlit.rerun()
+                        
+                         # Option to clear memory (this is still inside the outer "if streamlit.session_state.config_data is not None:")
+                         streamlit.markdown("---") # Separator before clear button
+                         if streamlit.button("Clear Configuration from Memory", key="clear_memory_btn", use_container_width=True, help="Removes any loaded or new configuration from the current session."):
+                            streamlit.session_state.config_data = None
+                            streamlit.session_state.config_filename = "config.json" # Reset default
+                            streamlit.session_state.last_uploaded_filename = None
+                            streamlit.session_state.processed_file_id = None
+                            streamlit.session_state.config_data_snapshot = None
+                            streamlit.session_state.new_config_saved_to_memory_at_least_once = False
+                            streamlit.session_state.fallback_config_state = None
+                            streamlit.session_state.uploaded_file_buffer = None
+                            streamlit.session_state.processed_file_id_for_buffer = None
+                            streamlit.info("Configuration cleared from memory.")
+                            streamlit.rerun()
 
             else: # if streamlit.session_state.edit_mode is True
                 if streamlit.session_state.config_data is None:
