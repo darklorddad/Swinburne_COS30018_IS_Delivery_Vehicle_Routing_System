@@ -5,12 +5,12 @@ import copy
 
 DEFAULT_CONFIG_TEMPLATE = {
     # Filename is managed by streamlit.session_state.config_filename, not in config data content
-    "warehouse_coordinates": [0.0, 0.0], # Example: [X, Y]
+    "warehouse_coordinates_x_y": [0.0, 0.0], # Example: [X, Y]
     "parcels": [
         # Example structure:
-        # { "id": "P001", "coordinates": [2.5, 3.1], "weight": 10 }
+        # { "id": "P001", "coordinates_x_y": [2.5, 3.1], "weight": 10 }
     ],
-    "agents": [
+    "delivery_agents": [
         # Example structure:
         # { "id": "DA01", "capacity_weight": 100 }
     ]
@@ -419,7 +419,7 @@ def main():
                         streamlit.rerun()
 
                 with col_save_edits_action:
-                    if streamlit.button("Save", key="save_edits_btn", use_container_width=True, help="Saves current changes to memory and returns to the menu."):
+                    if streamlit.button("Save", key="save_edits_btn", use_container_width=True, help="Saves the current configuration and returns to the menu"):
                         streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
                         if streamlit.session_state.last_uploaded_filename is None: 
                             streamlit.session_state.new_config_saved_to_memory_at_least_once = True
@@ -431,7 +431,7 @@ def main():
                         streamlit.rerun()
                 
                 with col_save_download_action:
-                    if streamlit.button("Save and download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu."):
+                    if streamlit.button("Save and download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu"):
                         config_to_save = {
                             # "project_name" is removed. Filename is handled by streamlit.session_state.config_filename for the download.
                             "warehouse_coordinates": streamlit.session_state.config_data.get("warehouse_coordinates"),
