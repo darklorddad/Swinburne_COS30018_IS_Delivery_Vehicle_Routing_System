@@ -1,6 +1,7 @@
 import copy
-import config_manager # Import config_manager
+# import config_manager # Functions moved into this file
 import streamlit # Allow access to streamlit.session_state
+import json # For JSON operations
 
 DEFAULT_CONFIG_TEMPLATE = {
     # Filename is managed by streamlit.session_state.config_filename, not in config data content
@@ -71,7 +72,7 @@ def confirm_load_configuration(ss):
         return {'type': 'warning', 'message': 'No file buffer found to load.'}
 
     if ss.uploaded_file_buffer.file_id != ss.get("processed_file_id_for_buffer"):
-        loaded_config = config_manager.load_config_from_uploaded_file(ss.uploaded_file_buffer)
+        loaded_config = load_config_from_uploaded_file(ss.uploaded_file_buffer) # Removed config_manager.
         if loaded_config is not None:
             # Stash current config if any
             if ss.config_data is not None:
@@ -222,7 +223,7 @@ def handle_save_and_download(ss):
     ss.config_filename_snapshot = ss.config_filename # Commit current filename as snapshot
 
     # Set up for download
-    ss.pending_download_data = config_manager.config_to_json_string(config_to_save)
+    ss.pending_download_data = config_to_json_string(config_to_save) # Removed config_manager.
     ss.pending_download_filename = ss.config_filename
     ss.initiate_download = True
 
@@ -384,3 +385,54 @@ def validate_edit_mode_preconditions(ss):
         ss.edit_mode = False
         return {'valid': False, 'message': "No configuration data found. Returning to selection.", 'type': 'warning'}
     return {'valid': True}
+
+# --- Configuration File Handling Logic (previously in config_manager.py) ---
+def load_config_from_uploaded_file(uploaded_file):
+    """
+    Loads configuration from a Streamlit UploadedFile object.
+    Returns a Python dictionary or None if an error occurs.
+    """
+    if uploaded_file is not None:
+        try:
+            # Ensure the file pointer is at the beginning if it was read before
+            uploaded_file.seek(0)
+            config_data = json.load(uploaded_file)
+            return config_data
+        except json.JSONDecodeError as e:
+            # In a real app, you might use streamlit.error in the calling code
+            print(f"Error decoding JSON: {e}")
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred during file loading: {e}")
+            return None
+    return None
+
+def config_to_json_string(config_data, indent=2):
+    """
+    Converts a Python dictionary configuration to a JSON formatted string.
+    Returns an empty string if config_data is None, or "{}" on serialization error.
+    Note: This version is slightly adjusted from the original config_manager.py
+    to catch generic Exceptions during json.dumps and ensure it returns "{}"
+    on any serialization error, removing a previously potentially problematic return path.
+    """
+    if config_data is None:
+        return "" # As per original behavior for None input
+    try:
+        return json.dumps(config_data, indent=indent)
+    except Exception as e: # Catch a broader range of potential serialization errors
+        print(f"Error serializing config to JSON: {e}")
+        return "{}" # Return an empty JSON object string on error
+
+def json_string_to_config(json_string):
+    """
+    Parses a JSON formatted string into a Python dictionary.
+    Returns a Python dictionary or None if an error occurs (e.g., empty string or invalid JSON).
+    """
+    if not json_string: # Handle empty string case
+        return None
+    try:
+        config_data = json.loads(json_string)
+        return config_data
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON string: {e}")
+        return None
