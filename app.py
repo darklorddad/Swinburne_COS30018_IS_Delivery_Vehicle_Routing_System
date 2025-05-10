@@ -2,7 +2,7 @@ import streamlit
 import config_manager
 import app_logic # Import the new logic module
 import json
-import copy # Keep copy for other parts of app.py for now
+# import copy # No longer needed
 
 
 def main():
@@ -164,10 +164,10 @@ def main():
                                 streamlit.rerun()
 
             else: # if streamlit.session_state.edit_mode is True
-                if streamlit.session_state.config_data is None:
-                    # Should not happen if logic is correct, but as a fallback:
-                    streamlit.warning("No configuration data found. Returning to selection.")
-                    streamlit.session_state.edit_mode = False
+                validation_result = app_logic.validate_edit_mode_preconditions(streamlit.session_state)
+                if not validation_result['valid']:
+                    if validation_result.get('message') and validation_result.get('type') == 'warning':
+                        streamlit.warning(validation_result['message'])
                     streamlit.rerun()
                     return
 

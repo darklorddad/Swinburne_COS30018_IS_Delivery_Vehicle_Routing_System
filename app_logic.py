@@ -373,3 +373,14 @@ def handle_load_config_action(ss):
 def handle_show_header_toggle(ss):
     """Updates the show_header state based on the toggle widget."""
     ss.show_header = ss.get("show_header_toggle_widget", False) # Key of the toggle
+
+def validate_edit_mode_preconditions(ss):
+    """
+    Validates if the necessary preconditions for entering edit mode are met.
+    Specifically, checks if config_data exists.
+    If not, sets edit_mode to False and returns an appropriate status.
+    """
+    if ss.config_data is None:
+        ss.edit_mode = False
+        return {'valid': False, 'message': "No configuration data found. Returning to selection.", 'type': 'warning'}
+    return {'valid': True}
