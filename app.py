@@ -135,142 +135,143 @@ def main():
             if not streamlit.session_state.edit_mode:
                 if streamlit.session_state.action_selected == "load":
                     # --- Load View ---
-                    # streamlit.subheader("Upload Configuration File") # Removed
-                    
-                    # File uploader now stores to a buffer
-                    uploaded_file_widget_val = streamlit.file_uploader(
-                        "Select a JSON configuration file to prepare for loading",
-                        type=["json"],
-                        key="config_uploader_buffer_widget" 
-                    )
+                    with streamlit.expander("Upload Configuration File", expanded=True):
+                        # File uploader now stores to a buffer
+                        uploaded_file_widget_val = streamlit.file_uploader(
+                            "Select a JSON configuration file to prepare for loading",
+                            type=["json"],
+                            key="config_uploader_buffer_widget"
+                        )
 
-                    # If a new file is uploaded by the widget, update the buffer
-                    if uploaded_file_widget_val is not None:
-                        streamlit.session_state.uploaded_file_buffer = uploaded_file_widget_val
-                        # Reset processed_file_id_for_buffer when a new file is selected by the uploader
-                        streamlit.session_state.processed_file_id_for_buffer = None 
+                        # If a new file is uploaded by the widget, update the buffer
+                        if uploaded_file_widget_val is not None:
+                            streamlit.session_state.uploaded_file_buffer = uploaded_file_widget_val
+                            # Reset processed_file_id_for_buffer when a new file is selected by the uploader
+                            streamlit.session_state.processed_file_id_for_buffer = None
 
-                    # Buttons for Load View - Cancel on left, Load on right
-                    col_cancel_load_action, col_load_action = streamlit.columns([1,1])
-                    
-                    with col_cancel_load_action:
-                        if streamlit.button("Cancel", key="cancel_load_action_btn", use_container_width=True):
-                            streamlit.session_state.action_selected = None
-                            streamlit.session_state.uploaded_file_buffer = None 
-                            streamlit.session_state.processed_file_id_for_buffer = None 
-                            streamlit.rerun()
+                        # Buttons for Load View - Cancel on left, Load on right
+                        col_cancel_load_action, col_load_action = streamlit.columns([1,1])
 
-                    with col_load_action:
-                        load_disabled = streamlit.session_state.uploaded_file_buffer is None
-                        if streamlit.button("Load selected configuration", key="confirm_load_btn", use_container_width=True, disabled=load_disabled):
-                            if streamlit.session_state.uploaded_file_buffer is not None: 
-                                if streamlit.session_state.uploaded_file_buffer.file_id != streamlit.session_state.get("processed_file_id_for_buffer"):
-                                    loaded_config = config_manager.load_config_from_uploaded_file(streamlit.session_state.uploaded_file_buffer)
-                                    if loaded_config is not None:
-                                        if streamlit.session_state.config_data is not None:
-                                            streamlit.session_state.fallback_config_state = {
-                                                'data': copy.deepcopy(streamlit.session_state.config_data),
-                                                'filename': streamlit.session_state.config_filename,
-                                                'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot),
-                                                'filename_snapshot': copy.deepcopy(streamlit.session_state.config_filename_snapshot), # Also stash filename snapshot
-                                                'last_uploaded': streamlit.session_state.last_uploaded_filename,
-                                                'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
-                                            }
-                                        else:
+                        with col_cancel_load_action:
+                            if streamlit.button("Cancel", key="cancel_load_action_btn", use_container_width=True):
+                                streamlit.session_state.action_selected = None
+                                streamlit.session_state.uploaded_file_buffer = None
+                                streamlit.session_state.processed_file_id_for_buffer = None
+                                streamlit.rerun()
+
+                        with col_load_action:
+                            load_disabled = streamlit.session_state.uploaded_file_buffer is None
+                            if streamlit.button("Load selected configuration", key="confirm_load_btn", use_container_width=True, disabled=load_disabled):
+                                if streamlit.session_state.uploaded_file_buffer is not None:
+                                    if streamlit.session_state.uploaded_file_buffer.file_id != streamlit.session_state.get("processed_file_id_for_buffer"):
+                                        loaded_config = config_manager.load_config_from_uploaded_file(streamlit.session_state.uploaded_file_buffer)
+                                        if loaded_config is not None:
+                                            if streamlit.session_state.config_data is not None:
+                                                streamlit.session_state.fallback_config_state = {
+                                                    'data': copy.deepcopy(streamlit.session_state.config_data),
+                                                    'filename': streamlit.session_state.config_filename,
+                                                    'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot),
+                                                    'filename_snapshot': copy.deepcopy(streamlit.session_state.config_filename_snapshot), # Also stash filename snapshot
+                                                    'last_uploaded': streamlit.session_state.last_uploaded_filename,
+                                                    'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
+                                                }
+                                            else:
+                                                streamlit.session_state.fallback_config_state = None
+
+                                            streamlit.session_state.config_data = loaded_config
+                                            streamlit.session_state.config_filename = streamlit.session_state.uploaded_file_buffer.name
+                                            streamlit.session_state.processed_file_id = streamlit.session_state.uploaded_file_buffer.file_id
+                                            streamlit.session_state.last_uploaded_filename = streamlit.session_state.uploaded_file_buffer.name
+                                            streamlit.session_state.new_config_saved_to_memory_at_least_once = False
+                                            
+                                            streamlit.session_state.edit_mode = False
+                                            streamlit.session_state.action_selected = None
                                             streamlit.session_state.fallback_config_state = None
-
-                                        streamlit.session_state.config_data = loaded_config
-                                        streamlit.session_state.config_filename = streamlit.session_state.uploaded_file_buffer.name
-                                        streamlit.session_state.processed_file_id = streamlit.session_state.uploaded_file_buffer.file_id
-                                        streamlit.session_state.last_uploaded_filename = streamlit.session_state.uploaded_file_buffer.name 
-                                        streamlit.session_state.new_config_saved_to_memory_at_least_once = False 
-                                        
-                                        streamlit.session_state.edit_mode = False 
-                                        streamlit.session_state.action_selected = None 
-                                        streamlit.session_state.fallback_config_state = None
-                                        streamlit.session_state.uploaded_file_buffer = None 
-                                        streamlit.session_state.processed_file_id_for_buffer = streamlit.session_state.processed_file_id 
-                                        streamlit.success(f"Configuration '{streamlit.session_state.config_filename}' loaded successfully.")
-                                        streamlit.rerun()
+                                            streamlit.session_state.uploaded_file_buffer = None
+                                            streamlit.session_state.processed_file_id_for_buffer = streamlit.session_state.processed_file_id
+                                            streamlit.success(f"Configuration '{streamlit.session_state.config_filename}' loaded successfully.")
+                                            streamlit.rerun()
+                                        else:
+                                            streamlit.error(f"Failed to load or parse '{streamlit.session_state.uploaded_file_buffer.name}'. Ensure it's valid JSON.")
+                                            streamlit.session_state.processed_file_id_for_buffer = streamlit.session_state.uploaded_file_buffer.file_id
                                     else:
-                                        streamlit.error(f"Failed to load or parse '{streamlit.session_state.uploaded_file_buffer.name}'. Ensure it's valid JSON.")
-                                        streamlit.session_state.processed_file_id_for_buffer = streamlit.session_state.uploaded_file_buffer.file_id 
-                                else: 
-                                    if streamlit.session_state.config_data and streamlit.session_state.config_filename == streamlit.session_state.uploaded_file_buffer.name:
-                                        streamlit.info(f"'{streamlit.session_state.uploaded_file_buffer.name}' is already loaded. Returning to menu.")
-                                        streamlit.session_state.edit_mode = False 
-                                        streamlit.session_state.action_selected = None 
-                                        streamlit.session_state.uploaded_file_buffer = None
-                                        streamlit.rerun()
-                                    else:
-                                         streamlit.warning(f"This file instance was already processed. If it failed, please select a new or corrected file.")
+                                        if streamlit.session_state.config_data and streamlit.session_state.config_filename == streamlit.session_state.uploaded_file_buffer.name:
+                                            streamlit.info(f"'{streamlit.session_state.uploaded_file_buffer.name}' is already loaded. Returning to menu.")
+                                            streamlit.session_state.edit_mode = False
+                                            streamlit.session_state.action_selected = None
+                                            streamlit.session_state.uploaded_file_buffer = None
+                                            streamlit.rerun()
+                                        else:
+                                             streamlit.warning(f"This file instance was already processed. If it failed, please select a new or corrected file.")
 
                 else: # --- Initial View: Choose Action (action_selected is None) ---
-                    col_create_btn, col_load_btn = streamlit.columns(2)
-                    with col_create_btn:
-                        if streamlit.button("New configuration", key="create_new_config_action_btn", help="Create a new configuration", use_container_width=True):
-                            # If there's any config in memory (loaded or new-saved), stash it as fallback
-                            if streamlit.session_state.config_data is not None:
-                                streamlit.session_state.fallback_config_state = {
-                                    'data': copy.deepcopy(streamlit.session_state.config_data),
-                                    'filename': streamlit.session_state.config_filename,
-                                    'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot), # Snapshot of the config being stashed
-                                    'filename_snapshot': copy.deepcopy(streamlit.session_state.config_filename_snapshot), # Also stash filename snapshot
-                                    'last_uploaded': streamlit.session_state.last_uploaded_filename,
-                                    'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
-                                }
-                            else:
-                                streamlit.session_state.fallback_config_state = None
+                    with streamlit.expander("Create or Load Configuration", expanded=True):
+                        col_create_btn, col_load_btn = streamlit.columns(2)
+                        with col_create_btn:
+                            if streamlit.button("New configuration", key="create_new_config_action_btn", help="Create a new configuration", use_container_width=True):
+                                # If there's any config in memory (loaded or new-saved), stash it as fallback
+                                if streamlit.session_state.config_data is not None:
+                                    streamlit.session_state.fallback_config_state = {
+                                        'data': copy.deepcopy(streamlit.session_state.config_data),
+                                        'filename': streamlit.session_state.config_filename,
+                                        'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot), # Snapshot of the config being stashed
+                                        'filename_snapshot': copy.deepcopy(streamlit.session_state.config_filename_snapshot), # Also stash filename snapshot
+                                        'last_uploaded': streamlit.session_state.last_uploaded_filename,
+                                        'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
+                                    }
+                                else:
+                                    streamlit.session_state.fallback_config_state = None
 
-                            # Initialize new config
-                            streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
-                            streamlit.session_state.config_filename = "new_config.json"
-                            streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Snapshot for new config filename
-                            streamlit.session_state.processed_file_id = None 
-                            streamlit.session_state.last_uploaded_filename = None
-                            streamlit.session_state.action_selected = None 
-                            streamlit.session_state.edit_mode = True 
-                            streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data) 
-                            streamlit.session_state.new_config_saved_to_memory_at_least_once = False 
-                            streamlit.rerun()
-                    
-                    with col_load_btn:
-                        if streamlit.button("Load configuration", key="load_config_action_btn", help="Load configuration by uploading a JSON configuration file", use_container_width=True):
-                            streamlit.session_state.action_selected = "load" # Switch to load view
-                            streamlit.rerun()
+                                # Initialize new config
+                                streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
+                                streamlit.session_state.config_filename = "new_config.json"
+                                streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Snapshot for new config filename
+                                streamlit.session_state.processed_file_id = None
+                                streamlit.session_state.last_uploaded_filename = None
+                                streamlit.session_state.action_selected = None
+                                streamlit.session_state.edit_mode = True
+                                streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
+                                streamlit.session_state.new_config_saved_to_memory_at_least_once = False
+                                streamlit.rerun()
+                        
+                        with col_load_btn:
+                            if streamlit.button("Load configuration", key="load_config_action_btn", help="Load configuration by uploading a JSON configuration file", use_container_width=True):
+                                streamlit.session_state.action_selected = "load" # Switch to load view
+                                streamlit.rerun()
                     
                     # Option to edit if a configuration is in memory
                     if streamlit.session_state.config_data is not None:
-                         streamlit.markdown("---")
-                         config_status_message = f"A loaded configuration ('{streamlit.session_state.config_filename}') is in memory." \
-                             if streamlit.session_state.last_uploaded_filename is not None \
-                             else f"An unsaved new configuration ('{streamlit.session_state.config_filename}') is in memory."
-                         streamlit.info(config_status_message)
-                         if streamlit.button("Edit Configuration", key="edit_config_btn", use_container_width=True): # Unified edit button
-                             streamlit.session_state.edit_mode = True
-                             # Snapshot is already set when entering edit mode or after "Save Edits"
-                             # Ensure snapshot is taken if it's somehow None (e.g. direct state manipulation outside flow)
-                             if streamlit.session_state.config_data_snapshot is None:
-                                 streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
-                             # Take snapshot of filename when entering edit mode
-                             streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename
-                             streamlit.rerun()
-                        
-                         # Option to clear memory (this is still inside the outer "if streamlit.session_state.config_data is not None:")
-                         streamlit.markdown("---") # Separator before clear button
-                         if streamlit.button("Clear Configuration from Memory", key="clear_memory_btn", use_container_width=True, help="Removes any loaded or new configuration from the current session."):
-                            streamlit.session_state.config_data = None
-                            streamlit.session_state.config_filename = "config.json" # Reset default
-                            streamlit.session_state.last_uploaded_filename = None
-                            streamlit.session_state.processed_file_id = None
-                            streamlit.session_state.config_data_snapshot = None
-                            streamlit.session_state.config_filename_snapshot = None # Clear filename snapshot
-                            streamlit.session_state.new_config_saved_to_memory_at_least_once = False
-                            streamlit.session_state.fallback_config_state = None
-                            streamlit.session_state.uploaded_file_buffer = None
-                            streamlit.session_state.processed_file_id_for_buffer = None
-                            streamlit.info("Configuration cleared from memory.")
-                            streamlit.rerun()
+                        with streamlit.expander("Manage Current Configuration", expanded=True):
+                             streamlit.markdown("---")
+                             config_status_message = f"A loaded configuration ('{streamlit.session_state.config_filename}') is in memory." \
+                                 if streamlit.session_state.last_uploaded_filename is not None \
+                                 else f"An unsaved new configuration ('{streamlit.session_state.config_filename}') is in memory."
+                             streamlit.info(config_status_message)
+                             if streamlit.button("Edit Configuration", key="edit_config_btn", use_container_width=True): # Unified edit button
+                                 streamlit.session_state.edit_mode = True
+                                 # Snapshot is already set when entering edit mode or after "Save Edits"
+                                 # Ensure snapshot is taken if it's somehow None (e.g. direct state manipulation outside flow)
+                                 if streamlit.session_state.config_data_snapshot is None:
+                                     streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
+                                 # Take snapshot of filename when entering edit mode
+                                 streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename
+                                 streamlit.rerun()
+                            
+                             # Option to clear memory (this is still inside the outer "if streamlit.session_state.config_data is not None:")
+                             streamlit.markdown("---") # Separator before clear button
+                             if streamlit.button("Clear Configuration from Memory", key="clear_memory_btn", use_container_width=True, help="Removes any loaded or new configuration from the current session."):
+                                streamlit.session_state.config_data = None
+                                streamlit.session_state.config_filename = "config.json" # Reset default
+                                streamlit.session_state.last_uploaded_filename = None
+                                streamlit.session_state.processed_file_id = None
+                                streamlit.session_state.config_data_snapshot = None
+                                streamlit.session_state.config_filename_snapshot = None # Clear filename snapshot
+                                streamlit.session_state.new_config_saved_to_memory_at_least_once = False
+                                streamlit.session_state.fallback_config_state = None
+                                streamlit.session_state.uploaded_file_buffer = None
+                                streamlit.session_state.processed_file_id_for_buffer = None
+                                streamlit.info("Configuration cleared from memory.")
+                                streamlit.rerun()
 
             else: # if streamlit.session_state.edit_mode is True
                 if streamlit.session_state.config_data is None:
