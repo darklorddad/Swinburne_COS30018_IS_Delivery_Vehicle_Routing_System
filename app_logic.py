@@ -344,12 +344,13 @@ def finalize_download(ss):
     ss.pending_download_data = None
     ss.pending_download_filename = None
 
-def handle_file_uploader_change(ss):
+def handle_file_uploader_change(): # Removed 'ss' parameter
     """
     Updates the uploaded_file_buffer and related state based on the
     config_uploader_buffer_widget's current value.
     Called on_change of the file_uploader.
     """
+    ss = streamlit.session_state # Use imported streamlit.session_state
     uploaded_file_widget_val = ss.get("config_uploader_buffer_widget") # Key of the file_uploader
     if uploaded_file_widget_val is not None:
         ss.uploaded_file_buffer = uploaded_file_widget_val
@@ -371,8 +372,9 @@ def handle_load_config_action(ss):
     """Switches to the load configuration view."""
     ss.action_selected = "load"
 
-def handle_show_header_toggle(ss):
+def handle_show_header_toggle(): # Removed 'ss' parameter
     """Updates the show_header state based on the toggle widget."""
+    ss = streamlit.session_state # Use imported streamlit.session_state
     ss.show_header = ss.get("show_header_toggle_widget", False) # Key of the toggle
 
 def validate_edit_mode_preconditions(ss):
