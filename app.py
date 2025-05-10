@@ -192,23 +192,34 @@ def main():
                     # The filename is not stored within config_data.
                     current_filename_base = streamlit.session_state.config_filename.replace(".json", "")
                     
-                    new_filename_base = streamlit.text_input(
+                    streamlit.text_input(
                         "Filename", 
                         value=current_filename_base,
-                        key="filename_input"
+                        key="filename_input_widget", # Changed key
+                        on_change=app_logic.handle_filename_update # Added on_change handler
                     )
-                    if new_filename_base: # Prevent empty filename causing ".json" or an error
-                        new_full_filename = f"{new_filename_base}.json" if not new_filename_base.endswith(".json") else new_filename_base
-                        streamlit.session_state.config_filename = new_full_filename
+                    # Direct update logic removed, now handled by app_logic.handle_filename_update
                     # "project_name" key is no longer used in config_data for the filename.
 
 
                     wh_coords = streamlit.session_state.config_data.get("warehouse_coordinates_x_y", [0, 0])
                     col_wh_x, col_wh_y = streamlit.columns(2)
-                    # Ensure value is int, format is %d, and step is 1 for +/- buttons
-                    wh_x = col_wh_x.number_input("Warehouse X", value=int(wh_coords[0]), key="wh_x_input", format="%d")
-                    wh_y = col_wh_y.number_input("Warehouse Y", value=int(wh_coords[1]), key="wh_y_input", format="%d")
-                    streamlit.session_state.config_data["warehouse_coordinates_x_y"] = [wh_x, wh_y]
+                    
+                    col_wh_x.number_input(
+                        "Warehouse X", 
+                        value=int(wh_coords[0]), 
+                        key="wh_x_input_widget", # Changed key
+                        format="%d",
+                        on_change=app_logic.handle_warehouse_coordinates_update # Added on_change handler
+                    )
+                    col_wh_y.number_input(
+                        "Warehouse Y", 
+                        value=int(wh_coords[1]), 
+                        key="wh_y_input_widget", # Changed key
+                        format="%d",
+                        on_change=app_logic.handle_warehouse_coordinates_update # Added on_change handler
+                    )
+                    # Direct update logic removed, now handled by app_logic.handle_warehouse_coordinates_update
 
                 with streamlit.expander("Parcels Management", expanded=True):
                     streamlit.markdown("---")
