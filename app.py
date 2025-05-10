@@ -1,57 +1,15 @@
 import streamlit
 import config_manager
+import app_logic # Import the new logic module
 import json
-import copy
+import copy # Keep copy for other parts of app.py for now
 
-DEFAULT_CONFIG_TEMPLATE = {
-    # Filename is managed by streamlit.session_state.config_filename, not in config data content
-    "warehouse_coordinates_x_y": [0, 0], # Example: [X, Y]
-    "parcels": [
-        # Example structure:
-        # { "id": "P001", "coordinates_x_y": [2, 3], "weight": 10 }
-    ],
-    "delivery_agents": [
-        # Example structure:
-        # { "id": "DA01", "capacity_weight": 100 }
-    ]
-}
 
 def main():
     streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
 
-    # Initialise session state variables
-    if "show_header" not in streamlit.session_state:
-        streamlit.session_state.show_header = False # Default is off (header hidden)
-    if "config_data" not in streamlit.session_state:
-        streamlit.session_state.config_data = None
-    if "config_filename" not in streamlit.session_state:
-        streamlit.session_state.config_filename = "config.json" # Default for download
-    if "processed_file_id" not in streamlit.session_state:
-        streamlit.session_state.processed_file_id = None
-    if "edit_mode" not in streamlit.session_state:
-        streamlit.session_state.edit_mode = False
-    if "last_uploaded_filename" not in streamlit.session_state: 
-        streamlit.session_state.last_uploaded_filename = None
-    if "action_selected" not in streamlit.session_state: 
-        streamlit.session_state.action_selected = None
-    # For managing custom download flow
-    if "initiate_download" not in streamlit.session_state:
-        streamlit.session_state.initiate_download = False
-    if "pending_download_data" not in streamlit.session_state:
-        streamlit.session_state.pending_download_data = None
-    if "pending_download_filename" not in streamlit.session_state:
-        streamlit.session_state.pending_download_filename = None
-    if "uploaded_file_buffer" not in streamlit.session_state: # To hold uploaded file before explicit load
-        streamlit.session_state.uploaded_file_buffer = None
-    if "config_data_snapshot" not in streamlit.session_state: # For reverting edits
-        streamlit.session_state.config_data_snapshot = None
-    if "new_config_saved_to_memory_at_least_once" not in streamlit.session_state:
-        streamlit.session_state.new_config_saved_to_memory_at_least_once = False
-    if "fallback_config_state" not in streamlit.session_state: # To store state of a new-saved config if another new one is started
-        streamlit.session_state.fallback_config_state = None
-    if "config_filename_snapshot" not in streamlit.session_state: # For reverting filename edits
-        streamlit.session_state.config_filename_snapshot = None
-
+    # Initialise session state variables using the function from app_logic
+    app_logic.initialize_session_state(streamlit.session_state)
 
     # Dynamically build CSS based on header visibility state
     header_style_properties = "background-color: #1E1E1E !important;" # Always set background color
@@ -217,29 +175,7 @@ def main():
                         col_create_btn, col_load_btn = streamlit.columns(2)
                         with col_create_btn:
                             if streamlit.button("New configuration", key="create_new_config_action_btn", help="Create a new configuration", use_container_width=True):
-                                # If there's any config in memory (loaded or new-saved), stash it as fallback
-                                if streamlit.session_state.config_data is not None:
-                                    streamlit.session_state.fallback_config_state = {
-                                        'data': copy.deepcopy(streamlit.session_state.config_data),
-                                        'filename': streamlit.session_state.config_filename,
-                                        'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot), # Snapshot of the config being stashed
-                                        'filename_snapshot': copy.deepcopy(streamlit.session_state.config_filename_snapshot), # Also stash filename snapshot
-                                        'last_uploaded': streamlit.session_state.last_uploaded_filename,
-                                        'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
-                                    }
-                                else:
-                                    streamlit.session_state.fallback_config_state = None
-
-                                # Initialize new config
-                                streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
-                                streamlit.session_state.config_filename = "new-config.json"
-                                streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Snapshot for new config filename
-                                streamlit.session_state.processed_file_id = None
-                                streamlit.session_state.last_uploaded_filename = None
-                                streamlit.session_state.action_selected = None
-                                streamlit.session_state.edit_mode = True
-                                streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
-                                streamlit.session_state.new_config_saved_to_memory_at_least_once = False
+                                app_logic.handle_new_config_action(streamlit.session_state)
                                 streamlit.rerun()
                         
                         with col_load_btn:
