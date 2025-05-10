@@ -149,6 +149,11 @@ def main():
                             streamlit.session_state.uploaded_file_buffer = uploaded_file_widget_val
                             # Reset processed_file_id_for_buffer when a new file is selected by the uploader
                             streamlit.session_state.processed_file_id_for_buffer = None
+                        else:  # User cleared the file from the uploader widget
+                            if streamlit.session_state.uploaded_file_buffer is not None:
+                                # If there was a file in our buffer, clear it
+                                streamlit.session_state.uploaded_file_buffer = None
+                                streamlit.session_state.processed_file_id_for_buffer = None
 
                         # Buttons for Load View - Cancel on left, Load on right
                         col_cancel_load_action, col_load_action = streamlit.columns([1,1])
