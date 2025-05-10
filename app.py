@@ -82,10 +82,8 @@ def main():
                         """,
                         height=1 # Minimal height as there's no visible content
                     )
-                # Reset flags and data
-                streamlit.session_state.initiate_download = False
-                streamlit.session_state.pending_download_data = None
-                streamlit.session_state.pending_download_filename = None
+                # Reset flags and data using the new app_logic function
+                app_logic.finalize_download(streamlit.session_state)
                 # Rerun might be good here to clean up the "Downloading..." message immediately
                 # However, the navigation to main menu is already handled by edit_mode=False
                 # Let's see if a rerun is needed after testing. If the "Downloading..." message persists, add streamlit.rerun().
@@ -95,32 +93,21 @@ def main():
                     # --- Load View ---
                     with streamlit.expander("Upload Configuration File", expanded=True):
                         streamlit.markdown("---")
-                        # File uploader now stores to a buffer
-                        uploaded_file_widget_val = streamlit.file_uploader(
+                        # File uploader now stores to a buffer, managed by on_change
+                        streamlit.file_uploader(
                             "Select a JSON configuration file to prepare for loading",
                             type=["json"],
-                            key="config_uploader_buffer_widget"
+                            key="config_uploader_buffer_widget",
+                            on_change=app_logic.handle_file_uploader_change
                         )
-
-                        # If a new file is uploaded by the widget, update the buffer
-                        if uploaded_file_widget_val is not None:
-                            streamlit.session_state.uploaded_file_buffer = uploaded_file_widget_val
-                            # Reset processed_file_id_for_buffer when a new file is selected by the uploader
-                            streamlit.session_state.processed_file_id_for_buffer = None
-                        else:  # User cleared the file from the uploader widget
-                            if streamlit.session_state.uploaded_file_buffer is not None:
-                                # If there was a file in our buffer, clear it
-                                streamlit.session_state.uploaded_file_buffer = None
-                                streamlit.session_state.processed_file_id_for_buffer = None
+                        # Direct buffer manipulation logic removed
 
                     # Buttons for Load View - Cancel on left, Load on right
                     col_cancel_load_action, col_load_action = streamlit.columns([1,1])
 
                     with col_cancel_load_action:
                         if streamlit.button("Cancel", key="cancel_load_action_btn", use_container_width=True):
-                            streamlit.session_state.action_selected = None
-                            streamlit.session_state.uploaded_file_buffer = None
-                            streamlit.session_state.processed_file_id_for_buffer = None
+                            app_logic.handle_cancel_load_action(streamlit.session_state)
                             streamlit.rerun()
 
                     with col_load_action:
@@ -154,7 +141,7 @@ def main():
                         
                         with col_load_btn:
                             if streamlit.button("Load configuration", key="load_config_action_btn", help="Load configuration by uploading a JSON configuration file", use_container_width=True):
-                                streamlit.session_state.action_selected = "load" # Switch to load view
+                                app_logic.handle_load_config_action(streamlit.session_state)
                                 streamlit.rerun()
                     
                     # Option to edit if a configuration is in memory
@@ -223,8 +210,9 @@ def main():
 
                 with streamlit.expander("Parcels Management", expanded=True):
                     streamlit.markdown("---")
-                    if "parcels" not in streamlit.session_state.config_data:
-                        streamlit.session_state.config_data["parcels"] = []
+                    # Initialization of "parcels" list is now handled by app_logic.enter_edit_mode
+                    # if "parcels" not in streamlit.session_state.config_data:
+                    #     streamlit.session_state.config_data["parcels"] = []
 
                     col_p_id, col_p_x, col_p_y, col_p_weight = streamlit.columns([2,1,1,1]) # Renamed columns for clarity
                     new_parcel_id = col_p_id.text_input("Parcel ID", key="new_parcel_id")
@@ -269,8 +257,9 @@ def main():
 
                 with streamlit.expander("Delivery Agents Management", expanded=True):
                     streamlit.markdown("---")
-                    if "delivery_agents" not in streamlit.session_state.config_data:
-                        streamlit.session_state.config_data["delivery_agents"] = []
+                    # Initialization of "delivery_agents" list is now handled by app_logic.enter_edit_mode
+                    # if "delivery_agents" not in streamlit.session_state.config_data:
+                    #     streamlit.session_state.config_data["delivery_agents"] = []
 
                     # Simplified Add New Agent section
                     col_a_id, col_a_cap_weight = streamlit.columns([2,1])
@@ -351,9 +340,9 @@ def main():
             streamlit.header("UI Settings")
             streamlit.toggle(
                 "Show Streamlit Header",
-                value=streamlit.session_state.show_header, # Bind to existing state
-                key="show_header_toggle", # Use a distinct key for the widget itself
-                on_change=lambda: setattr(streamlit.session_state, 'show_header', streamlit.session_state.show_header_toggle),
+                value=streamlit.session_state.show_header,
+                key="show_header_toggle_widget", # Changed key to match app_logic
+                on_change=app_logic.handle_show_header_toggle,
                 help="Toggle the visibility of the default Streamlit header bar."
             )
 

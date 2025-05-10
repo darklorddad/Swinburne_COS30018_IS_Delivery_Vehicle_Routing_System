@@ -143,6 +143,13 @@ def enter_edit_mode(ss):
         ss.config_data_snapshot = copy.deepcopy(ss.config_data)
     # Take snapshot of filename when entering edit mode
     ss.config_filename_snapshot = ss.config_filename
+    
+    # Ensure 'parcels' and 'delivery_agents' keys exist in config_data
+    if isinstance(ss.config_data, dict):
+        if "parcels" not in ss.config_data:
+            ss.config_data["parcels"] = []
+        if "delivery_agents" not in ss.config_data:
+            ss.config_data["delivery_agents"] = []
     # No specific message needed, action implies UI change
 
 def handle_cancel_edit(ss):
@@ -329,3 +336,40 @@ def handle_warehouse_coordinates_update():
     final_wh_y = wh_y_val if wh_y_val is not None else current_coords[1]
     
     ss.config_data["warehouse_coordinates_x_y"] = [int(final_wh_x), int(final_wh_y)]
+
+def finalize_download(ss):
+    """Resets download-related flags after a download is initiated."""
+    ss.initiate_download = False
+    ss.pending_download_data = None
+    ss.pending_download_filename = None
+
+def handle_file_uploader_change(ss):
+    """
+    Updates the uploaded_file_buffer and related state based on the
+    config_uploader_buffer_widget's current value.
+    Called on_change of the file_uploader.
+    """
+    uploaded_file_widget_val = ss.get("config_uploader_buffer_widget") # Key of the file_uploader
+    if uploaded_file_widget_val is not None:
+        ss.uploaded_file_buffer = uploaded_file_widget_val
+        # Reset processed_file_id_for_buffer when a new file is selected by the uploader
+        ss.processed_file_id_for_buffer = None
+    else:  # User cleared the file from the uploader widget
+        if ss.uploaded_file_buffer is not None:
+            # If there was a file in our buffer, clear it
+            ss.uploaded_file_buffer = None
+            ss.processed_file_id_for_buffer = None
+
+def handle_cancel_load_action(ss):
+    """Handles the cancel action from the load configuration view."""
+    ss.action_selected = None
+    ss.uploaded_file_buffer = None
+    ss.processed_file_id_for_buffer = None
+
+def handle_load_config_action(ss):
+    """Switches to the load configuration view."""
+    ss.action_selected = "load"
+
+def handle_show_header_toggle(ss):
+    """Updates the show_header state based on the toggle widget."""
+    ss.show_header = ss.get("show_header_toggle_widget", False) # Key of the toggle
