@@ -222,32 +222,34 @@ def main():
                     new_parcel_weight = col_p_weight.number_input("Weight", value=0, key="new_parcel_weight", min_value=0, format="%d")
                     
                     if streamlit.button("Add parcel", key="add_parcel_btn", use_container_width=True):
-                        if new_parcel_id and not any(p['id'] == new_parcel_id for p in streamlit.session_state.config_data["parcels"]):
-                            streamlit.session_state.config_data["parcels"].append({
-                                "id": new_parcel_id,
-                                "coordinates_x_y": [new_parcel_x, new_parcel_y], # Use "coordinates_x_y"
-                                "weight": new_parcel_weight
-                            })
-                            # Clear inputs after adding by rerunning (Streamlit's default behavior for new keys might also clear them)
-                            streamlit.rerun() 
-                        elif not new_parcel_id:
-                            streamlit.warning("Parcel ID cannot be empty")
-                        else:
-                            streamlit.warning(f"Parcel ID '{new_parcel_id}' already exists")
+                        result = app_logic.add_parcel(
+                            streamlit.session_state, 
+                            new_parcel_id, 
+                            new_parcel_x, 
+                            new_parcel_y, 
+                            new_parcel_weight
+                        )
+                        if result and result['type'] == 'warning':
+                            streamlit.warning(result['message'])
+                        else: # On success or if no message, rerun to clear inputs and update table
+                            streamlit.rerun()
                     
                     # Section for Removing Parcels (below add, above table)
                     if streamlit.session_state.config_data["parcels"]:
                         parcel_ids_to_remove = [p['id'] for p in streamlit.session_state.config_data["parcels"]]
                         selected_parcel_to_remove = streamlit.selectbox(
                             "Select parcel ID to remove", 
-                            options=[""] + parcel_ids_to_remove,
+                            options=[""] + parcel_ids_to_remove, # Add empty option
+                            index=0, # Default to empty option
                             key="remove_parcel_select"
                         )
-                        if streamlit.button("Remove selected parcel", key="remove_parcel_btn_new_row", use_container_width=True) and selected_parcel_to_remove:
-                            streamlit.session_state.config_data["parcels"] = [
-                                p for p in streamlit.session_state.config_data["parcels"] if p['id'] != selected_parcel_to_remove
-                            ]
-                            streamlit.rerun()
+                        if streamlit.button("Remove selected parcel", key="remove_parcel_btn_new_row", use_container_width=True):
+                            if selected_parcel_to_remove:
+                                result = app_logic.remove_parcel(streamlit.session_state, selected_parcel_to_remove)
+                                # Optionally display result['message'] if needed
+                                streamlit.rerun()
+                            else:
+                                streamlit.warning("Please select a parcel ID to remove.")
                         
                         streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["parcels"], use_container_width=True)
@@ -265,30 +267,32 @@ def main():
                     new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value=0, min_value=0, format="%d", key="new_agent_cap_weight_simplified")
 
                     if streamlit.button("Add agent", key="add_agent_btn_simplified", use_container_width=True):
-                        if new_agent_id and not any(a['id'] == new_agent_id for a in streamlit.session_state.config_data["delivery_agents"]):
-                            streamlit.session_state.config_data["delivery_agents"].append({
-                                "id": new_agent_id,
-                                "capacity_weight": new_agent_cap_weight
-                            })
+                        result = app_logic.add_delivery_agent(
+                            streamlit.session_state,
+                            new_agent_id,
+                            new_agent_cap_weight
+                        )
+                        if result and result['type'] == 'warning':
+                            streamlit.warning(result['message'])
+                        else: # On success or if no message, rerun to clear inputs and update table
                             streamlit.rerun()
-                        elif not new_agent_id:
-                            streamlit.warning("Agent ID cannot be empty")
-                        else:
-                            streamlit.warning(f"Agent ID '{new_agent_id}' already exists")
 
                     # Section for Removing Agents (below add, above table)
                     if streamlit.session_state.config_data["delivery_agents"]:
                         agent_ids_to_remove = [a['id'] for a in streamlit.session_state.config_data["delivery_agents"]]
                         selected_agent_to_remove = streamlit.selectbox(
                             "Select agent ID to remove", 
-                            options=[""] + agent_ids_to_remove,
+                            options=[""] + agent_ids_to_remove, # Add empty option
+                            index=0, # Default to empty option
                             key="remove_agent_select_simplified"
                         )
-                        if streamlit.button("Remove selected agent", key="remove_agent_btn_new_row", use_container_width=True) and selected_agent_to_remove:
-                            streamlit.session_state.config_data["delivery_agents"] = [
-                                a for a in streamlit.session_state.config_data["delivery_agents"] if a['id'] != selected_agent_to_remove
-                            ]
-                            streamlit.rerun()
+                        if streamlit.button("Remove selected agent", key="remove_agent_btn_new_row", use_container_width=True):
+                            if selected_agent_to_remove:
+                                result = app_logic.remove_delivery_agent(streamlit.session_state, selected_agent_to_remove)
+                                # Optionally display result['message'] if needed
+                                streamlit.rerun()
+                            else:
+                                streamlit.warning("Please select an agent ID to remove.")
                         
                         streamlit.markdown("---") # Line above table
                         streamlit.dataframe(streamlit.session_state.config_data["delivery_agents"], use_container_width=True)
