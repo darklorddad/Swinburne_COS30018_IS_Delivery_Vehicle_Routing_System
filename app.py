@@ -68,6 +68,13 @@ def main():
         .stApp {{
             background-color: #1E1E1E !important;
         }}
+
+        /* Hide step buttons on number inputs */
+        button[data-testid="stNumberInputStepDown"],
+        button[data-testid="stNumberInputStepUp"] {{
+            display: none !important;
+            visibility: hidden !important;
+        }}
     </style>
     """
 
