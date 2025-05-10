@@ -300,93 +300,19 @@ def main():
 
                 with col_cancel_action:
                     if streamlit.button("Cancel", key="cancel_edit_btn", use_container_width=True):
-                        # Revert to the snapshot
-                        if streamlit.session_state.config_data_snapshot is not None:
-                            streamlit.session_state.config_data = copy.deepcopy(streamlit.session_state.config_data_snapshot)
-                            # Also revert filename if its snapshot exists
-                            if streamlit.session_state.config_filename_snapshot is not None:
-                                streamlit.session_state.config_filename = streamlit.session_state.config_filename_snapshot
-                        else: 
-                            # This case implies config_data_snapshot is None.
-                            # If it's a new config and has no snapshot, it means it was never properly initialized.
-                            if streamlit.session_state.last_uploaded_filename is None: # It's a new config
-                                streamlit.session_state.config_data = None 
-                                streamlit.session_state.config_filename = "config.json" # Reset filename
-                                streamlit.session_state.config_filename_snapshot = None # No snapshot for a cleared new config
-                        
-                        streamlit.session_state.edit_mode = False
-                        streamlit.session_state.action_selected = None 
-                        
-                        is_current_config_new = streamlit.session_state.last_uploaded_filename is None
-                        current_new_config_never_saved_via_save_edits = not streamlit.session_state.new_config_saved_to_memory_at_least_once
-
-                        if is_current_config_new and current_new_config_never_saved_via_save_edits:
-                            # Current new config should be discarded. Check for fallback.
-                            if streamlit.session_state.fallback_config_state is not None:
-                                # Restore from fallback
-                                fallback = streamlit.session_state.fallback_config_state
-                                streamlit.session_state.config_data = fallback['data']
-                                streamlit.session_state.config_filename = fallback['filename']
-                                streamlit.session_state.last_uploaded_filename = fallback['last_uploaded']
-                                streamlit.session_state.config_data_snapshot = fallback['snapshot']
-                                streamlit.session_state.config_filename_snapshot = fallback.get('filename_snapshot', fallback['filename']) # Restore filename_snapshot
-                                streamlit.session_state.new_config_saved_to_memory_at_least_once = fallback['saved_once']
-                            else:
-                                # No fallback, so clear to None (data, filename, and snapshots)
-                                streamlit.session_state.config_data = None
-                                streamlit.session_state.config_filename = "config.json"
-                                streamlit.session_state.config_data_snapshot = None
-                                streamlit.session_state.config_filename_snapshot = None 
-                                # new_config_saved_to_memory_at_least_once is already False for the discarded config
-                        # else: current config (loaded, or new+saved_via_SE) remains (reverted to its snapshot for data and filename).
-                        
-                        streamlit.session_state.fallback_config_state = None # Fallback is consumed or no longer relevant
+                        app_logic.handle_cancel_edit(streamlit.session_state)
                         streamlit.rerun()
 
                 with col_save_edits_action:
                     if streamlit.button("Save", key="save_edits_btn", use_container_width=True, help="Saves the current configuration and returns to the menu"):
-                        streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
-                        streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Commit current filename as snapshot
-                        if streamlit.session_state.last_uploaded_filename is None: 
-                            streamlit.session_state.new_config_saved_to_memory_at_least_once = True
-                        
-                        streamlit.session_state.edit_mode = False
-                        streamlit.session_state.action_selected = None
-                        streamlit.session_state.fallback_config_state = None # Edits committed, fallback irrelevant
-                        streamlit.success("Edits saved to memory.") 
+                        result = app_logic.handle_save_edits(streamlit.session_state)
+                        if result and result.get('type') == 'success':
+                            streamlit.success(result['message'])
                         streamlit.rerun()
                 
                 with col_save_download_action:
                     if streamlit.button("Save and download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu"):
-                        # Prepare config_to_save strictly according to DEFAULT_CONFIG_TEMPLATE
-                        config_data_internal = streamlit.session_state.config_data
-                        config_to_save = {
-                            "warehouse_coordinates_x_y": config_data_internal.get("warehouse_coordinates_x_y"),
-                            "parcels": config_data_internal.get("parcels", []), 
-                            "delivery_agents": config_data_internal.get("delivery_agents", []) 
-                        }
-                        # Ensure snapshot reflects the state being saved, in case "Edit Configuration" is used later for this saved file (if it were loaded)
-                        streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
-                        streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Commit current filename as snapshot
-
-                        # Initiate download
-                        streamlit.session_state.pending_download_data = config_manager.config_to_json_string(config_to_save)
-                        streamlit.session_state.pending_download_filename = streamlit.session_state.config_filename
-                        streamlit.session_state.initiate_download = True
-                        
-                        was_new_config_being_saved = streamlit.session_state.last_uploaded_filename is None
-                        
-                        streamlit.session_state.edit_mode = False
-                        streamlit.session_state.action_selected = None
-
-                        if was_new_config_being_saved:
-                            # The config_data, config_filename, and config_data_snapshot are already current
-                            # and reflect the state that was just downloaded.
-                            # last_uploaded_filename and processed_file_id correctly remain None for a new config.
-                            streamlit.session_state.new_config_saved_to_memory_at_least_once = True
-                        # If it was a loaded config being saved & downloaded, its state is already correct.
-                        
-                        streamlit.session_state.fallback_config_state = None # Config saved/downloaded, fallback irrelevant
+                        app_logic.handle_save_and_download(streamlit.session_state)
                         streamlit.rerun()
             
         with tab_run:

@@ -143,3 +143,88 @@ def enter_edit_mode(ss):
     # Take snapshot of filename when entering edit mode
     ss.config_filename_snapshot = ss.config_filename
     # No specific message needed, action implies UI change
+
+def handle_cancel_edit(ss):
+    """Handles the logic for canceling edits and reverting or clearing the configuration."""
+    # Revert to the snapshot
+    if ss.config_data_snapshot is not None:
+        ss.config_data = copy.deepcopy(ss.config_data_snapshot)
+        # Also revert filename if its snapshot exists
+        if ss.config_filename_snapshot is not None:
+            ss.config_filename = ss.config_filename_snapshot
+    else:
+        # This case implies config_data_snapshot is None.
+        # If it's a new config and has no snapshot, it means it was never properly initialized.
+        if ss.last_uploaded_filename is None: # It's a new config
+            ss.config_data = None
+            ss.config_filename = "config.json" # Reset filename
+            ss.config_filename_snapshot = None # No snapshot for a cleared new config
+
+    ss.edit_mode = False
+    ss.action_selected = None
+
+    is_current_config_new = ss.last_uploaded_filename is None
+    current_new_config_never_saved_via_save_edits = not ss.new_config_saved_to_memory_at_least_once
+
+    if is_current_config_new and current_new_config_never_saved_via_save_edits:
+        # Current new config should be discarded. Check for fallback.
+        if ss.fallback_config_state is not None:
+            # Restore from fallback
+            fallback = ss.fallback_config_state
+            ss.config_data = fallback['data']
+            ss.config_filename = fallback['filename']
+            ss.last_uploaded_filename = fallback['last_uploaded']
+            ss.config_data_snapshot = fallback['snapshot']
+            ss.config_filename_snapshot = fallback.get('filename_snapshot', fallback['filename']) # Restore filename_snapshot
+            ss.new_config_saved_to_memory_at_least_once = fallback['saved_once']
+        else:
+            # No fallback, so clear to None (data, filename, and snapshots)
+            ss.config_data = None
+            ss.config_filename = "config.json"
+            ss.config_data_snapshot = None
+            ss.config_filename_snapshot = None
+            # new_config_saved_to_memory_at_least_once is already False for the discarded config
+    # else: current config (loaded, or new+saved_via_SE) remains (reverted to its snapshot for data and filename).
+
+    ss.fallback_config_state = None # Fallback is consumed or no longer relevant
+
+def handle_save_edits(ss):
+    """Handles the logic for saving edits to the configuration in memory."""
+    ss.config_data_snapshot = copy.deepcopy(ss.config_data)
+    ss.config_filename_snapshot = ss.config_filename # Commit current filename as snapshot
+    if ss.last_uploaded_filename is None:
+        ss.new_config_saved_to_memory_at_least_once = True
+
+    ss.edit_mode = False
+    ss.action_selected = None
+    ss.fallback_config_state = None # Edits committed, fallback irrelevant
+    return {'type': 'success', 'message': "Edits saved to memory."}
+
+def handle_save_and_download(ss):
+    """Handles logic for saving, preparing for download, and exiting edit mode."""
+    # Prepare config_to_save strictly according to DEFAULT_CONFIG_TEMPLATE
+    config_data_internal = ss.config_data
+    config_to_save = {
+        "warehouse_coordinates_x_y": config_data_internal.get("warehouse_coordinates_x_y"),
+        "parcels": config_data_internal.get("parcels", []),
+        "delivery_agents": config_data_internal.get("delivery_agents", [])
+    }
+    # Ensure snapshot reflects the state being saved
+    ss.config_data_snapshot = copy.deepcopy(ss.config_data)
+    ss.config_filename_snapshot = ss.config_filename # Commit current filename as snapshot
+
+    # Set up for download
+    ss.pending_download_data = config_manager.config_to_json_string(config_to_save)
+    ss.pending_download_filename = ss.config_filename
+    ss.initiate_download = True
+
+    was_new_config_being_saved = ss.last_uploaded_filename is None
+
+    ss.edit_mode = False
+    ss.action_selected = None
+
+    if was_new_config_being_saved:
+        ss.new_config_saved_to_memory_at_least_once = True
+    
+    ss.fallback_config_state = None # Config saved/downloaded, fallback irrelevant
+    # No direct message here, UI will trigger download and rerun
