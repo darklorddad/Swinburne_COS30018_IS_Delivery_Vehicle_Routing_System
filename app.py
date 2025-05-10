@@ -136,6 +136,7 @@ def main():
                 if streamlit.session_state.action_selected == "load":
                     # --- Load View ---
                     with streamlit.expander("Upload Configuration File", expanded=True):
+                        streamlit.markdown("---")
                         # File uploader now stores to a buffer
                         uploaded_file_widget_val = streamlit.file_uploader(
                             "Select a JSON configuration file to prepare for loading",
@@ -206,6 +207,7 @@ def main():
 
                 else: # --- Initial View: Choose Action (action_selected is None) ---
                     with streamlit.expander("Create or Load Configuration", expanded=True):
+                        streamlit.markdown("---")
                         col_create_btn, col_load_btn = streamlit.columns(2)
                         with col_create_btn:
                             if streamlit.button("New configuration", key="create_new_config_action_btn", help="Create a new configuration", use_container_width=True):
@@ -224,7 +226,7 @@ def main():
 
                                 # Initialize new config
                                 streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
-                                streamlit.session_state.config_filename = "new_config.json"
+                                streamlit.session_state.config_filename = "new-config.json"
                                 streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Snapshot for new config filename
                                 streamlit.session_state.processed_file_id = None
                                 streamlit.session_state.last_uploaded_filename = None
@@ -243,11 +245,11 @@ def main():
                     if streamlit.session_state.config_data is not None:
                         with streamlit.expander("Manage Current Configuration", expanded=True):
                              streamlit.markdown("---")
-                             config_status_message = f"A loaded configuration ('{streamlit.session_state.config_filename}') is in memory." \
+                             config_status_message = f"A loaded configuration ('{streamlit.session_state.config_filename}') is in memory" \
                                  if streamlit.session_state.last_uploaded_filename is not None \
-                                 else f"An unsaved new configuration ('{streamlit.session_state.config_filename}') is in memory."
+                                 else f"A new configuration ('{streamlit.session_state.config_filename}') is in memory"
                              streamlit.info(config_status_message)
-                             if streamlit.button("Edit Configuration", key="edit_config_btn", use_container_width=True): # Unified edit button
+                             if streamlit.button("Edit configuration", key="edit_config_btn", use_container_width=True): # Unified edit button
                                  streamlit.session_state.edit_mode = True
                                  # Snapshot is already set when entering edit mode or after "Save Edits"
                                  # Ensure snapshot is taken if it's somehow None (e.g. direct state manipulation outside flow)
@@ -258,8 +260,7 @@ def main():
                                  streamlit.rerun()
                             
                              # Option to clear memory (this is still inside the outer "if streamlit.session_state.config_data is not None:")
-                             streamlit.markdown("---") # Separator before clear button
-                             if streamlit.button("Clear Configuration from Memory", key="clear_memory_btn", use_container_width=True, help="Removes any loaded or new configuration from the current session."):
+                             if streamlit.button("Clear configuration from memory", key="clear_memory_btn", use_container_width=True, help="Removes any loaded or new configuration from the current session"):
                                 streamlit.session_state.config_data = None
                                 streamlit.session_state.config_filename = "config.json" # Reset default
                                 streamlit.session_state.last_uploaded_filename = None
@@ -270,7 +271,7 @@ def main():
                                 streamlit.session_state.fallback_config_state = None
                                 streamlit.session_state.uploaded_file_buffer = None
                                 streamlit.session_state.processed_file_id_for_buffer = None
-                                streamlit.info("Configuration cleared from memory.")
+                                streamlit.info("Configuration cleared from memory")
                                 streamlit.rerun()
 
             else: # if streamlit.session_state.edit_mode is True
@@ -314,8 +315,8 @@ def main():
 
                     col_p_id, col_p_x, col_p_y, col_p_weight = streamlit.columns([2,1,1,1]) # Renamed columns for clarity
                     new_parcel_id = col_p_id.text_input("Parcel ID", key="new_parcel_id")
-                    new_parcel_x = col_p_x.number_input("X", value=0, key="new_parcel_x", format="%d") # Label and key changed
-                    new_parcel_y = col_p_y.number_input("Y", value=0, key="new_parcel_y", format="%d") # Label and key changed
+                    new_parcel_x = col_p_x.number_input("Parcel X", value=0, key="new_parcel_x", format="%d") # Label and key changed
+                    new_parcel_y = col_p_y.number_input("Parcel Y", value=0, key="new_parcel_y", format="%d") # Label and key changed
                     new_parcel_weight = col_p_weight.number_input("Weight", value=0, key="new_parcel_weight", min_value=0, format="%d")
                     
                     if streamlit.button("Add parcel", key="add_parcel_btn", use_container_width=True):
