@@ -49,6 +49,8 @@ def main():
         streamlit.session_state.new_config_saved_to_memory_at_least_once = False
     if "fallback_config_state" not in streamlit.session_state: # To store state of a new-saved config if another new one is started
         streamlit.session_state.fallback_config_state = None
+    if "config_filename_snapshot" not in streamlit.session_state: # For reverting filename edits
+        streamlit.session_state.config_filename_snapshot = None
 
 
     # Dynamically build CSS based on header visibility state
@@ -170,6 +172,7 @@ def main():
                                                 'data': copy.deepcopy(streamlit.session_state.config_data),
                                                 'filename': streamlit.session_state.config_filename,
                                                 'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot),
+                                                'filename_snapshot': copy.deepcopy(streamlit.session_state.config_filename_snapshot), # Also stash filename snapshot
                                                 'last_uploaded': streamlit.session_state.last_uploaded_filename,
                                                 'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
                                             }
@@ -212,6 +215,7 @@ def main():
                                     'data': copy.deepcopy(streamlit.session_state.config_data),
                                     'filename': streamlit.session_state.config_filename,
                                     'snapshot': copy.deepcopy(streamlit.session_state.config_data_snapshot), # Snapshot of the config being stashed
+                                    'filename_snapshot': copy.deepcopy(streamlit.session_state.config_filename_snapshot), # Also stash filename snapshot
                                     'last_uploaded': streamlit.session_state.last_uploaded_filename,
                                     'saved_once': streamlit.session_state.new_config_saved_to_memory_at_least_once
                                 }
@@ -221,6 +225,7 @@ def main():
                             # Initialize new config
                             streamlit.session_state.config_data = DEFAULT_CONFIG_TEMPLATE.copy()
                             streamlit.session_state.config_filename = "new_config.json"
+                            streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Snapshot for new config filename
                             streamlit.session_state.processed_file_id = None 
                             streamlit.session_state.last_uploaded_filename = None
                             streamlit.session_state.action_selected = None 
@@ -247,6 +252,8 @@ def main():
                              # Ensure snapshot is taken if it's somehow None (e.g. direct state manipulation outside flow)
                              if streamlit.session_state.config_data_snapshot is None:
                                  streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
+                             # Take snapshot of filename when entering edit mode
+                             streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename
                              streamlit.rerun()
                         
                          # Option to clear memory (this is still inside the outer "if streamlit.session_state.config_data is not None:")
@@ -257,6 +264,7 @@ def main():
                             streamlit.session_state.last_uploaded_filename = None
                             streamlit.session_state.processed_file_id = None
                             streamlit.session_state.config_data_snapshot = None
+                            streamlit.session_state.config_filename_snapshot = None # Clear filename snapshot
                             streamlit.session_state.new_config_saved_to_memory_at_least_once = False
                             streamlit.session_state.fallback_config_state = None
                             streamlit.session_state.uploaded_file_buffer = None
@@ -391,13 +399,16 @@ def main():
                         # Revert to the snapshot
                         if streamlit.session_state.config_data_snapshot is not None:
                             streamlit.session_state.config_data = copy.deepcopy(streamlit.session_state.config_data_snapshot)
+                            # Also revert filename if its snapshot exists
+                            if streamlit.session_state.config_filename_snapshot is not None:
+                                streamlit.session_state.config_filename = streamlit.session_state.config_filename_snapshot
                         else: 
                             # This case implies config_data_snapshot is None.
-                            # This should ideally not happen if snapshot is always set upon entering edit mode.
                             # If it's a new config and has no snapshot, it means it was never properly initialized.
-                            if streamlit.session_state.last_uploaded_filename is None:
-                                streamlit.session_state.config_data = None # Clear it as there's no valid state to revert to
-                                streamlit.session_state.config_filename = "config.json"
+                            if streamlit.session_state.last_uploaded_filename is None: # It's a new config
+                                streamlit.session_state.config_data = None 
+                                streamlit.session_state.config_filename = "config.json" # Reset filename
+                                streamlit.session_state.config_filename_snapshot = None # No snapshot for a cleared new config
                         
                         streamlit.session_state.edit_mode = False
                         streamlit.session_state.action_selected = None 
@@ -414,14 +425,16 @@ def main():
                                 streamlit.session_state.config_filename = fallback['filename']
                                 streamlit.session_state.last_uploaded_filename = fallback['last_uploaded']
                                 streamlit.session_state.config_data_snapshot = fallback['snapshot']
+                                streamlit.session_state.config_filename_snapshot = fallback.get('filename_snapshot', fallback['filename']) # Restore filename_snapshot
                                 streamlit.session_state.new_config_saved_to_memory_at_least_once = fallback['saved_once']
                             else:
-                                # No fallback, so clear to None
+                                # No fallback, so clear to None (data, filename, and snapshots)
                                 streamlit.session_state.config_data = None
                                 streamlit.session_state.config_filename = "config.json"
                                 streamlit.session_state.config_data_snapshot = None
+                                streamlit.session_state.config_filename_snapshot = None 
                                 # new_config_saved_to_memory_at_least_once is already False for the discarded config
-                        # else: current config (loaded, or new+saved_via_SE) remains (reverted to its snapshot).
+                        # else: current config (loaded, or new+saved_via_SE) remains (reverted to its snapshot for data and filename).
                         
                         streamlit.session_state.fallback_config_state = None # Fallback is consumed or no longer relevant
                         streamlit.rerun()
@@ -429,6 +442,7 @@ def main():
                 with col_save_edits_action:
                     if streamlit.button("Save", key="save_edits_btn", use_container_width=True, help="Saves the current configuration and returns to the menu"):
                         streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
+                        streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Commit current filename as snapshot
                         if streamlit.session_state.last_uploaded_filename is None: 
                             streamlit.session_state.new_config_saved_to_memory_at_least_once = True
                         
@@ -449,6 +463,7 @@ def main():
                         }
                         # Ensure snapshot reflects the state being saved, in case "Edit Configuration" is used later for this saved file (if it were loaded)
                         streamlit.session_state.config_data_snapshot = copy.deepcopy(streamlit.session_state.config_data)
+                        streamlit.session_state.config_filename_snapshot = streamlit.session_state.config_filename # Commit current filename as snapshot
 
                         # Initiate download
                         streamlit.session_state.pending_download_data = config_manager.config_to_json_string(config_to_save)
