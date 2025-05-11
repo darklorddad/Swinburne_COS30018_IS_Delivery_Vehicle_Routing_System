@@ -34,6 +34,12 @@ def _apply_custom_styling(ss):
             display: none !important;
             visibility: hidden !important;
         }}
+
+        /* Style for Streamlit forms */
+        div[data-testid="stForm"] {{
+            background-color: rgba(0, 0, 0, .10);
+            backdrop-filter: blur(16px);
+        }}
     </style>
     """
     streamlit.markdown(custom_css, unsafe_allow_html = True)
