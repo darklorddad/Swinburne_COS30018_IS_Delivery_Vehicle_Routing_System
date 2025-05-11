@@ -1,0 +1,26 @@
+Development Guidelines
+These guidelines are established to ensure consistency, maintainability, and efficiency across all development projects. 
+Adherence to these principles is crucial for successful project outcomes.
+
+Core Principles
+Modularity and API-Driven Design:
+Strive for highly modular components. 
+Each module should be a self-contained unit with a well-defined purpose.
+Design components and systems with an "API-first" approach. 
+Interactions between modules should occur through clearly defined interfaces, promoting plug-and-play capabilities.
+
+Separation of Concerns:
+Strictly maintain the separation between front-end and back-end logic. 
+Do not mix presentation layer code with business logic or data access layers.
+
+Code Style Consistency:
+Adhere to the established code style guide for the project or language. 
+Consistency in code formatting, naming conventions, and structure is paramount for readability and maintainability.
+
+Redundancy Reduction (DRY - Don't Repeat Yourself):
+New Implementations: Before adding new functionality, thoroughly check if similar or identical implementations already exist within the codebase. 
+Leverage existing solutions where possible to avoid duplication of effort and code.
+Removing Implementations: When removing or deprecating a feature or piece of code, ensure that all associated and no-longer-needed assets, configurations, or dependent code snippets are also removed. 
+This includes orphaned functions, unused variables, dead code paths, and obsolete documentation.
+
+Avoid the use of emojis
