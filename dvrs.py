@@ -41,7 +41,7 @@ def _render_main_layout(ss):
 
         tab_config, tab_run, tab_results, tab_settings = streamlit.tabs([
             "Configuration",
-            "Run Optimization",
+            "Run Optimisation",
             "Dashboard & Results",
             "Settings"
         ])
@@ -50,7 +50,7 @@ def _render_main_layout(ss):
             render_config_tab(ss)
             
         with tab_run:
-            streamlit.header("Run Optimization")
+            streamlit.header("Run Optimisation")
             if ss.config_data is None:
                 streamlit.warning("Please load a configuration in the 'Configuration' tab first.")
             else:

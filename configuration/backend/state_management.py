@@ -39,9 +39,8 @@ def initialise_session_state(ss):
         if key not in ss:
             ss[key] = value
 
-# Handles the logic for creating a new configuration.
-def handle_new_config_action(ss):
-    # Stashes the current configuration, if any, as a fallback.
+# Helper function to stash the current configuration state as a fallback.
+def _stash_current_config_as_fallback(ss):
     if ss.config_data is not None:
         ss.fallback_config_state = {
             'data': copy.deepcopy(ss.config_data),
@@ -53,6 +52,11 @@ def handle_new_config_action(ss):
         }
     else:
         ss.fallback_config_state = None
+
+# Handles the logic for creating a new configuration.
+def handle_new_config_action(ss):
+    # Stashes the current configuration, if any, as a fallback.
+    _stash_current_config_as_fallback(ss)
 
     # Initialises a new configuration using the default template.
     ss.config_data = copy.deepcopy(DEFAULT_CONFIG_TEMPLATE) # Ensures template is not modified.
@@ -75,17 +79,7 @@ def confirm_load_configuration(ss):
         loaded_config = load_config_from_uploaded_file(ss.uploaded_file_buffer)
         if loaded_config is not None:
             # Stashes current configuration, if any, before loading the new one.
-            if ss.config_data is not None:
-                ss.fallback_config_state = {
-                    'data': copy.deepcopy(ss.config_data),
-                    'filename': ss.config_filename,
-                    'snapshot': copy.deepcopy(ss.config_data_snapshot),
-                    'filename_snapshot': copy.deepcopy(ss.config_filename_snapshot),
-                    'last_uploaded': ss.last_uploaded_filename,
-                    'saved_once': ss.new_config_saved_to_memory_at_least_once
-                }
-            else:
-                ss.fallback_config_state = None
+            _stash_current_config_as_fallback(ss)
 
             # Updates session state with the loaded configuration.
             ss.config_data = loaded_config

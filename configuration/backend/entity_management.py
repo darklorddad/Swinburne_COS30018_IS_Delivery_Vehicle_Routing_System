@@ -1,62 +1,60 @@
+# --- Entity Management Helpers ---
+def _add_entity(ss, entities_key, entity_id, entity_data, entity_name_singular):
+    """Helper to add an entity to a list in config_data if the ID is unique."""
+    if not entity_id:
+        return {'type': 'warning', 'message': f"{entity_name_singular} ID cannot be empty"}
+    
+    if entities_key not in ss.config_data:
+        ss.config_data[entities_key] = []
+        
+    if any(e['id'] == entity_id for e in ss.config_data[entities_key]):
+        return {'type': 'warning', 'message': f"{entity_name_singular} ID '{entity_id}' already exists"}
+    
+    ss.config_data[entities_key].append(entity_data)
+    return {'type': 'success', 'message': f"{entity_name_singular} '{entity_id}' added"}
+
+def _remove_entity(ss, entities_key, entity_id_to_remove, entity_name_singular):
+    """Helper to remove an entity from a list in config_data by its ID."""
+    if not entity_id_to_remove:
+        return {'type': 'warning', 'message': f"No {entity_name_singular.lower()} selected to remove"}
+        
+    if entities_key in ss.config_data and ss.config_data[entities_key]:
+        initial_len = len(ss.config_data[entities_key])
+        ss.config_data[entities_key] = [e for e in ss.config_data[entities_key] if e['id'] != entity_id_to_remove]
+        if len(ss.config_data[entities_key]) < initial_len:
+            return {'type': 'success', 'message': f"{entity_name_singular} '{entity_id_to_remove}' removed"}
+        else:
+            return {'type': 'warning', 'message': f"{entity_name_singular} ID '{entity_id_to_remove}' not found"}
+            
+    return {'type': 'info', 'message': f"No {entity_name_singular.lower()}s to remove from"}
+
 # --- Parcel Management ---
 # Adds a new parcel to the configuration if the ID is unique.
 def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight):
-    if not parcel_id:
-        return {'type': 'warning', 'message': "Parcel ID cannot be empty"}
-    if "parcels" not in ss.config_data:
-        ss.config_data["parcels"] = []
-    if any(p['id'] == parcel_id for p in ss.config_data["parcels"]):
-        return {'type': 'warning', 'message': f"Parcel ID '{parcel_id}' already exists"}
-    
-    ss.config_data["parcels"].append({
+    parcel_data = {
         "id": parcel_id,
         "coordinates_x_y": [parcel_x, parcel_y],
         "weight": parcel_weight
-    })
-    return {'type': 'success', 'message': f"Parcel '{parcel_id}' added"} # Status message.
+    }
+    return _add_entity(ss, "parcels", parcel_id, parcel_data, "Parcel")
 
 # Removes a parcel from the configuration by its ID.
 def remove_parcel(ss, parcel_id_to_remove):
-    if not parcel_id_to_remove:
-        return {'type': 'warning', 'message': "No parcel selected to remove"}
-    if "parcels" in ss.config_data:
-        initial_len = len(ss.config_data["parcels"])
-        ss.config_data["parcels"] = [p for p in ss.config_data["parcels"] if p['id'] != parcel_id_to_remove]
-        if len(ss.config_data["parcels"]) < initial_len:
-            return {'type': 'success', 'message': f"Parcel '{parcel_id_to_remove}' removed"} # Status message.
-        else:
-            return {'type': 'warning', 'message': f"Parcel ID '{parcel_id_to_remove}' not found"}
-    return {'type': 'info', 'message': "No parcels to remove from"}
+    return _remove_entity(ss, "parcels", parcel_id_to_remove, "Parcel")
 
 
 # --- Delivery Agent Management ---
 # Adds a new delivery agent to the configuration if the ID is unique.
 def add_delivery_agent(ss, agent_id, capacity_weight):
-    if not agent_id:
-        return {'type': 'warning', 'message': "Agent ID cannot be empty"}
-    if "delivery_agents" not in ss.config_data:
-        ss.config_data["delivery_agents"] = []
-    if any(a['id'] == agent_id for a in ss.config_data["delivery_agents"]):
-        return {'type': 'warning', 'message': f"Agent ID '{agent_id}' already exists"}
-
-    ss.config_data["delivery_agents"].append({
+    agent_data = {
         "id": agent_id,
         "capacity_weight": capacity_weight
-    })
-    return {'type': 'success', 'message': f"Agent '{agent_id}' added"} # Status message.
+    }
+    return _add_entity(ss, "delivery_agents", agent_id, agent_data, "Agent")
 
 # Removes a delivery agent from the configuration by its ID.
 def remove_delivery_agent(ss, agent_id_to_remove):
-    if not agent_id_to_remove:
-        return {'type': 'warning', 'message': "No agent selected to remove"}
-    if "delivery_agents" in ss.config_data:
-        initial_len = len(ss.config_data["delivery_agents"])
-        ss.config_data["delivery_agents"] = [a for a in ss.config_data["delivery_agents"] if a['id'] != agent_id_to_remove]
-        if len(ss.config_data["delivery_agents"]) < initial_len:
-            return {'type': 'success', 'message': f"Agent '{agent_id_to_remove}' removed"} # Status message.
-        else:
-            return {'type': 'warning', 'message': f"Agent ID '{agent_id_to_remove}' not found"}
-    return {'type': 'info', 'message': "No agents to remove from"}
+    return _remove_entity(ss, "delivery_agents", agent_id_to_remove, "Agent")
 
 # --- General Settings in Edit Mode ---
 # Updates the config_filename in session_state.
