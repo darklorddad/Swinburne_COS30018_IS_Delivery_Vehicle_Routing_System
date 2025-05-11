@@ -31,7 +31,7 @@ def render_config_tab(ss):
                 """,
                 height=1
             )
-        config_logic.finalize_download(ss)
+        backend.config_logic.finalize_download(ss)
         # A streamlit.rerun() might be implicitly handled by other actions,
         # or could be added here if the "Downloading..." message needs to be cleared faster.
 
