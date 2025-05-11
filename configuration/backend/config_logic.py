@@ -1,6 +1,6 @@
-# This file acts as a facade for configuration logic, importing from specialised modules.
+# Facade for configuration logic, importing from specialized modules.
 
-# Import functions from state_management.py
+# Imports from state_management.py
 from .state_management import (
     DEFAULT_CONFIG_TEMPLATE,
     initialise_session_state,
@@ -19,7 +19,7 @@ from .state_management import (
     validate_edit_mode_preconditions
 )
 
-# Import functions from entity_management.py
+# Imports from entity_management.py
 from .entity_management import (
     add_parcel,
     remove_parcel,
@@ -29,17 +29,16 @@ from .entity_management import (
     handle_warehouse_coordinates_update
 )
 
-# Import functions from file_operations.py
+# Imports from file_operations.py
 from .file_operations import (
     load_config_from_uploaded_file,
     config_to_json_string,
     json_string_to_config
 )
 
-# Optionally, define __all__ to specify what gets imported with "from .config_logic import *"
-# This is good practice for modules designed as facades.
+# Defines the public API of this module when using "from .config_logic import *"
 __all__ = [
-    # from state_management
+    # Functions from state_management
     "DEFAULT_CONFIG_TEMPLATE",
     "initialise_session_state",
     "handle_new_config_action",
@@ -55,14 +54,14 @@ __all__ = [
     "handle_load_config_action",
     "handle_show_header_toggle",
     "validate_edit_mode_preconditions",
-    # from entity_management
+    # Functions from entity_management
     "add_parcel",
     "remove_parcel",
     "add_delivery_agent",
     "remove_delivery_agent",
     "handle_filename_update",
     "handle_warehouse_coordinates_update",
-    # from file_operations
+    # Functions from file_operations
     "load_config_from_uploaded_file",
     "config_to_json_string",
     "json_string_to_config",
