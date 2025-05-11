@@ -114,7 +114,7 @@ def confirm_load_configuration(ss):
             # If already loaded and matches current config, inform user and clear buffer.
             ss.edit_mode = False
             ss.action_selected = None
-            ss.uploaded_file_buffer = None # Clears buffer.
+            ss.uploaded_file_buffer = None
             return {'type': 'info', 'message': f"'{ss.config_filename}' is already loaded. Returning to menu"}
         else:
             # If processed but failed previously, prompt for a new or corrected file.
@@ -247,7 +247,7 @@ def finalize_download(ss):
 # Updates the uploaded_file_buffer and related state.
 # Called on_change of the file_uploader widget.
 def handle_file_uploader_change(ss):
-    uploaded_file_widget_val = ss.get("config_uploader_buffer_widget") # Key of the file_uploader.
+    uploaded_file_widget_val = ss.get("config_uploader_buffer_widget")
     if uploaded_file_widget_val is not None:
         ss.uploaded_file_buffer = uploaded_file_widget_val
         # Resets processed_file_id_for_buffer when a new file is selected.
@@ -270,7 +270,7 @@ def handle_load_config_action(ss):
 
 # Updates the show_header state based on the toggle widget.
 def handle_show_header_toggle(ss):
-    ss.show_header = ss.get("show_header_toggle_widget", False) # Key of the toggle.
+    ss.show_header = ss.get("show_header_toggle_widget", False)
 
 # Validates if preconditions for entering edit mode are met.
 # Specifically, checks if config_data exists.
