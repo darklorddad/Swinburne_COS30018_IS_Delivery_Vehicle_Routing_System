@@ -25,12 +25,12 @@ def render_initial_view(ss):
                  else f"A new configuration ('{ss.config_filename}') is in memory"
              streamlit.info(config_status_message)
              if streamlit.button("Edit configuration", key="edit_config_btn", use_container_width=True): # Unified edit button
-                 app_logic.enter_edit_mode(ss)
+                 backend.config_logic.enter_edit_mode(ss)
                  streamlit.rerun()
             
              # Option to clear memory (this is still inside the outer "if ss.config_data is not None:")
              if streamlit.button("Clear configuration from memory", key="clear_memory_btn", use_container_width=True, help="Removes any loaded or new configuration from the current session"):
-                result = app_logic.clear_config_from_memory(ss)
+                result = backend.config_logic.clear_config_from_memory(ss)
                 if result and result.get('message'):
                     streamlit.info(result['message'])
                 streamlit.rerun()
