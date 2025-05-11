@@ -7,7 +7,7 @@ from configuration.frontend.config_tab_ui import render_config_tab
 
 def _apply_custom_styling(ss):
     """Applies custom CSS to the Streamlit app."""
-    header_style_properties = "background-color: #1E1E1E !important;" # Always set background color
+    header_style_properties = "background-color: #1E1E1E !important;" # Always set background colour
 
     if not ss.show_header:
         header_style_properties += " display: none !important; visibility: hidden !important;"
@@ -36,7 +36,7 @@ def _apply_custom_styling(ss):
 
 def _render_main_layout(ss):
     """Renders the main layout and tabs for the application."""
-    # Create columns to center the main content
+    # Create columns to centre the main content
     col1, col2, col3 = streamlit.columns([2.5, 5, 2.5]) # Adjust ratios to make middle narrower
 
     with col2: # This will be our "card" area
@@ -86,7 +86,7 @@ def main():
     # Initialise session state variables using the function from config_logic
     # Use an alias for streamlit.session_state for brevity
     ss = streamlit.session_state
-    config_logic.initialize_session_state(ss)
+    config_logic.initialise_session_state(ss)
 
     _apply_custom_styling(ss)
     _render_main_layout(ss)

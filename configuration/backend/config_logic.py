@@ -3,7 +3,7 @@
 # Import functions from state_management.py
 from .state_management import (
     DEFAULT_CONFIG_TEMPLATE,
-    initialize_session_state,
+    initialise_session_state,
     handle_new_config_action,
     confirm_load_configuration,
     clear_config_from_memory,
@@ -41,7 +41,7 @@ from .file_operations import (
 __all__ = [
     # from state_management
     "DEFAULT_CONFIG_TEMPLATE",
-    "initialize_session_state",
+    "initialise_session_state",
     "handle_new_config_action",
     "confirm_load_configuration",
     "clear_config_from_memory",

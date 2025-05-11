@@ -86,7 +86,7 @@ def handle_warehouse_coordinates_update(ss):
 
     if not isinstance(ss.get("config_data"), dict):
         # This should ideally not happen if the app flow is correct and config_data is initialized.
-        # Initialize with default structure if necessary for robustness.
+        # Initialise with default structure if necessary for robustness.
         ss.config_data = {"warehouse_coordinates_x_y": [0, 0]}
 
     # Fallback to current values in config_data if widget values are somehow None

@@ -1,5 +1,4 @@
 import copy
-# import json # Not directly used for json.load/dumps, but for type hints if any
 from .file_operations import load_config_from_uploaded_file, config_to_json_string
 
 DEFAULT_CONFIG_TEMPLATE = {
@@ -60,7 +59,7 @@ def handle_new_config_action(ss):
     ss.config_filename_snapshot = ss.config_filename
     ss.processed_file_id = None
     ss.last_uploaded_filename = None
-    ss.action_selected = None # This might be reset in app.py based on flow
+    ss.action_selected = None # Reset to default, actual view depends on subsequent logic
     ss.edit_mode = True
     ss.config_data_snapshot = copy.deepcopy(ss.config_data)
     ss.new_config_saved_to_memory_at_least_once = False

@@ -24,17 +24,17 @@ def load_config_from_uploaded_file(uploaded_file):
 def config_to_json_string(config_data, indent=2):
     """
     Converts a Python dictionary configuration to a JSON formatted string.
-    Returns an empty string if config_data is None, or "{}" on serialization error.
+    Returns an empty string if config_data is None, or "{}" on serialisation error.
     Note: This version is slightly adjusted from the original config_manager.py
     to catch generic Exceptions during json.dumps and ensure it returns "{}"
-    on any serialization error, removing a previously potentially problematic return path.
+    on any serialisation error, removing a previously potentially problematic return path.
     """
     if config_data is None:
         return "" # As per original behavior for None input
     try:
         return json.dumps(config_data, indent=indent)
-    except Exception as e: # Catch a broader range of potential serialization errors
-        print(f"Error serializing config to JSON: {e}")
+    except Exception as e: # Catch a broader range of potential serialisation errors
+        print(f"Error serialising config to JSON: {e}")
         return "{}" # Return an empty JSON object string on error
 
 def json_string_to_config(json_string):
