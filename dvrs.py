@@ -72,7 +72,7 @@ def _render_main_layout(ss):
             streamlit.toggle(
                 "Show Streamlit Header",
                 value = ss.show_header,
-                key = "show_header_toggle_widget", # Changed key to match config_logic
+                key = "show_header_toggle_widget",
                 on_change = config_logic.handle_show_header_toggle,
                 args = (ss,),
                 help = "Toggle the visibility of the default Streamlit header bar."

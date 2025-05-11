@@ -10,8 +10,6 @@ def render_edit_view(ss):
         streamlit.rerun()
         return
 
-    # streamlit.subheader(f"Editing Configuration: {ss.config_filename}") # Removed
-    
     with streamlit.expander("General Settings", expanded = True):
         streamlit.markdown("---")
         current_filename_base = ss.config_filename.replace(".json", "")
