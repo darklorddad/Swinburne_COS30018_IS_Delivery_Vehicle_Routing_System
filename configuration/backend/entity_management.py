@@ -1,4 +1,4 @@
-# --- Parcel Management Logic ---
+# Parcel management logic
 def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight):
     """Adds a new parcel to the configuration if the ID is unique"""
     if not parcel_id:
@@ -29,7 +29,7 @@ def remove_parcel(ss, parcel_id_to_remove):
     return {'type': 'info', 'message': "No parcels to remove from"}
 
 
-# --- Delivery Agent Management Logic ---
+# Delivery agent management logic
 def add_delivery_agent(ss, agent_id, capacity_weight):
     """Adds a new delivery agent to the configuration if the ID is unique"""
     if not agent_id:
@@ -58,7 +58,7 @@ def remove_delivery_agent(ss, agent_id_to_remove):
             return {'type': 'warning', 'message': f"Agent ID '{agent_id_to_remove}' not found"}
     return {'type': 'info', 'message': "No agents to remove from"}
 
-# --- Edit Mode General Settings Logic ---
+# Edit mode general settings logic
 def handle_filename_update(ss):
     """
     Updates the config_filename in session_state based on the
@@ -83,7 +83,7 @@ def handle_warehouse_coordinates_update(ss):
     wh_y_val = ss.get("wh_y_input_widget") # Key of the Y number_input
 
     if not isinstance(ss.get("config_data"), dict):
-        # This should ideally not happen if the app flow is correct and config_data is initialized.
+        # This should ideally not happen if the app flow is correct and config_data is initialised.
         # Initialise with default structure if necessary for robustness.
         ss.config_data = {"warehouse_coordinates_x_y": [0, 0]}
 
