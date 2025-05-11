@@ -18,7 +18,8 @@ def _apply_custom_styling(ss):
 
         /* Set a darker background color for the app */
         .stApp {{
-            background-image: url(https://www.transparenttextures.com/patterns/otis-redding.png), 
+            background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), /* 50% Darkening Overlay */
+            url(https://www.transparenttextures.com/patterns/otis-redding.png), 
             radial-gradient(at 55% 17%, hsla(43, 71%, 37%, 1) 0px, transparent 50%), 
             radial-gradient(at 27% 78%, hsla(187, 71%, 37%, 1) 0px, transparent 50%), 
             radial-gradient(at 94% 10%, hsla(24, 71%, 37%, 1) 0px, transparent 50%), 
@@ -35,8 +36,7 @@ def _apply_custom_styling(ss):
             visibility: hidden !important;
         }}
 
-        /* Style for key content containers (forms, tab panels, expanders) */
-        div[data-testid="stForm"],
+        /* Style for key content containers (tab panels, expanders) */
         div[data-testid="stTabPanel"],
         div[data-testid="stExpander"] {{
             background-color: rgba(0, 0, 0, .10);
