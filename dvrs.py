@@ -4,7 +4,7 @@ from configuration.frontend.config_tab_ui import render_config_tab
 
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
-    header_style_properties = "background-color: #1E1E1E !important;" # Always set background colour
+    header_style_properties = "background-color: transparent !important;" # Set background to transparent
 
     if not ss.show_header:
         header_style_properties += " display: none !important; visibility: hidden !important;"
