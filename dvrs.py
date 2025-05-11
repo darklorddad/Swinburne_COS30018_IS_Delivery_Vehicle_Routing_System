@@ -2,9 +2,8 @@ import streamlit
 from configuration.backend import config_logic
 from configuration.frontend.config_tab_ui import render_config_tab
 
-
+# Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
-    """Applies custom CSS to the Streamlit app."""
     header_style_properties = "background-color: #1E1E1E !important;" # Always set background colour
 
     if not ss.show_header:
@@ -32,12 +31,12 @@ def _apply_custom_styling(ss):
     """
     streamlit.markdown(custom_css, unsafe_allow_html=True)
 
+# Renders the main layout and tabs for the application.
 def _render_main_layout(ss):
-    """Renders the main layout and tabs for the application."""
-    # Create columns to centre the main content
-    col1, col2, col3 = streamlit.columns([2.5, 5, 2.5]) # Adjust ratios to make middle narrower
+    # Create columns to centre the main content.
+    col1, col2, col3 = streamlit.columns([2.5, 5, 2.5]) # Adjust ratios to make middle narrower.
 
-    with col2: # This will be our "card" area
+    with col2: # This is the main content area, styled as a card.
         streamlit.title("Delivery Vehicle Routing System")
 
         tab_config, tab_run, tab_results, tab_settings = streamlit.tabs([
@@ -62,7 +61,7 @@ def _render_main_layout(ss):
 
         with tab_results:
             streamlit.header("Dashboard & Results")
-            if ss.config_data is None: # Or more specific check like "if results exist"
+            if ss.config_data is None: # Check if configuration data is available.
                 streamlit.warning("Please load a configuration and run optimization to see results.")
             else:
                 streamlit.write("Route visualizations and results will appear here.")
