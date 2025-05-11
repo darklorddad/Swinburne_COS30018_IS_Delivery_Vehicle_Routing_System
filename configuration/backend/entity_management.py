@@ -1,6 +1,6 @@
 # --- Parcel Management Logic ---
 def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight):
-    """Adds a new parcel to the configuration if the ID is unique."""
+    """Adds a new parcel to the configuration if the ID is unique"""
     if not parcel_id:
         return {'type': 'warning', 'message': "Parcel ID cannot be empty"}
     if "parcels" not in ss.config_data:
@@ -13,25 +13,25 @@ def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight):
         "coordinates_x_y": [parcel_x, parcel_y],
         "weight": parcel_weight
     })
-    return {'type': 'success', 'message': f"Parcel '{parcel_id}' added."} # Message for potential future use
+    return {'type': 'success', 'message': f"Parcel '{parcel_id}' added"} # Message for potential future use
 
 def remove_parcel(ss, parcel_id_to_remove):
-    """Removes a parcel from the configuration by its ID."""
+    """Removes a parcel from the configuration by its ID"""
     if not parcel_id_to_remove:
-        return {'type': 'warning', 'message': "No parcel selected to remove."}
+        return {'type': 'warning', 'message': "No parcel selected to remove"}
     if "parcels" in ss.config_data:
         initial_len = len(ss.config_data["parcels"])
         ss.config_data["parcels"] = [p for p in ss.config_data["parcels"] if p['id'] != parcel_id_to_remove]
         if len(ss.config_data["parcels"]) < initial_len:
-            return {'type': 'success', 'message': f"Parcel '{parcel_id_to_remove}' removed."} # For potential future use
+            return {'type': 'success', 'message': f"Parcel '{parcel_id_to_remove}' removed"} # For potential future use
         else:
-            return {'type': 'warning', 'message': f"Parcel ID '{parcel_id_to_remove}' not found."}
-    return {'type': 'info', 'message': "No parcels to remove from."}
+            return {'type': 'warning', 'message': f"Parcel ID '{parcel_id_to_remove}' not found"}
+    return {'type': 'info', 'message': "No parcels to remove from"}
 
 
 # --- Delivery Agent Management Logic ---
 def add_delivery_agent(ss, agent_id, capacity_weight):
-    """Adds a new delivery agent to the configuration if the ID is unique."""
+    """Adds a new delivery agent to the configuration if the ID is unique"""
     if not agent_id:
         return {'type': 'warning', 'message': "Agent ID cannot be empty"}
     if "delivery_agents" not in ss.config_data:
@@ -43,20 +43,20 @@ def add_delivery_agent(ss, agent_id, capacity_weight):
         "id": agent_id,
         "capacity_weight": capacity_weight
     })
-    return {'type': 'success', 'message': f"Agent '{agent_id}' added."} # Message for potential future use
+    return {'type': 'success', 'message': f"Agent '{agent_id}' added"} # Message for potential future use
 
 def remove_delivery_agent(ss, agent_id_to_remove):
-    """Removes a delivery agent from the configuration by its ID."""
+    """Removes a delivery agent from the configuration by its ID"""
     if not agent_id_to_remove:
-        return {'type': 'warning', 'message': "No agent selected to remove."}
+        return {'type': 'warning', 'message': "No agent selected to remove"}
     if "delivery_agents" in ss.config_data:
         initial_len = len(ss.config_data["delivery_agents"])
         ss.config_data["delivery_agents"] = [a for a in ss.config_data["delivery_agents"] if a['id'] != agent_id_to_remove]
         if len(ss.config_data["delivery_agents"]) < initial_len:
-            return {'type': 'success', 'message': f"Agent '{agent_id_to_remove}' removed."} # For potential future use
+            return {'type': 'success', 'message': f"Agent '{agent_id_to_remove}' removed"} # For potential future use
         else:
-            return {'type': 'warning', 'message': f"Agent ID '{agent_id_to_remove}' not found."}
-    return {'type': 'info', 'message': "No agents to remove from."}
+            return {'type': 'warning', 'message': f"Agent ID '{agent_id_to_remove}' not found"}
+    return {'type': 'info', 'message': "No agents to remove from"}
 
 # --- Edit Mode General Settings Logic ---
 def handle_filename_update(ss):

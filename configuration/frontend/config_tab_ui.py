@@ -6,7 +6,7 @@ from .load_view_ui import render_load_view
 from .edit_view_ui import render_edit_view
 
 def render_config_tab(ss):
-    """Renders the entire Configuration tab."""
+    """Renders the entire Configuration tab"""
     # Handle pending download if initiated
     if ss.get("initiate_download", False):
         if ss.pending_download_data and ss.pending_download_filename:

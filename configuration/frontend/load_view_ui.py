@@ -2,7 +2,7 @@ import streamlit
 from configuration.backend import config_logic
 
 def render_load_view(ss):
-    """Renders the 'Load Configuration' view."""
+    """Renders the 'Load Configuration' view"""
     with streamlit.expander("Upload Configuration File", expanded=True):
         streamlit.markdown("---")
         # File uploader now stores to a buffer, managed by on_change

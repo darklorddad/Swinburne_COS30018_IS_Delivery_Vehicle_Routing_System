@@ -1,8 +1,10 @@
 Development Guidelines
+
 These guidelines are established to ensure consistency, maintainability, and efficiency across all development projects. 
 Adherence to these principles is crucial for successful project outcomes.
 
 Core Principles
+
 Modularity and API-Driven Design:
 Strive for highly modular components. 
 Each module should be a self-contained unit with a well-defined purpose.
@@ -24,3 +26,10 @@ Removing Implementations: When removing or deprecating a feature or piece of cod
 This includes orphaned functions, unused variables, dead code paths, and obsolete documentation.
 
 Avoid the use of emojis
+
+Make sure to use British English
+
+No redundant comment, all comment must be useful, make sure for the comments you use # instead of "
+
+When you are using =, make sure to keep space before and after, basically space things out nicely so they are not so compact and hard to read
+

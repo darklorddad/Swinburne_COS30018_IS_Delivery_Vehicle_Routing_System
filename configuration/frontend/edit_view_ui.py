@@ -2,7 +2,7 @@ import streamlit
 from configuration.backend import config_logic
 
 def render_edit_view(ss):
-    """Renders the 'Edit Configuration' view."""
+    """Renders the 'Edit Configuration' view"""
     validation_result = config_logic.validate_edit_mode_preconditions(ss)
     if not validation_result['valid']:
         if validation_result.get('message') and validation_result.get('type') == 'warning':
@@ -78,7 +78,7 @@ def render_edit_view(ss):
                     result = config_logic.remove_parcel(ss, selected_parcel_to_remove)
                     streamlit.rerun()
                 else:
-                    streamlit.warning("Please select a parcel ID to remove.")
+                    streamlit.warning("Please select a parcel ID to remove")
             
             streamlit.markdown("---")
             streamlit.dataframe(ss.config_data["parcels"], use_container_width=True)
@@ -115,7 +115,7 @@ def render_edit_view(ss):
                     result = config_logic.remove_delivery_agent(ss, selected_agent_to_remove)
                     streamlit.rerun()
                 else:
-                    streamlit.warning("Please select an agent ID to remove.")
+                    streamlit.warning("Please select an agent ID to remove")
             
             streamlit.markdown("---")
             streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)

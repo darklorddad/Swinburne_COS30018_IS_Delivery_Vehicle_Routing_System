@@ -16,7 +16,7 @@ DEFAULT_CONFIG_TEMPLATE = {
 }
 
 def initialize_session_state(ss):
-    """Initializes session state variables if they don't exist."""
+    """Initializes session state variables if they don't exist"""
     defaults = {
         "show_header": False,
         "config_data": None,
@@ -40,7 +40,7 @@ def initialize_session_state(ss):
             ss[key] = value
 
 def handle_new_config_action(ss):
-    """Handles the logic for creating a new configuration."""
+    """Handles the logic for creating a new configuration"""
     # If there's any config in memory (loaded or new-saved), stash it as fallback
     if ss.config_data is not None:
         ss.fallback_config_state = {
@@ -66,7 +66,7 @@ def handle_new_config_action(ss):
     ss.new_config_saved_to_memory_at_least_once = False
 
 def confirm_load_configuration(ss):
-    """Handles the logic for confirming and loading an uploaded configuration file."""
+    """Handles the logic for confirming and loading an uploaded configuration file"""
     if ss.uploaded_file_buffer is None:
         return {'type': 'warning', 'message': 'No file buffer found to load.'}
 
@@ -102,10 +102,10 @@ def confirm_load_configuration(ss):
             ss.config_filename_snapshot = ss.config_filename
             # Mark this file_id as processed for the buffer to prevent re-processing same buffer instance
             ss.processed_file_id_for_buffer = ss.processed_file_id 
-            return {'type': 'success', 'message': f"Configuration '{ss.config_filename}' loaded successfully."}
+            return {'type': 'success', 'message': f"Configuration '{ss.config_filename}' loaded successfully"}
         else:
             ss.processed_file_id_for_buffer = ss.uploaded_file_buffer.file_id # Mark as processed even if failed
-            return {'type': 'error', 'message': f"Failed to load or parse '{ss.uploaded_file_buffer.name}'. Ensure it's valid JSON."}
+            return {'type': 'error', 'message': f"Failed to load or parse '{ss.uploaded_file_buffer.name}'. Ensure it's valid JSON"}
     else:
         # This case means the file instance in the buffer was already processed.
         # If it's already loaded and matches current config, it's an info.
@@ -114,13 +114,13 @@ def confirm_load_configuration(ss):
             ss.edit_mode = False
             ss.action_selected = None
             ss.uploaded_file_buffer = None # Clear buffer
-            return {'type': 'info', 'message': f"'{ss.config_filename}' is already loaded. Returning to menu."}
+            return {'type': 'info', 'message': f"'{ss.config_filename}' is already loaded. Returning to menu"}
         else:
             # This implies the file in buffer was processed (e.g. failed previously)
-            return {'type': 'warning', 'message': "This file instance was already processed. If it failed, please select a new or corrected file."}
+            return {'type': 'warning', 'message': "This file instance was already processed. If it failed, please select a new or corrected file"}
 
 def clear_config_from_memory(ss):
-    """Clears all configuration data from the session state."""
+    """Clears all configuration data from the session state"""
     ss.config_data = None
     ss.config_filename = "config.json" # Reset default
     ss.last_uploaded_filename = None
@@ -133,10 +133,10 @@ def clear_config_from_memory(ss):
     ss.processed_file_id_for_buffer = None
     ss.edit_mode = False # Ensure not in edit mode if config is cleared
     ss.action_selected = None # Reset action
-    return {'type': 'info', 'message': "Configuration cleared from memory."}
+    return {'type': 'info', 'message': "Configuration cleared from memory"}
 
 def enter_edit_mode(ss):
-    """Sets the application to edit mode and takes necessary snapshots."""
+    """Sets the application to edit mode and takes necessary snapshots"""
     ss.edit_mode = True
     # Ensure snapshot is taken if it's somehow None (e.g. direct state manipulation outside flow)
     if ss.config_data_snapshot is None and ss.config_data is not None:
@@ -153,7 +153,7 @@ def enter_edit_mode(ss):
     # No specific message needed, action implies UI change
 
 def handle_cancel_edit(ss):
-    """Handles the logic for canceling edits and reverting or clearing the configuration."""
+    """Handles the logic for canceling edits and reverting or clearing the configuration"""
     # Revert to the snapshot
     if ss.config_data_snapshot is not None:
         ss.config_data = copy.deepcopy(ss.config_data_snapshot)
@@ -197,7 +197,7 @@ def handle_cancel_edit(ss):
     ss.fallback_config_state = None # Fallback is consumed or no longer relevant
 
 def handle_save_edits(ss):
-    """Handles the logic for saving edits to the configuration in memory."""
+    """Handles the logic for saving edits to the configuration in memory"""
     ss.config_data_snapshot = copy.deepcopy(ss.config_data)
     ss.config_filename_snapshot = ss.config_filename # Commit current filename as snapshot
     if ss.last_uploaded_filename is None:
@@ -206,10 +206,10 @@ def handle_save_edits(ss):
     ss.edit_mode = False
     ss.action_selected = None
     ss.fallback_config_state = None # Edits committed, fallback irrelevant
-    return {'type': 'success', 'message': "Edits saved to memory."}
+    return {'type': 'success', 'message': "Edits saved to memory"}
 
 def handle_save_and_download(ss):
-    """Handles logic for saving, preparing for download, and exiting edit mode."""
+    """Handles logic for saving, preparing for download, and exiting edit mode"""
     # Prepare config_to_save strictly according to DEFAULT_CONFIG_TEMPLATE
     config_data_internal = ss.config_data
     config_to_save = {}
@@ -237,7 +237,7 @@ def handle_save_and_download(ss):
     # No direct message here, UI will trigger download and rerun
 
 def finalize_download(ss):
-    """Resets download-related flags after a download is initiated."""
+    """Resets download-related flags after a download is initiated"""
     ss.initiate_download = False
     ss.pending_download_data = None
     ss.pending_download_filename = None
@@ -261,17 +261,17 @@ def handle_file_uploader_change(ss): # Added 'ss' parameter
             ss.processed_file_id_for_buffer = None
 
 def handle_cancel_load_action(ss):
-    """Handles the cancel action from the load configuration view."""
+    """Handles the cancel action from the load configuration view"""
     ss.action_selected = None
     ss.uploaded_file_buffer = None
     ss.processed_file_id_for_buffer = None
 
 def handle_load_config_action(ss):
-    """Switches to the load configuration view."""
+    """Switches to the load configuration view"""
     ss.action_selected = "load"
 
 def handle_show_header_toggle(ss): # Added 'ss' parameter
-    """Updates the show_header state based on the toggle widget."""
+    """Updates the show_header state based on the toggle widget"""
     # ss = streamlit.session_state # Now passed as parameter
     ss.show_header = ss.get("show_header_toggle_widget", False) # Key of the toggle
 
@@ -283,5 +283,5 @@ def validate_edit_mode_preconditions(ss):
     """
     if ss.config_data is None:
         ss.edit_mode = False
-        return {'valid': False, 'message': "No configuration data found. Returning to selection.", 'type': 'warning'}
+        return {'valid': False, 'message': "No configuration data found. Returning to selection", 'type': 'warning'}
     return {'valid': True}
