@@ -62,9 +62,8 @@ def remove_delivery_agent(ss, agent_id_to_remove):
 # Updates the config_filename in session_state.
 # Triggered by changes in the filename input widget.
 def handle_filename_update(ss):
-    new_filename_base = ss.get("filename_input_widget") # Retrieves value from filename input widget.
-    if new_filename_base: # Ensures the filename base is not empty.
-        # Appends .json extension if not already present.
+    new_filename_base = ss.get("filename_input_widget")
+    if new_filename_base:
         new_full_filename = f"{new_filename_base}.json" if not new_filename_base.endswith(".json") else new_filename_base
         ss.config_filename = new_full_filename
     # If new_filename_base is empty, config_filename remains unchanged.
@@ -73,8 +72,8 @@ def handle_filename_update(ss):
 # Updates warehouse_coordinates_x_y in config_data.
 # Triggered by changes in warehouse coordinate input widgets.
 def handle_warehouse_coordinates_update(ss):
-    wh_x_val = ss.get("wh_x_input_widget") # Retrieves X coordinate from input widget.
-    wh_y_val = ss.get("wh_y_input_widget") # Retrieves Y coordinate from input widget.
+    wh_x_val = ss.get("wh_x_input_widget")
+    wh_y_val = ss.get("wh_y_input_widget")
 
     if not isinstance(ss.get("config_data"), dict):
         # Ensures config_data is a dictionary; initialises if necessary.
