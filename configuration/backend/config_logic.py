@@ -1,4 +1,4 @@
-# This file acts as a facade for configuration logic, importing from specialized modules.
+# This file acts as a facade for configuration logic, importing from specialised modules.
 
 # Import functions from state_management.py
 from .state_management import (
