@@ -29,7 +29,7 @@ def _apply_custom_styling(ss):
         }}
     </style>
     """
-    streamlit.markdown(custom_css, unsafe_allow_html=True)
+    streamlit.markdown(custom_css, unsafe_allow_html = True)
 
 # Renders the main layout and tabs for the application.
 def _render_main_layout(ss):
@@ -78,7 +78,7 @@ def _render_main_layout(ss):
             )
 
 def main():
-    streamlit.set_page_config(layout="wide", page_title="Delivery Vehicle Routing System")
+    streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
 
     # Initialise session state variables using the function from config_logic
     # Use an alias for streamlit.session_state for brevity
