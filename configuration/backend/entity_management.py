@@ -1,5 +1,3 @@
-import streamlit # Allow access to streamlit.session_state
-
 # --- Parcel Management Logic ---
 def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight):
     """Adds a new parcel to the configuration if the ID is unique."""
