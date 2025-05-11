@@ -1,5 +1,6 @@
 import streamlit
 from configuration.backend import config_logic
+from .ui_utils import display_operation_result
 
 # Renders the 'Load Configuration' view.
 def render_load_view(ss):
@@ -27,17 +28,9 @@ def render_load_view(ss):
         load_disabled = ss.uploaded_file_buffer is None
         if streamlit.button("Load selected configuration", key = "confirm_load_btn", use_container_width = True, disabled = load_disabled):
             result = config_logic.confirm_load_configuration(ss)
-            if result:
-                if result['type'] == 'success':
-                    streamlit.success(result['message'])
-                elif result['type'] == 'error':
-                    streamlit.error(result['message'])
-                elif result['type'] == 'info':
-                    streamlit.info(result['message'])
-                elif result['type'] == 'warning':
-                    streamlit.warning(result['message'])
+            if display_operation_result(result):
                 # Rerun for most outcomes of confirm_load_configuration
-                if result['type'] in ['success', 'info'] or \
-                   (result['type'] == 'error' and "Ensure it's valid JSON" in result['message']) or \
-                   (result['type'] == 'warning' and "already processed" in result['message']):
+                if result and (result.get('type') in ['success', 'info'] or \
+                   (result.get('type') == 'error' and "Ensure it's valid JSON" in result.get('message', '')) or \
+                   (result.get('type') == 'warning' and "already processed" in result.get('message', ''))):
                     streamlit.rerun()

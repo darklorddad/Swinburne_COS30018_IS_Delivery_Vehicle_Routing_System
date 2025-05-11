@@ -19,7 +19,7 @@ def render_config_tab(ss):
                             window.onload = function() {{
                                 var link = document.createElement('a');
                                 link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent({json.dumps(ss.pending_download_data)});
-                                link.download = {json.dumps(ss.pending_download_filename)}; // Note: spacing around '=' in JS context is different, this is Python's json.dumps
+                                link.download = {json.dumps(ss.pending_download_filename)};
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);

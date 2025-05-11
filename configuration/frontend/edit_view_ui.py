@@ -1,5 +1,6 @@
 import streamlit
 from configuration.backend import config_logic
+from .ui_utils import display_operation_result
 
 # Renders the 'Edit Configuration' view.
 def render_edit_view(ss):
@@ -58,10 +59,10 @@ def render_edit_view(ss):
                 new_parcel_y, 
                 new_parcel_weight
             )
-            if result and result['type'] == 'warning':
-                streamlit.warning(result['message'])
-            else:
-                streamlit.rerun()
+            if not display_operation_result(result): # If it's not a warning (or other displayed message)
+                streamlit.rerun() # Assumes success or other non-message state that needs a rerun
+            elif result and result['type'] != 'warning': # If a message was displayed but it wasn't a warning
+                streamlit.rerun() # Rerun for success/info messages
         
         if ss.config_data["parcels"]:
             parcel_ids_to_remove = [p['id'] for p in ss.config_data["parcels"]]
@@ -73,7 +74,7 @@ def render_edit_view(ss):
             )
             if streamlit.button("Remove selected parcel", key = "remove_parcel_btn_new_row", use_container_width = True):
                 if selected_parcel_to_remove:
-                    result = config_logic.remove_parcel(ss, selected_parcel_to_remove)
+                    config_logic.remove_parcel(ss, selected_parcel_to_remove) # Result not directly used for message here
                     streamlit.rerun()
                 else:
                     streamlit.warning("Please select a parcel ID to remove")
@@ -95,9 +96,9 @@ def render_edit_view(ss):
                 new_agent_id,
                 new_agent_cap_weight
             )
-            if result and result['type'] == 'warning':
-                streamlit.warning(result['message'])
-            else:
+            if not display_operation_result(result): # If it's not a warning
+                streamlit.rerun() # Assumes success or other non-message state
+            elif result and result['type'] != 'warning':
                 streamlit.rerun()
 
         if ss.config_data["delivery_agents"]:
@@ -110,7 +111,7 @@ def render_edit_view(ss):
             )
             if streamlit.button("Remove selected agent", key = "remove_agent_btn_new_row", use_container_width = True):
                 if selected_agent_to_remove:
-                    result = config_logic.remove_delivery_agent(ss, selected_agent_to_remove)
+                    config_logic.remove_delivery_agent(ss, selected_agent_to_remove) # Result not directly used for message here
                     streamlit.rerun()
                 else:
                     streamlit.warning("Please select an agent ID to remove")
@@ -130,8 +131,7 @@ def render_edit_view(ss):
     with col_save_edits_action:
         if streamlit.button("Save", key = "save_edits_btn", use_container_width = True, help = "Saves the current configuration and returns to the menu"):
             result = config_logic.handle_save_edits(ss)
-            if result and result.get('type') == 'success':
-                streamlit.success(result['message'])
+            display_operation_result(result) # Display success message
             streamlit.rerun()
     
     with col_save_download_action:
