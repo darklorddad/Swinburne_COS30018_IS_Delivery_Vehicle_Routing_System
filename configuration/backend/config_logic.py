@@ -1,6 +1,5 @@
 # Facade for configuration logic, importing from specialised modules.
 
-# Imports from state_management.py
 from .state_management import (
     DEFAULT_CONFIG_TEMPLATE,
     initialise_session_state,
@@ -19,7 +18,6 @@ from .state_management import (
     validate_edit_mode_preconditions
 )
 
-# Imports from entity_management.py
 from .entity_management import (
     add_parcel,
     remove_parcel,
@@ -29,7 +27,6 @@ from .entity_management import (
     handle_warehouse_coordinates_update
 )
 
-# Imports from file_operations.py
 from .file_operations import (
     load_config_from_uploaded_file,
     config_to_json_string,
