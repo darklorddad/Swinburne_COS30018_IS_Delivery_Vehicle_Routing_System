@@ -1,5 +1,5 @@
 import streamlit
-import backend.config_logic
+from configuration.backend import config_logic
 
 def render_initial_view(ss):
     """Renders the initial view of the Configuration tab."""
@@ -8,12 +8,12 @@ def render_initial_view(ss):
         col_create_btn, col_load_btn = streamlit.columns(2)
         with col_create_btn:
             if streamlit.button("New configuration", key="create_new_config_action_btn", help="Create a new configuration", use_container_width=True):
-                backend.config_logic.handle_new_config_action(ss)
+                config_logic.handle_new_config_action(ss)
                 streamlit.rerun()
         
         with col_load_btn:
             if streamlit.button("Load configuration", key="load_config_action_btn", help="Load configuration by uploading a JSON configuration file", use_container_width=True):
-                backend.config_logic.handle_load_config_action(ss)
+                config_logic.handle_load_config_action(ss)
                 streamlit.rerun()
     
     # Option to edit if a configuration is in memory
@@ -25,12 +25,12 @@ def render_initial_view(ss):
                  else f"A new configuration ('{ss.config_filename}') is in memory"
              streamlit.info(config_status_message)
              if streamlit.button("Edit configuration", key="edit_config_btn", use_container_width=True): # Unified edit button
-                 backend.config_logic.enter_edit_mode(ss)
+                 config_logic.enter_edit_mode(ss)
                  streamlit.rerun()
             
              # Option to clear memory (this is still inside the outer "if ss.config_data is not None:")
              if streamlit.button("Clear configuration from memory", key="clear_memory_btn", use_container_width=True, help="Removes any loaded or new configuration from the current session"):
-                result = backend.config_logic.clear_config_from_memory(ss)
+                result = config_logic.clear_config_from_memory(ss)
                 if result and result.get('message'):
                     streamlit.info(result['message'])
                 streamlit.rerun()
