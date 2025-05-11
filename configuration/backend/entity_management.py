@@ -1,6 +1,6 @@
 # --- Entity Management Helpers ---
+# Helper to add an entity to a list in config_data if the ID is unique.
 def _add_entity(ss, entities_key, entity_id, entity_data, entity_name_singular):
-    """Helper to add an entity to a list in config_data if the ID is unique."""
     if not entity_id:
         return {'type': 'warning', 'message': f"{entity_name_singular} ID cannot be empty"}
     
@@ -13,8 +13,8 @@ def _add_entity(ss, entities_key, entity_id, entity_data, entity_name_singular):
     ss.config_data[entities_key].append(entity_data)
     return {'type': 'success', 'message': f"{entity_name_singular} '{entity_id}' added"}
 
+# Helper to remove an entity from a list in config_data by its ID.
 def _remove_entity(ss, entities_key, entity_id_to_remove, entity_name_singular):
-    """Helper to remove an entity from a list in config_data by its ID."""
     if not entity_id_to_remove:
         return {'type': 'warning', 'message': f"No {entity_name_singular.lower()} selected to remove"}
         

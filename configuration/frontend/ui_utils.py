@@ -1,16 +1,12 @@
 import streamlit
 
+# Displays a Streamlit success, error, info, or warning message.
+# Args:
+#   result (dict): A dictionary with 'type' and 'message' keys.
+#                  'type' can be 'success', 'error', 'info', 'warning'.
+# Returns:
+#   bool: True if a message was displayed, False otherwise.
 def display_operation_result(result):
-    """
-    Displays a Streamlit success, error, info, or warning message.
-
-    Args:
-        result (dict): A dictionary with 'type' and 'message' keys.
-                       'type' can be 'success', 'error', 'info', 'warning'.
-    
-    Returns:
-        bool: True if a message was displayed, False otherwise.
-    """
     if not result or not isinstance(result, dict) or not result.get('message') or not result.get('type'):
         return False
 
