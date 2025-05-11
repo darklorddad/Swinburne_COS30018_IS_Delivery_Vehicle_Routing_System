@@ -1,35 +1,22 @@
-Development Guidelines
-
-These guidelines are established to ensure consistency, maintainability, and efficiency across all development projects. 
-Adherence to these principles is crucial for successful project outcomes.
-
 Core Principles
 
 Modularity and API-Driven Design:
-Strive for highly modular components. 
-Each module should be a self-contained unit with a well-defined purpose.
-Design components and systems with an "API-first" approach. 
-Interactions between modules should occur through clearly defined interfaces, promoting plug-and-play capabilities.
 
+Strive for highly modular components. Each module should be a self-contained unit with a well-defined purpose.
+Design components and systems with an "API-first" approach. Interactions between modules should occur through clearly defined interfaces, promoting plug-and-play capabilities.
 Separation of Concerns:
-Strictly maintain the separation between front-end and back-end logic. 
-Do not mix presentation layer code with business logic or data access layers.
 
-Code Style Consistency:
-Adhere to the established code style guide for the project or language. 
-Consistency in code formatting, naming conventions, and structure is paramount for readability and maintainability.
+Strictly maintain the separation between front-end and back-end logic. Do not mix presentation layer code with business logic or data access layers.
+Code Style and Readability:
 
+Adhere to the established code style guide for the project or language. Consistency in code formatting, naming conventions, and structure is paramount for readability and maintainability.
+Ensure code is well-spaced for clarity. For instance, include spaces around operators (e.g., variable_name = value + 5 rather than variable_name=value+5).
+All code comments must be useful and provide necessary clarification, avoiding redundancy. For single-line comments, use the standard comment character for the programming language (e.g., # in Python, // in JavaScript/Java/C#). Multi-line comments or docstrings should be used appropriately as per language conventions, but avoid using them for trivial single-line remarks.
 Redundancy Reduction (DRY - Don't Repeat Yourself):
-New Implementations: Before adding new functionality, thoroughly check if similar or identical implementations already exist within the codebase. 
-Leverage existing solutions where possible to avoid duplication of effort and code.
-Removing Implementations: When removing or deprecating a feature or piece of code, ensure that all associated and no-longer-needed assets, configurations, or dependent code snippets are also removed. 
-This includes orphaned functions, unused variables, dead code paths, and obsolete documentation.
 
-Avoid the use of emojis
+New Implementations: Before adding new functionality, thoroughly check if similar or identical implementations already exist within the codebase. Leverage existing solutions where possible to avoid duplication of effort and code.
+Removing Implementations: When removing or deprecating a feature or piece of code, ensure that all associated and no-longer-needed assets, configurations, or dependent code snippets are also removed. This includes orphaned functions, unused variables, dead code paths, and obsolete documentation.
+Professional Communication and Standards:
 
-Make sure to use British English
-
-No redundant comment, all comment must be useful, make sure for the comments you use # instead of "
-
-When you are using =, make sure to keep space before and after, basically space things out nicely so they are not so compact and hard to read
-
+Employ British English for all written documentation, code comments, commit messages, and user-facing text.
+Avoid the use of emojis in all professional communications and code artefacts.
