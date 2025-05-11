@@ -29,7 +29,7 @@ def render_config_tab(ss):
                     <body></body>
                 </html>
                 """,
-                height=1
+                height = 1
             )
         config_logic.finalize_download(ss)
         # streamlit.rerun() could be used here to clear the "Downloading..." message faster if needed.

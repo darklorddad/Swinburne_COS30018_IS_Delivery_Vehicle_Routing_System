@@ -22,11 +22,11 @@ def load_config_from_uploaded_file(uploaded_file):
 # Converts a Python dictionary configuration to a JSON formatted string.
 # Returns an empty string if config_data is None.
 # Returns "{}" on a serialisation error.
-def config_to_json_string(config_data, indent=2):
+def config_to_json_string(config_data, indent = 2):
     if config_data is None:
         return "" # Maintains original behaviour for None input.
     try:
-        return json.dumps(config_data, indent=indent)
+        return json.dumps(config_data, indent = indent)
     except Exception as e: # Catches a broad range of potential serialisation errors.
         print(f"Error serialising config to JSON: {e}")
         return "{}" # Returns an empty JSON object string on error.
