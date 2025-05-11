@@ -1,7 +1,5 @@
 import json
 
-# --- Configuration File Handling Logic ---
-
 # Loads configuration from a Streamlit UploadedFile object.
 # Returns a Python dictionary, or None if an error occurs.
 def load_config_from_uploaded_file(uploaded_file):
