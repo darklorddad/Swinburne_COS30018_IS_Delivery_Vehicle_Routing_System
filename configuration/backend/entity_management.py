@@ -65,7 +65,6 @@ def handle_filename_update(ss):
     filename_input_widget's current value.
     Called on_change of the filename text input.
     """
-    # ss = streamlit.session_state # Now passed as parameter
     new_filename_base = ss.get("filename_input_widget") # Key of the text_input widget
     if new_filename_base: # Ensure not empty
         new_full_filename = f"{new_filename_base}.json" if not new_filename_base.endswith(".json") else new_filename_base
@@ -80,7 +79,6 @@ def handle_warehouse_coordinates_update(ss):
     the number input widgets' current values.
     Called on_change of either warehouse coordinate number input.
     """
-    # ss = streamlit.session_state # Now passed as parameter
     wh_x_val = ss.get("wh_x_input_widget") # Key of the X number_input
     wh_y_val = ss.get("wh_y_input_widget") # Key of the Y number_input
 
