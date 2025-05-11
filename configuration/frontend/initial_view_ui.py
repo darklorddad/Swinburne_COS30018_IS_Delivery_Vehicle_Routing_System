@@ -1,8 +1,8 @@
 import streamlit
 from configuration.backend import config_logic
 
+# Renders the initial view of the Configuration tab.
 def render_initial_view(ss):
-    """Renders the initial view of the Configuration tab"""
     with streamlit.expander("Create or Load Configuration", expanded = True):
         streamlit.markdown("---")
         col_create_btn, col_load_btn = streamlit.columns(2)
