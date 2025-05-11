@@ -1,9 +1,9 @@
 import streamlit
-import app_logic
+import backend.config_logic
 
 def render_edit_view(ss):
     """Renders the 'Edit Configuration' view."""
-    validation_result = app_logic.validate_edit_mode_preconditions(ss)
+    validation_result = backend.config_logic.validate_edit_mode_preconditions(ss)
     if not validation_result['valid']:
         if validation_result.get('message') and validation_result.get('type') == 'warning':
             streamlit.warning(validation_result['message'])
@@ -20,7 +20,7 @@ def render_edit_view(ss):
             "Filename", 
             value=current_filename_base,
             key="filename_input_widget",
-            on_change=app_logic.handle_filename_update
+            on_change=backend.config_logic.handle_filename_update
         )
 
         wh_coords = ss.config_data.get("warehouse_coordinates_x_y", [0, 0])
@@ -31,14 +31,14 @@ def render_edit_view(ss):
             value=int(wh_coords[0]), 
             key="wh_x_input_widget",
             format="%d",
-            on_change=app_logic.handle_warehouse_coordinates_update
+            on_change=backend.config_logic.handle_warehouse_coordinates_update
         )
         col_wh_y.number_input(
             "Warehouse Y", 
             value=int(wh_coords[1]), 
             key="wh_y_input_widget",
             format="%d",
-            on_change=app_logic.handle_warehouse_coordinates_update
+            on_change=backend.config_logic.handle_warehouse_coordinates_update
         )
 
     with streamlit.expander("Parcels Management", expanded=True):
@@ -50,7 +50,7 @@ def render_edit_view(ss):
         new_parcel_weight = col_p_weight.number_input("Weight", value=0, key="new_parcel_weight", min_value=0, format="%d")
         
         if streamlit.button("Add parcel", key="add_parcel_btn", use_container_width=True):
-            result = app_logic.add_parcel(
+            result = backend.config_logic.add_parcel(
                 ss, 
                 new_parcel_id, 
                 new_parcel_x, 
@@ -72,7 +72,7 @@ def render_edit_view(ss):
             )
             if streamlit.button("Remove selected parcel", key="remove_parcel_btn_new_row", use_container_width=True):
                 if selected_parcel_to_remove:
-                    result = app_logic.remove_parcel(ss, selected_parcel_to_remove)
+                    result = backend.config_logic.remove_parcel(ss, selected_parcel_to_remove)
                     streamlit.rerun()
                 else:
                     streamlit.warning("Please select a parcel ID to remove.")
@@ -89,7 +89,7 @@ def render_edit_view(ss):
         new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value=0, min_value=0, format="%d", key="new_agent_cap_weight_simplified")
 
         if streamlit.button("Add agent", key="add_agent_btn_simplified", use_container_width=True):
-            result = app_logic.add_delivery_agent(
+            result = backend.config_logic.add_delivery_agent(
                 ss,
                 new_agent_id,
                 new_agent_cap_weight
@@ -109,7 +109,7 @@ def render_edit_view(ss):
             )
             if streamlit.button("Remove selected agent", key="remove_agent_btn_new_row", use_container_width=True):
                 if selected_agent_to_remove:
-                    result = app_logic.remove_delivery_agent(ss, selected_agent_to_remove)
+                    result = backend.config_logic.remove_delivery_agent(ss, selected_agent_to_remove)
                     streamlit.rerun()
                 else:
                     streamlit.warning("Please select an agent ID to remove.")
@@ -123,17 +123,17 @@ def render_edit_view(ss):
 
     with col_cancel_action:
         if streamlit.button("Cancel", key="cancel_edit_btn", use_container_width=True):
-            app_logic.handle_cancel_edit(ss)
+            backend.config_logic.handle_cancel_edit(ss)
             streamlit.rerun()
 
     with col_save_edits_action:
         if streamlit.button("Save", key="save_edits_btn", use_container_width=True, help="Saves the current configuration and returns to the menu"):
-            result = app_logic.handle_save_edits(ss)
+            result = backend.config_logic.handle_save_edits(ss)
             if result and result.get('type') == 'success':
                 streamlit.success(result['message'])
             streamlit.rerun()
     
     with col_save_download_action:
         if streamlit.button("Save and download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu"):
-            app_logic.handle_save_and_download(ss)
+            backend.config_logic.handle_save_and_download(ss)
             streamlit.rerun()

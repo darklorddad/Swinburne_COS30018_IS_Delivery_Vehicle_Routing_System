@@ -1,5 +1,5 @@
 import streamlit
-import app_logic
+import backend.config_logic
 
 def render_initial_view(ss):
     """Renders the initial view of the Configuration tab."""
@@ -8,12 +8,12 @@ def render_initial_view(ss):
         col_create_btn, col_load_btn = streamlit.columns(2)
         with col_create_btn:
             if streamlit.button("New configuration", key="create_new_config_action_btn", help="Create a new configuration", use_container_width=True):
-                app_logic.handle_new_config_action(ss)
+                backend.config_logic.handle_new_config_action(ss)
                 streamlit.rerun()
         
         with col_load_btn:
             if streamlit.button("Load configuration", key="load_config_action_btn", help="Load configuration by uploading a JSON configuration file", use_container_width=True):
-                app_logic.handle_load_config_action(ss)
+                backend.config_logic.handle_load_config_action(ss)
                 streamlit.rerun()
     
     # Option to edit if a configuration is in memory
