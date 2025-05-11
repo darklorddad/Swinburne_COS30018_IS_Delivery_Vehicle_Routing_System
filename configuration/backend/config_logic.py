@@ -1,4 +1,4 @@
-# Facade for configuration logic, importing from specialized modules.
+# Facade for configuration logic, importing from specialised modules.
 
 # Imports from state_management.py
 from .state_management import (
