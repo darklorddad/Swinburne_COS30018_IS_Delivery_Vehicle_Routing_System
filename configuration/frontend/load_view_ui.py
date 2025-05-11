@@ -1,11 +1,11 @@
 import streamlit
 from configuration.backend import config_logic
 
+# Renders the 'Load Configuration' view.
 def render_load_view(ss):
-    """Renders the 'Load Configuration' view"""
     with streamlit.expander("Upload Configuration File", expanded = True):
         streamlit.markdown("---")
-        # File uploader now stores to a buffer, managed by on_change
+        # File uploader now stores to a buffer, managed by on_change.
         streamlit.file_uploader(
             "Select a JSON configuration file to prepare for loading",
             type = ["json"],
