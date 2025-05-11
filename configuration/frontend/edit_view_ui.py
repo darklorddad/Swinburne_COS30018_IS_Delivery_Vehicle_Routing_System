@@ -12,16 +12,16 @@ def render_edit_view(ss):
 
     # streamlit.subheader(f"Editing Configuration: {ss.config_filename}") # Removed
     
-    with streamlit.expander("General Settings", expanded=True):
+    with streamlit.expander("General Settings", expanded = True):
         streamlit.markdown("---")
         current_filename_base = ss.config_filename.replace(".json", "")
         
         streamlit.text_input(
             "Filename", 
-            value=current_filename_base,
-            key="filename_input_widget",
-            on_change=config_logic.handle_filename_update,
-            args=(ss,)
+            value = current_filename_base,
+            key = "filename_input_widget",
+            on_change = config_logic.handle_filename_update,
+            args = (ss,)
         )
 
         wh_coords = ss.config_data.get("warehouse_coordinates_x_y", [0, 0])
@@ -29,30 +29,30 @@ def render_edit_view(ss):
         
         col_wh_x.number_input(
             "Warehouse X", 
-            value=int(wh_coords[0]), 
-            key="wh_x_input_widget",
-            format="%d",
-            on_change=config_logic.handle_warehouse_coordinates_update,
-            args=(ss,)
+            value = int(wh_coords[0]), 
+            key = "wh_x_input_widget",
+            format = "%d",
+            on_change = config_logic.handle_warehouse_coordinates_update,
+            args = (ss,)
         )
         col_wh_y.number_input(
             "Warehouse Y", 
-            value=int(wh_coords[1]), 
-            key="wh_y_input_widget",
-            format="%d",
-            on_change=config_logic.handle_warehouse_coordinates_update,
-            args=(ss,)
+            value = int(wh_coords[1]), 
+            key = "wh_y_input_widget",
+            format = "%d",
+            on_change = config_logic.handle_warehouse_coordinates_update,
+            args = (ss,)
         )
 
-    with streamlit.expander("Parcels Management", expanded=True):
+    with streamlit.expander("Parcels Management", expanded = True):
         streamlit.markdown("---")
         col_p_id, col_p_x, col_p_y, col_p_weight = streamlit.columns([2,1,1,1])
-        new_parcel_id = col_p_id.text_input("Parcel ID", key="new_parcel_id")
-        new_parcel_x = col_p_x.number_input("Parcel X", value=0, key="new_parcel_x", format="%d")
-        new_parcel_y = col_p_y.number_input("Parcel Y", value=0, key="new_parcel_y", format="%d")
-        new_parcel_weight = col_p_weight.number_input("Weight", value=0, key="new_parcel_weight", min_value=0, format="%d")
+        new_parcel_id = col_p_id.text_input("Parcel ID", key = "new_parcel_id")
+        new_parcel_x = col_p_x.number_input("Parcel X", value = 0, key = "new_parcel_x", format = "%d")
+        new_parcel_y = col_p_y.number_input("Parcel Y", value = 0, key = "new_parcel_y", format = "%d")
+        new_parcel_weight = col_p_weight.number_input("Weight", value = 0, key = "new_parcel_weight", min_value = 0, format = "%d")
         
-        if streamlit.button("Add parcel", key="add_parcel_btn", use_container_width=True):
+        if streamlit.button("Add parcel", key = "add_parcel_btn", use_container_width = True):
             result = config_logic.add_parcel(
                 ss, 
                 new_parcel_id, 
@@ -81,7 +81,7 @@ def render_edit_view(ss):
                     streamlit.warning("Please select a parcel ID to remove")
             
             streamlit.markdown("---")
-            streamlit.dataframe(ss.config_data["parcels"], use_container_width=True)
+            streamlit.dataframe(ss.config_data["parcels"], use_container_width = True)
         else:
             streamlit.info("No parcels added yet")
 
@@ -118,7 +118,7 @@ def render_edit_view(ss):
                     streamlit.warning("Please select an agent ID to remove")
             
             streamlit.markdown("---")
-            streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)
+            streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width = True)
         else:
             streamlit.info("No delivery agents added yet")
     
