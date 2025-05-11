@@ -1,8 +1,8 @@
 import streamlit
 from configuration.backend import config_logic
 
+# Renders the 'Edit Configuration' view.
 def render_edit_view(ss):
-    """Renders the 'Edit Configuration' view"""
     validation_result = config_logic.validate_edit_mode_preconditions(ss)
     if not validation_result['valid']:
         if validation_result.get('message') and validation_result.get('type') == 'warning':
