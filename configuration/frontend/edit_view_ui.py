@@ -69,11 +69,11 @@ def render_edit_view(ss):
             parcel_ids_to_remove = [p['id'] for p in ss.config_data["parcels"]]
             selected_parcel_to_remove = streamlit.selectbox(
                 "Select parcel ID to remove", 
-                options=[""] + parcel_ids_to_remove,
-                index=0,
-                key="remove_parcel_select"
+                options = [""] + parcel_ids_to_remove,
+                index = 0,
+                key = "remove_parcel_select"
             )
-            if streamlit.button("Remove selected parcel", key="remove_parcel_btn_new_row", use_container_width=True):
+            if streamlit.button("Remove selected parcel", key = "remove_parcel_btn_new_row", use_container_width = True):
                 if selected_parcel_to_remove:
                     result = config_logic.remove_parcel(ss, selected_parcel_to_remove)
                     streamlit.rerun()
@@ -85,13 +85,13 @@ def render_edit_view(ss):
         else:
             streamlit.info("No parcels added yet")
 
-    with streamlit.expander("Delivery Agents Management", expanded=True):
+    with streamlit.expander("Delivery Agents Management", expanded = True):
         streamlit.markdown("---")
         col_a_id, col_a_cap_weight = streamlit.columns([2,1])
-        new_agent_id = col_a_id.text_input("Agent ID", key="new_agent_id_simplified")
-        new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value=0, min_value=0, format="%d", key="new_agent_cap_weight_simplified")
+        new_agent_id = col_a_id.text_input("Agent ID", key = "new_agent_id_simplified")
+        new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value = 0, min_value = 0, format = "%d", key = "new_agent_cap_weight_simplified")
 
-        if streamlit.button("Add agent", key="add_agent_btn_simplified", use_container_width=True):
+        if streamlit.button("Add agent", key = "add_agent_btn_simplified", use_container_width = True):
             result = config_logic.add_delivery_agent(
                 ss,
                 new_agent_id,
@@ -106,11 +106,11 @@ def render_edit_view(ss):
             agent_ids_to_remove = [a['id'] for a in ss.config_data["delivery_agents"]]
             selected_agent_to_remove = streamlit.selectbox(
                 "Select agent ID to remove", 
-                options=[""] + agent_ids_to_remove,
-                index=0,
-                key="remove_agent_select_simplified"
+                options = [""] + agent_ids_to_remove,
+                index = 0,
+                key = "remove_agent_select_simplified"
             )
-            if streamlit.button("Remove selected agent", key="remove_agent_btn_new_row", use_container_width=True):
+            if streamlit.button("Remove selected agent", key = "remove_agent_btn_new_row", use_container_width = True):
                 if selected_agent_to_remove:
                     result = config_logic.remove_delivery_agent(ss, selected_agent_to_remove)
                     streamlit.rerun()
@@ -125,18 +125,18 @@ def render_edit_view(ss):
     col_cancel_action, col_save_edits_action, col_save_download_action = streamlit.columns([1,1,1])
 
     with col_cancel_action:
-        if streamlit.button("Cancel", key="cancel_edit_btn", use_container_width=True):
+        if streamlit.button("Cancel", key = "cancel_edit_btn", use_container_width = True):
             config_logic.handle_cancel_edit(ss)
             streamlit.rerun()
 
     with col_save_edits_action:
-        if streamlit.button("Save", key="save_edits_btn", use_container_width=True, help="Saves the current configuration and returns to the menu"):
+        if streamlit.button("Save", key = "save_edits_btn", use_container_width = True, help = "Saves the current configuration and returns to the menu"):
             result = config_logic.handle_save_edits(ss)
             if result and result.get('type') == 'success':
                 streamlit.success(result['message'])
             streamlit.rerun()
     
     with col_save_download_action:
-        if streamlit.button("Save and download", key="save_download_btn", use_container_width=True, help="Saves the current configuration, downloads it, and returns to the menu"):
+        if streamlit.button("Save and download", key = "save_download_btn", use_container_width = True, help = "Saves the current configuration, downloads it, and returns to the menu"):
             config_logic.handle_save_and_download(ss)
             streamlit.rerun()

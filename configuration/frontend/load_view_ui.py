@@ -3,15 +3,15 @@ from configuration.backend import config_logic
 
 def render_load_view(ss):
     """Renders the 'Load Configuration' view"""
-    with streamlit.expander("Upload Configuration File", expanded=True):
+    with streamlit.expander("Upload Configuration File", expanded = True):
         streamlit.markdown("---")
         # File uploader now stores to a buffer, managed by on_change
         streamlit.file_uploader(
             "Select a JSON configuration file to prepare for loading",
-            type=["json"],
-            key="config_uploader_buffer_widget",
-            on_change=config_logic.handle_file_uploader_change,
-            args=(ss,)
+            type = ["json"],
+            key = "config_uploader_buffer_widget",
+            on_change = config_logic.handle_file_uploader_change,
+            args = (ss,)
         )
         # Direct buffer manipulation logic removed
 
@@ -19,13 +19,13 @@ def render_load_view(ss):
     col_cancel_load_action, col_load_action = streamlit.columns([1,1])
 
     with col_cancel_load_action:
-        if streamlit.button("Cancel", key="cancel_load_action_btn", use_container_width=True):
+        if streamlit.button("Cancel", key = "cancel_load_action_btn", use_container_width = True):
             config_logic.handle_cancel_load_action(ss)
             streamlit.rerun()
 
     with col_load_action:
         load_disabled = ss.uploaded_file_buffer is None
-        if streamlit.button("Load selected configuration", key="confirm_load_btn", use_container_width=True, disabled=load_disabled):
+        if streamlit.button("Load selected configuration", key = "confirm_load_btn", use_container_width = True, disabled = load_disabled):
             result = config_logic.confirm_load_configuration(ss)
             if result:
                 if result['type'] == 'success':

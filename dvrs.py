@@ -1,8 +1,6 @@
 import streamlit
 from configuration.backend import config_logic
-# import json # No longer used
 from configuration.frontend.config_tab_ui import render_config_tab
-# import copy # No longer needed
 
 
 def _apply_custom_styling(ss):
@@ -73,15 +71,15 @@ def _render_main_layout(ss):
             streamlit.header("UI Settings")
             streamlit.toggle(
                 "Show Streamlit Header",
-                value=ss.show_header,
-                key="show_header_toggle_widget", # Changed key to match config_logic
-                on_change=config_logic.handle_show_header_toggle,
-                args=(ss,),
-                help="Toggle the visibility of the default Streamlit header bar."
+                value = ss.show_header,
+                key = "show_header_toggle_widget", # Changed key to match config_logic
+                on_change = config_logic.handle_show_header_toggle,
+                args = (ss,),
+                help = "Toggle the visibility of the default Streamlit header bar."
             )
 
 def main():
-    streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
+    streamlit.set_page_config(layout="wide", page_title="Delivery Vehicle Routing System")
 
     # Initialise session state variables using the function from config_logic
     # Use an alias for streamlit.session_state for brevity
