@@ -14,8 +14,8 @@ DEFAULT_CONFIG_TEMPLATE = {
     ]
 }
 
-def initialize_session_state(ss):
-    """Initializes session state variables if they don't exist"""
+def initialise_session_state(ss):
+    """Initialises session state variables if they don't exist"""
     defaults = {
         "show_header": False,
         "config_data": None,
