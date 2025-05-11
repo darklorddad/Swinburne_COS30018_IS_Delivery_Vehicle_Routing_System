@@ -10,7 +10,8 @@ def render_load_view(ss):
             "Select a JSON configuration file to prepare for loading",
             type=["json"],
             key="config_uploader_buffer_widget",
-            on_change=config_logic.handle_file_uploader_change
+            on_change=config_logic.handle_file_uploader_change,
+            args=(ss,)
         )
         # Direct buffer manipulation logic removed
 

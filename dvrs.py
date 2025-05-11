@@ -80,6 +80,7 @@ def main():
                 value=streamlit.session_state.show_header,
                 key="show_header_toggle_widget", # Changed key to match config_logic
                 on_change=config_logic.handle_show_header_toggle,
+                args=(streamlit.session_state,),
                 help="Toggle the visibility of the default Streamlit header bar."
             )
 

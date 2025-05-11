@@ -20,7 +20,8 @@ def render_edit_view(ss):
             "Filename", 
             value=current_filename_base,
             key="filename_input_widget",
-            on_change=config_logic.handle_filename_update
+            on_change=config_logic.handle_filename_update,
+            args=(ss,)
         )
 
         wh_coords = ss.config_data.get("warehouse_coordinates_x_y", [0, 0])
@@ -31,14 +32,16 @@ def render_edit_view(ss):
             value=int(wh_coords[0]), 
             key="wh_x_input_widget",
             format="%d",
-            on_change=config_logic.handle_warehouse_coordinates_update
+            on_change=config_logic.handle_warehouse_coordinates_update,
+            args=(ss,)
         )
         col_wh_y.number_input(
             "Warehouse Y", 
             value=int(wh_coords[1]), 
             key="wh_y_input_widget",
             format="%d",
-            on_change=config_logic.handle_warehouse_coordinates_update
+            on_change=config_logic.handle_warehouse_coordinates_update,
+            args=(ss,)
         )
 
     with streamlit.expander("Parcels Management", expanded=True):
