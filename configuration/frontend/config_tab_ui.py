@@ -1,9 +1,9 @@
 import streamlit
 import json # For the download component
-import app_logic
-from .config_tab_initial_view import render_initial_view
-from .config_tab_load_view import render_load_view
-from .config_tab_edit_view import render_edit_view
+import backend.config_logic
+from .initial_view_ui import render_initial_view
+from .load_view_ui import render_load_view
+from .edit_view_ui import render_edit_view
 
 def render_config_tab(ss):
     """Renders the entire Configuration tab."""
@@ -31,7 +31,7 @@ def render_config_tab(ss):
                 """,
                 height=1
             )
-        app_logic.finalize_download(ss)
+        config_logic.finalize_download(ss)
         # A streamlit.rerun() might be implicitly handled by other actions,
         # or could be added here if the "Downloading..." message needs to be cleared faster.
 

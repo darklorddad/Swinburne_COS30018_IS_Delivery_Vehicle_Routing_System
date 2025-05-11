@@ -1,15 +1,15 @@
 import streamlit
-import app_logic # Import the new logic module
+from configuration.backend import config_logic
 import json
-from ui_components.config_tab import render_config_tab
+from configuration.frontend.config_tab_ui import render_config_tab
 # import copy # No longer needed
 
 
 def main():
     streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
 
-    # Initialise session state variables using the function from app_logic
-    app_logic.initialize_session_state(streamlit.session_state)
+    # Initialise session state variables using the function from config_logic
+    config_logic.initialize_session_state(streamlit.session_state)
 
     # Dynamically build CSS based on header visibility state
     header_style_properties = "background-color: #1E1E1E !important;" # Always set background color
@@ -78,8 +78,8 @@ def main():
             streamlit.toggle(
                 "Show Streamlit Header",
                 value=streamlit.session_state.show_header,
-                key="show_header_toggle_widget", # Changed key to match app_logic
-                on_change=app_logic.handle_show_header_toggle,
+                key="show_header_toggle_widget", # Changed key to match config_logic
+                on_change=config_logic.handle_show_header_toggle,
                 help="Toggle the visibility of the default Streamlit header bar."
             )
 

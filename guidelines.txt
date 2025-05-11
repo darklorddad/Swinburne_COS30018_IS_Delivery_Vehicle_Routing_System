@@ -1,0 +1,10 @@
+Everything should be done in an API style
+
+Do not mix front end and back end
+
+Respect my code style
+
+Make sure to reduce redundancy, for example, if you added a new implementation, make sure the implementation does not already exist or similar.
+Another example is when you remove an implementation, make sure to remove everything else that does not need to be kept
+
+Do not use emojis
