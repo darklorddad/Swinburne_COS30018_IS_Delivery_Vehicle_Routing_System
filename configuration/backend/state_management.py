@@ -212,11 +212,10 @@ def handle_save_and_download(ss):
     """Handles logic for saving, preparing for download, and exiting edit mode."""
     # Prepare config_to_save strictly according to DEFAULT_CONFIG_TEMPLATE
     config_data_internal = ss.config_data
-    config_to_save = {
-        "warehouse_coordinates_x_y": config_data_internal.get("warehouse_coordinates_x_y"),
-        "parcels": config_data_internal.get("parcels", []),
-        "delivery_agents": config_data_internal.get("delivery_agents", [])
-    }
+    config_to_save = {}
+    for key in DEFAULT_CONFIG_TEMPLATE.keys():
+        config_to_save[key] = config_data_internal.get(key, copy.deepcopy(DEFAULT_CONFIG_TEMPLATE[key]))
+        
     # Ensure snapshot reflects the state being saved
     ss.config_data_snapshot = copy.deepcopy(ss.config_data)
     ss.config_filename_snapshot = ss.config_filename # Commit current filename as snapshot
