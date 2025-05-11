@@ -5,16 +5,11 @@ from configuration.frontend.config_tab_ui import render_config_tab
 # import copy # No longer needed
 
 
-def main():
-    streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
-
-    # Initialise session state variables using the function from config_logic
-    config_logic.initialize_session_state(streamlit.session_state)
-
-    # Dynamically build CSS based on header visibility state
+def _apply_custom_styling(ss):
+    """Applies custom CSS to the Streamlit app."""
     header_style_properties = "background-color: #1E1E1E !important;" # Always set background color
 
-    if not streamlit.session_state.show_header:
+    if not ss.show_header:
         header_style_properties += " display: none !important; visibility: hidden !important;"
 
     custom_css = f"""
@@ -37,9 +32,10 @@ def main():
         }}
     </style>
     """
+    streamlit.markdown(custom_css, unsafe_allow_html=True)
 
-    streamlit.markdown(custom_css, unsafe_allow_html = True)
-
+def _render_main_layout(ss):
+    """Renders the main layout and tabs for the application."""
     # Create columns to center the main content
     col1, col2, col3 = streamlit.columns([2.5, 5, 2.5]) # Adjust ratios to make middle narrower
 
@@ -54,21 +50,21 @@ def main():
         ])
 
         with tab_config:
-            render_config_tab(streamlit.session_state)
+            render_config_tab(ss)
             
         with tab_run:
             streamlit.header("Run Optimization")
-            if streamlit.session_state.config_data is None:
+            if ss.config_data is None:
                 streamlit.warning("Please load a configuration in the 'Configuration' tab first.")
             else:
                 streamlit.write("Initiate the route optimization process here. Progress and logs may be displayed.")
                 streamlit.write("Using configuration:")
-                streamlit.json(streamlit.session_state.config_data)
+                streamlit.json(ss.config_data)
 
 
         with tab_results:
             streamlit.header("Dashboard & Results")
-            if streamlit.session_state.config_data is None: # Or more specific check like "if results exist"
+            if ss.config_data is None: # Or more specific check like "if results exist"
                 streamlit.warning("Please load a configuration and run optimization to see results.")
             else:
                 streamlit.write("Route visualizations and results will appear here.")
@@ -77,12 +73,23 @@ def main():
             streamlit.header("UI Settings")
             streamlit.toggle(
                 "Show Streamlit Header",
-                value=streamlit.session_state.show_header,
+                value=ss.show_header,
                 key="show_header_toggle_widget", # Changed key to match config_logic
                 on_change=config_logic.handle_show_header_toggle,
-                args=(streamlit.session_state,),
+                args=(ss,),
                 help="Toggle the visibility of the default Streamlit header bar."
             )
+
+def main():
+    streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
+
+    # Initialise session state variables using the function from config_logic
+    # Use an alias for streamlit.session_state for brevity
+    ss = streamlit.session_state
+    config_logic.initialize_session_state(ss)
+
+    _apply_custom_styling(ss)
+    _render_main_layout(ss)
 
 if __name__ == "__main__":
     main()
