@@ -5,8 +5,8 @@ from .initial_view_ui import render_initial_view
 from .load_view_ui import render_load_view
 from .edit_view_ui import render_edit_view
 
+# Renders the entire Configuration tab.
 def render_config_tab(ss):
-    """Renders the entire Configuration tab"""
     # Handle pending download if initiated
     if ss.get("initiate_download", False):
         if ss.pending_download_data and ss.pending_download_filename:
@@ -32,8 +32,7 @@ def render_config_tab(ss):
                 height=1
             )
         config_logic.finalize_download(ss)
-        # A streamlit.rerun() might be implicitly handled by other actions,
-        # or could be added here if the "Downloading..." message needs to be cleared faster.
+        # streamlit.rerun() could be used here to clear the "Downloading..." message faster if needed.
 
     if not ss.edit_mode:
         if ss.action_selected == "load":
