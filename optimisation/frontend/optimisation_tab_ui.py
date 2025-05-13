@@ -18,10 +18,6 @@ def render_optimisation_tab(ss):
     # The main tab title "Optimisation" is already provided by Streamlit's tab system.
     # No need for an additional streamlit.header() here.
 
-    # The info message below is now redundant due to the check above.
-    # if not ss.config_data: 
-    #     streamlit.info("INFO: Main configuration not yet loaded. You can load an optimisation script, but running it will require the main configuration from the 'Configuration' tab.")
-
     with streamlit.expander("Upload Optimisation Script", expanded = not ss.optimisation_script_loaded_successfully):
         streamlit.markdown("---")
         # The file uploader's state is managed by Streamlit.
