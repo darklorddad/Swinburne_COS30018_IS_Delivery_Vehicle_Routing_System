@@ -1,6 +1,8 @@
 import streamlit
 from configuration.backend import config_logic
 from configuration.frontend.config_tab_ui import render_config_tab
+from optimisation.backend import optimisation_logic
+from optimisation.frontend.optimisation_tab_ui import render_optimisation_tab
 
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
@@ -58,8 +60,9 @@ def _render_main_layout(ss):
     with col2: # This is the main content area, styled as a card.
         streamlit.title("Delivery Vehicle Routing System")
 
-        tab_config, tab_run, tab_results, tab_settings = streamlit.tabs([
+        tab_config, tab_optimisation, tab_run, tab_results, tab_settings = streamlit.tabs([
             "Configuration",
+            "Optimisation Technique",
             "Run Optimisation",
             "Dashboard & Results",
             "Settings"
@@ -67,16 +70,27 @@ def _render_main_layout(ss):
 
         with tab_config:
             render_config_tab(ss)
+
+        with tab_optimisation:
+            render_optimisation_tab(ss)
             
         with tab_run:
             streamlit.header("Run Optimisation")
             if ss.config_data is None:
                 streamlit.warning("Please load a configuration in the 'Configuration' tab first.")
+            elif not ss.selected_optimisation_technique_id or not ss.optimisation_technique_loaded:
+                streamlit.warning("Please select and apply an optimisation technique in the 'Optimisation Technique' tab first.")
             else:
-                streamlit.write("Initiate the route optimization process here. Progress and logs may be displayed.")
+                selected_technique_name = ss.available_optimisation_techniques.get(ss.selected_optimisation_technique_id, "Unknown")
+                streamlit.write(f"Ready to run optimisation using **{selected_technique_name}**.")
                 streamlit.write("Using configuration:")
                 streamlit.json(ss.config_data)
-
+                streamlit.write("With parameters (example):")
+                streamlit.json(ss.optimisation_params if ss.optimisation_params else {"note": "No specific parameters set for this technique yet."})
+                # Add button to start optimisation process
+                if streamlit.button("Start Optimisation Process", key="start_optimisation_button"):
+                    streamlit.write("Optimisation process started... (placeholder)")
+                    # Here you would call the actual MRA logic with config_data and optimisation_params
 
         with tab_results:
             streamlit.header("Dashboard & Results")
@@ -103,6 +117,7 @@ def main():
     # Use an alias for streamlit.session_state for brevity
     ss = streamlit.session_state
     config_logic.initialise_session_state(ss)
+    optimisation_logic.initialise_session_state(ss) # Initialise optimisation state
 
     _apply_custom_styling(ss)
     _render_main_layout(ss)
