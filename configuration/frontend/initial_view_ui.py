@@ -20,9 +20,11 @@ def render_initial_view(ss):
     if ss.config_data is not None:
         with streamlit.expander("Manage Current Configuration", expanded = True):
              streamlit.markdown("---")
-             config_status_message = f"A loaded configuration ('{ss.config_filename}') is in memory" \
-                 if ss.last_uploaded_filename is not None \
+             config_status_message = (
+                 f"A loaded configuration ('{ss.config_filename}') is in memory"
+                 if ss.last_uploaded_filename is not None
                  else f"A new configuration ('{ss.config_filename}') is in memory"
+             )
              streamlit.info(config_status_message)
              if streamlit.button("Edit configuration", key = "edit_config_btn", use_container_width = True): # Unified edit button
                  config_logic.enter_edit_mode(ss)

@@ -30,7 +30,9 @@ def render_load_view(ss):
             result = config_logic.confirm_load_configuration(ss)
             if display_operation_result(result):
                 # Rerun for most outcomes of confirm_load_configuration
-                if result and (result.get('type') in ['success', 'info'] or \
-                   (result.get('type') == 'error' and "Ensure it's valid JSON" in result.get('message', '')) or \
-                   (result.get('type') == 'warning' and "already processed" in result.get('message', ''))):
+                if result and (
+                    result.get('type') in ['success', 'info'] or
+                    (result.get('type') == 'error' and "Ensure it's valid JSON" in result.get('message', '')) or
+                    (result.get('type') == 'warning' and "already processed" in result.get('message', ''))
+                ):
                     streamlit.rerun()
