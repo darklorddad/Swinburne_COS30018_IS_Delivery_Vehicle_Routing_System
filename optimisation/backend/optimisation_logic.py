@@ -47,6 +47,7 @@ def initialise_session_state(ss):
         ss.optimisation_script_filename = None
         ss.optimisation_script_param_schema = None # Schema extracted from the script
         ss.optimisation_script_user_values = {} # User-defined values for the script's parameters
+        ss.optimisation_script_user_values_snapshot = {} # Snapshot for cancelling parameter edits
         ss.optimisation_script_loaded_successfully = False
         ss.optimisation_script_error_message = None
         
@@ -112,6 +113,7 @@ def handle_optimisation_file_upload(ss):
     ss.optimisation_script_filename = uploaded_file.name
     ss.optimisation_script_param_schema = None
     ss.optimisation_script_user_values = {}
+    ss.optimisation_script_user_values_snapshot = {} # Clear snapshot as well
     ss.optimisation_script_loaded_successfully = False
     ss.optimisation_script_error_message = None
     ss.optimisation_results = None 
@@ -234,3 +236,27 @@ def handle_cancel_load_script_action(ss):
     ss.optimisation_script_error_message = None
     
     ss.optimisation_action_selected = None # Reset to initial view
+
+
+# --- Optimisation Parameter Editing View Management ---
+
+# Switches to the parameter editing view.
+def handle_edit_parameters_action(ss):
+    import copy # For deepcopy
+    ss.optimisation_script_user_values_snapshot = copy.deepcopy(ss.optimisation_script_user_values)
+    ss.optimisation_action_selected = "edit_parameters"
+
+# Saves the edited parameters and returns to the initial optimisation view.
+def handle_save_parameters_action(ss):
+    # Parameters are already updated in ss.optimisation_script_user_values by form widgets.
+    # Here, we just commit this state by clearing the snapshot and changing view.
+    ss.optimisation_script_user_values_snapshot = {} 
+    ss.optimisation_action_selected = None # Return to initial view
+    return {'type': 'success', 'message': "Parameters updated successfully."}
+
+# Cancels parameter editing, reverting to snapshot, and returns to initial view.
+def handle_cancel_edit_parameters_action(ss):
+    import copy # For deepcopy
+    ss.optimisation_script_user_values = copy.deepcopy(ss.optimisation_script_user_values_snapshot)
+    ss.optimisation_script_user_values_snapshot = {}
+    ss.optimisation_action_selected = None # Return to initial view
