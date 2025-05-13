@@ -6,7 +6,7 @@ from optimisation.frontend.optimisation_tab_ui import render_optimisation_tab
 
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
-    header_style_properties = "background-color: transparent !important;" # Set background to transparent
+    header_style_properties = "background-color: transparent !important;" 
 
     if not ss.show_header:
         header_style_properties += " display: none !important; visibility: hidden !important;"
