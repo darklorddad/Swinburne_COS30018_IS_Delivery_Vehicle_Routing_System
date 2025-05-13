@@ -1,1 +1,1 @@
-# This file makes 'configuration' a Python package.
+# This file makes "configuration" a Python package

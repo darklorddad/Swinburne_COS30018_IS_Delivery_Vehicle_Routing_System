@@ -1,1 +1,1 @@
-# This file makes 'frontend' a Python package.
+# This file makes "frontend" a Python package
