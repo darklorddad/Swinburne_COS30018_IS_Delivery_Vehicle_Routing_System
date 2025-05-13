@@ -8,33 +8,34 @@ def render_initial_optimisation_view(ss):
         streamlit.markdown("---")
 
         if ss.optimisation_script_loaded_successfully and ss.optimisation_script_filename:
-            streamlit.success(f"Script '{ss.optimisation_script_filename}' loaded successfully.")
+            streamlit.success(f"{ss.optimisation_script_filename}")
+            col_edit_btn, col_clear_btn = streamlit.columns(2)
             
-            if streamlit.button("Edit Script Parameters", key="edit_script_parameters_btn", use_container_width=True, help="Edit the parameters for the loaded script."):
-                optimisation_logic.handle_edit_parameters_action(ss)
-                streamlit.rerun()
+            with col_edit_btn:
+                if streamlit.button("Edit script", key="edit_script_parameters_btn", use_container_width=True):
+                    optimisation_logic.handle_edit_parameters_action(ss)
+                    streamlit.rerun()
             
-            if streamlit.button("Clear script from memory", key="clear_optimisation_script_initial_view_btn", use_container_width=True, help="Clears the loaded script and its parameters."):
-                optimisation_logic.clear_optimisation_script(ss)
-                streamlit.rerun()
-            
-            streamlit.markdown("---") # Separator
+            with col_clear_btn:
+                if streamlit.button("Clear script", key="clear_optimisation_script_initial_view_btn", use_container_width=True):
+                    optimisation_logic.clear_optimisation_script(ss)
+                    streamlit.rerun()
             
             # "Load Another Optimisation Script" button moved here
-            if streamlit.button("Load Another Optimisation Script", key="initiate_load_another_script_btn", use_container_width=True, help="Replace the current script with a new one."):
+            if streamlit.button("Load script", key="initiate_load_another_script_btn", use_container_width=True):
                 optimisation_logic.handle_initiate_load_script_action(ss)
                 streamlit.rerun()
 
         elif ss.optimisation_script_error_message and not ss.optimisation_script_loaded_successfully:
             streamlit.error(ss.optimisation_script_error_message)
             # Still show "Load New Optimisation Script" button below if there was an error and no script is loaded
-            if streamlit.button("Load New Optimisation Script", key="initiate_load_script_error_case_btn", use_container_width=True, help="Load a Python script for optimisation."):
+            if streamlit.button("Load script", key="initiate_load_script_error_case_btn", use_container_width=True):
                 optimisation_logic.handle_initiate_load_script_action(ss)
                 streamlit.rerun()
 
         elif not ss.optimisation_script_loaded_successfully: # No script loaded, no error message shown yet
             # Button to load a new script
-            if streamlit.button("Load New Optimisation Script", key="initiate_load_script_no_script_btn", use_container_width=True, help="Load a Python script for optimisation."):
+            if streamlit.button("Load script", key="initiate_load_script_no_script_btn", use_container_width=True):
                 optimisation_logic.handle_initiate_load_script_action(ss)
                 streamlit.rerun()
 

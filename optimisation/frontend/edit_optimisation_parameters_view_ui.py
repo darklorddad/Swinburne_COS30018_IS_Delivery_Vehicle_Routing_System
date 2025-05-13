@@ -78,7 +78,6 @@ def render_edit_optimisation_parameters_view(ss):
                     label, value=val, help=help_text, key=widget_key
                 )
     
-    streamlit.markdown("---")
     col_cancel, col_save = streamlit.columns(2)
     with col_cancel:
         if streamlit.button("Cancel", key="cancel_edit_params_btn", use_container_width=True):
@@ -86,7 +85,7 @@ def render_edit_optimisation_parameters_view(ss):
             streamlit.rerun()
     
     with col_save:
-        if streamlit.button("Save Parameters", key="save_edit_params_btn", use_container_width=True):
+        if streamlit.button("Save", key="save_edit_params_btn", use_container_width=True):
             result = optimisation_logic.handle_save_parameters_action(ss)
             display_operation_result(result) # Show success message
             streamlit.rerun()
