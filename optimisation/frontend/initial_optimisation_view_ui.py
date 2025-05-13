@@ -73,7 +73,3 @@ def render_initial_optimisation_view(ss):
                     streamlit.json(ss.optimisation_results)
             else: 
                  streamlit.warning("Optimisation script completed but returned no results (None).")
-
-    elif not ss.optimisation_script_loaded_successfully and not ss.optimisation_script_error_message: 
-        # No script loaded and no persistent error message shown in manage section
-        streamlit.caption("Click 'Load New Optimisation Script' to begin configuring an optimisation technique.")
