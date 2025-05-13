@@ -70,11 +70,11 @@ def render_edit_view(ss):
                 key = "remove_parcel_select"
             )
             if streamlit.button("Remove selected parcel", key = "remove_parcel_btn_new_row", use_container_width = True):
-                if selected_parcel_to_remove:
-                    config_logic.remove_parcel(ss, selected_parcel_to_remove) # Result not directly used for message here
+                # The backend's remove_parcel (via _remove_entity) handles the case where selected_parcel_to_remove is empty.
+                result = config_logic.remove_parcel(ss, selected_parcel_to_remove)
+                display_operation_result(result)
+                if result and result.get('type') == 'success': # Rerun only on successful removal to update dataframe.
                     streamlit.rerun()
-                else:
-                    streamlit.warning("Please select a parcel ID to remove")
             
             streamlit.markdown("---")
             streamlit.dataframe(ss.config_data["parcels"], use_container_width = True)
@@ -104,11 +104,11 @@ def render_edit_view(ss):
                 key = "remove_agent_select_simplified"
             )
             if streamlit.button("Remove selected agent", key = "remove_agent_btn_new_row", use_container_width = True):
-                if selected_agent_to_remove:
-                    config_logic.remove_delivery_agent(ss, selected_agent_to_remove) # Result not directly used for message here
+                # The backend's remove_delivery_agent (via _remove_entity) handles the case where selected_agent_to_remove is empty.
+                result = config_logic.remove_delivery_agent(ss, selected_agent_to_remove)
+                display_operation_result(result)
+                if result and result.get('type') == 'success': # Rerun only on successful removal to update dataframe.
                     streamlit.rerun()
-                else:
-                    streamlit.warning("Please select an agent ID to remove")
             
             streamlit.markdown("---")
             streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width = True)
