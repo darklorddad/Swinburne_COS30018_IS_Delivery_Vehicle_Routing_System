@@ -31,10 +31,21 @@ def render_optimisation_tab(ss):
             "Select a Python optimisation script",
             type=["py"],
             key="optimisation_file_uploader_widget", # Session state key for the widget
-            on_change=optimisation_logic.handle_optimisation_file_upload,
-            args=(ss,),
+            # on_change callback removed, loading is now triggered by the button below
+            args=(ss,), # args might not be needed anymore if on_change is gone, but keeping for now.
             help="The script must be UTF-8 encoded and contain 'get_params_schema()' and 'run_optimisation(config_data, params)' functions."
         )
+
+        # Button to explicitly load the script after selection
+        if streamlit.button("Load Selected Script", key="load_optimisation_script_button", use_container_width=True):
+            # Check if a file has been uploaded first
+            if ss.get("optimisation_file_uploader_widget") is not None:
+                optimisation_logic.handle_optimisation_file_upload(ss)
+                streamlit.rerun()
+            else:
+                # Optionally, provide feedback if no file is selected but button is pressed
+                streamlit.toast("Please select a script file first.", icon="⚠️")
+
 
     if ss.optimisation_script_error_message:
         streamlit.error(ss.optimisation_script_error_message)

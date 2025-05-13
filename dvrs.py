@@ -31,11 +31,6 @@ def _apply_custom_styling(ss):
             radial-gradient(at 53% 81%, hsla(33, 71%, 37%, 1) 0px, transparent 50%);
         }}
 
-        /* Ensure scrollbar is always present to prevent layout shift */
-        html {{
-            overflow-y: scroll;
-        }}
-
         /* Hide step buttons on number inputs */
         button[data-testid="stNumberInputStepDown"],
         button[data-testid="stNumberInputStepUp"] {{
