@@ -105,7 +105,7 @@ def _render_main_layout(ss):
                 elif ss.get("optimisation_run_error"):
                     streamlit.error(f"Optimisation run failed or has an error: {ss.optimisation_run_error}")
                 else: # Script loaded but not yet run, or run was not conclusive (e.g. no error but no completion flag)
-                    streamlit.warning("Optimisation has not been run yet with the current script/parameters. Please use the 'Run Optimisation Script' button in the 'Optimisation Technique' tab.")
+                    streamlit.warning("Optimisation has not been run yet with the current script/parameters. Please use the 'Run Optimisation Script' button in the 'Optimisation' tab.")
 
         with tab_results:
             streamlit.header("Dashboard & Results")
