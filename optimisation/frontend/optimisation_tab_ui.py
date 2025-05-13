@@ -8,9 +8,9 @@ def render_optimisation_tab(ss):
         # The tab name itself (now "Optimisation") serves as the title.
         # No need for an additional streamlit.header() here when disabled.
         if not ss.config_data:
-            warning_message = "Please load a configuration in the 'Configuration' tab first. The Optimisation tab requires an active configuration to proceed."
+            warning_message = "Please create or load a configuration in the 'Configuration' tab first. The Optimisation tab requires an active configuration to proceed"
         else: # Implies ss.edit_mode is True
-            warning_message = "Please save or cancel the current configuration edits in the 'Configuration' tab before proceeding with optimisation setup."
+            warning_message = "Please save or cancel the current configuration edits in the 'Configuration' tab before proceeding with optimisation setup"
         streamlit.warning(warning_message)
         return # Prevent rendering the rest of the tab
     
@@ -23,11 +23,12 @@ def render_optimisation_tab(ss):
     #     streamlit.info("INFO: Main configuration not yet loaded. You can load an optimisation script, but running it will require the main configuration from the 'Configuration' tab.")
 
     with streamlit.expander("Upload Optimisation Script", expanded=not ss.optimisation_script_loaded_successfully):
+        streamlit.markdown("---")
         # The file uploader's state is managed by Streamlit.
         # Its on_change callback (handle_optimisation_file_upload) is triggered upon upload.
         # clear_optimisation_script sets the uploader's key in session_state to None to clear it.
         streamlit.file_uploader(
-            "Upload your Python optimisation script (.py)",
+            "Select a Python optimisation script",
             type=["py"],
             key="optimisation_file_uploader_widget", # Session state key for the widget
             on_change=optimisation_logic.handle_optimisation_file_upload,
