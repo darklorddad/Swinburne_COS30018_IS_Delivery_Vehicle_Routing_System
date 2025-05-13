@@ -207,10 +207,10 @@ def clear_optimisation_script(ss):
     ss.optimisation_run_complete = False
     ss.optimisation_run_error = None
     
-    # Reset the file uploader widget by setting its session state key to None.
-    # This should make the uploader appear empty on the next UI rerun.
-    if "optimisation_file_uploader_widget" in ss: # Key used in the UI.
-        ss.optimisation_file_uploader_widget = None
+    # The file uploader widget's state is managed by Streamlit.
+    # Clearing our application-level script state (content, filename, etc.)
+    # is sufficient. The widget will show "No file selected" or the last
+    # selected file, but our logic will ignore it if ss.optimisation_script_content is None.
     
     ss.optimisation_action_selected = None # Reset to initial view
 
@@ -226,10 +226,11 @@ def handle_initiate_load_script_action(ss):
 # Handles cancelling the script loading process.
 def handle_cancel_load_script_action(ss):
     ss.optimisation_action_selected = None
-    # Clear the file uploader widget buffer if a file was selected but not loaded
-    if "optimisation_file_uploader_widget" in ss:
-        ss.optimisation_file_uploader_widget = None
-    # Clear any error messages from a failed load attempt
+    # Clear our application's concept of a pending file by resetting script content/filename if necessary,
+    # though typically this action is about navigating away, not clearing a loaded script.
+    # The file uploader widget itself will retain its state until the user interacts with it again
+    # or the page structure changes significantly.
+    # Clearing ss.optimisation_script_error_message is good.
     ss.optimisation_script_error_message = None
     
     ss.optimisation_action_selected = None # Reset to initial view
