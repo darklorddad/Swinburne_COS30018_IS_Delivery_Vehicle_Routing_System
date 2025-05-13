@@ -22,7 +22,7 @@ def render_optimisation_tab(ss):
     # if not ss.config_data: 
     #     streamlit.info("INFO: Main configuration not yet loaded. You can load an optimisation script, but running it will require the main configuration from the 'Configuration' tab.")
 
-    with streamlit.expander("Upload Optimisation Script", expanded=not ss.optimisation_script_loaded_successfully):
+    with streamlit.expander("Upload Optimisation Script", expanded = not ss.optimisation_script_loaded_successfully):
         streamlit.markdown("---")
         # The file uploader's state is managed by Streamlit.
         # Its on_change callback (handle_optimisation_file_upload) is triggered upon upload.
