@@ -3,13 +3,20 @@ import streamlit
 from optimisation.backend import optimisation_logic
 
 def render_optimisation_tab(ss):
-    # It's good practice to allow script loading even if main config isn't ready,
-    # but running it will require the main config.
+    # streamlit.header("Load and Configure Optimisation Technique") # Moved down
+
     if not ss.config_data:
-        streamlit.info("INFO: Main configuration not yet loaded. You can load an optimisation script, but running it will require the main configuration from the 'Configuration' tab.")
+        streamlit.header("Optimisation Technique") # Show a basic header even when disabled
+        streamlit.warning("Please load a configuration in the 'Configuration' tab first. The Optimisation Technique tab requires an active configuration to proceed.")
+        return # Prevent rendering the rest of the tab if no config is loaded
+    
+    streamlit.header("Load and Configure Optimisation Technique") # Full header when active
+
+    # The info message below is now redundant due to the check above.
+    # if not ss.config_data: 
+    #     streamlit.info("INFO: Main configuration not yet loaded. You can load an optimisation script, but running it will require the main configuration from the 'Configuration' tab.")
 
     with streamlit.expander("Upload Optimisation Script", expanded=not ss.optimisation_script_loaded_successfully):
-        streamlit.markdown("---")
         # The file uploader's state is managed by Streamlit.
         # Its on_change callback (handle_optimisation_file_upload) is triggered upon upload.
         # clear_optimisation_script sets the uploader's key in session_state to None to clear it.
