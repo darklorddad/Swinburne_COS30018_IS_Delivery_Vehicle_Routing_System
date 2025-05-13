@@ -110,7 +110,7 @@ def _render_main_layout(ss):
             if ss.config_data is None: # Check if configuration data is available.
                 streamlit.warning("Please load a configuration and run optimization to see results.")
             else:
-                streamlit.write("Route visualizations and results will appear here.")
+                streamlit.write("Route visualisations and results will appear here.")
 
         with tab_settings:
             streamlit.header("UI Settings")

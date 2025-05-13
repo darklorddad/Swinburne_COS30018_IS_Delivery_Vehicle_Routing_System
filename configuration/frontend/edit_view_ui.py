@@ -1,6 +1,6 @@
 import streamlit
 from configuration.backend import config_logic
-from .ui_utils import display_operation_result
+from .ui_utils import display_operation_result, handle_ui_action_with_conditional_rerun
 
 # Renders the 'Edit Configuration' view.
 def render_edit_view(ss):
@@ -52,17 +52,15 @@ def render_edit_view(ss):
         new_parcel_weight = col_p_weight.number_input("Weight", value = 0, key = "new_parcel_weight", min_value = 0, format = "%d")
         
         if streamlit.button("Add parcel", key = "add_parcel_btn", use_container_width = True):
-            result = config_logic.add_parcel(
+            from .ui_utils import handle_ui_action_with_conditional_rerun # Import locally or at top
+            handle_ui_action_with_conditional_rerun(
+                config_logic.add_parcel,
                 ss, 
                 new_parcel_id, 
                 new_parcel_x, 
                 new_parcel_y, 
                 new_parcel_weight
             )
-            if not display_operation_result(result): # If it's not a warning (or other displayed message)
-                streamlit.rerun() # Assumes success or other non-message state that needs a rerun
-            elif result and result['type'] != 'warning': # If a message was displayed but it wasn't a warning
-                streamlit.rerun() # Rerun for success/info messages
         
         if ss.config_data["parcels"]:
             parcel_ids_to_remove = [p['id'] for p in ss.config_data["parcels"]]
@@ -91,15 +89,13 @@ def render_edit_view(ss):
         new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value = 0, min_value = 0, format = "%d", key = "new_agent_cap_weight_simplified")
 
         if streamlit.button("Add agent", key = "add_agent_btn_simplified", use_container_width = True):
-            result = config_logic.add_delivery_agent(
+            from .ui_utils import handle_ui_action_with_conditional_rerun # Import locally or at top if not already
+            handle_ui_action_with_conditional_rerun(
+                config_logic.add_delivery_agent,
                 ss,
                 new_agent_id,
                 new_agent_cap_weight
             )
-            if not display_operation_result(result): # If it's not a warning
-                streamlit.rerun() # Assumes success or other non-message state
-            elif result and result['type'] != 'warning':
-                streamlit.rerun()
 
         if ss.config_data["delivery_agents"]:
             agent_ids_to_remove = [a['id'] for a in ss.config_data["delivery_agents"]]
