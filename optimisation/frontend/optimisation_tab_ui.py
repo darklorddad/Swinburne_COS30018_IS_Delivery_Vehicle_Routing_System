@@ -36,16 +36,18 @@ def render_optimisation_tab(ss):
             help="The script must be UTF-8 encoded and contain 'get_params_schema()' and 'run_optimisation(config_data, params)' functions."
         )
 
-        # Button to explicitly load the script after selection
-        if streamlit.button("Load selected script", key="load_optimisation_script_button", use_container_width=True):
-            # Check if a file has been uploaded first
-            if ss.get("optimisation_file_uploader_widget") is not None:
-                optimisation_logic.handle_optimisation_file_upload(ss)
-                streamlit.rerun()
-            else:
-                # Optionally, provide feedback if no file is selected but button is pressed
-                streamlit.toast("Please select a script file first.", icon="⚠️")
-
+    # Button to explicitly load the script after selection, moved outside the expander
+    # Disable button if no file is selected in the uploader
+    load_script_button_disabled = ss.get("optimisation_file_uploader_widget") is None
+    if streamlit.button("Load selected script", 
+                        key="load_optimisation_script_button", 
+                        use_container_width=True, 
+                        disabled=load_script_button_disabled,
+                        help="Load the script selected in the uploader above. The button is disabled if no script is selected."):
+        # The handle_optimisation_file_upload function internally checks 
+        # if a file is present in ss.get("optimisation_file_uploader_widget").
+        optimisation_logic.handle_optimisation_file_upload(ss)
+        streamlit.rerun()
 
     if ss.optimisation_script_error_message:
         streamlit.error(ss.optimisation_script_error_message)
