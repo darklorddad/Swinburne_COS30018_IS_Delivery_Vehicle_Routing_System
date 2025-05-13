@@ -6,7 +6,7 @@ from optimisation.backend import optimisation_logic
 def render_initial_optimisation_view(ss):
     with streamlit.expander("Manage Optimisation Script", expanded = True):
         streamlit.markdown("---")
-        if streamlit.button("Load New Optimisation Script", key = "initiate_load_script_btn", use_container_width = True, help = "Load a new Python script for optimisation."):
+        if streamlit.button("Load script", key = "initiate_load_script_btn", use_container_width = True, help = "Load a new Python script for optimisation."):
             optimisation_logic.handle_initiate_load_script_action(ss)
             streamlit.rerun()
 
