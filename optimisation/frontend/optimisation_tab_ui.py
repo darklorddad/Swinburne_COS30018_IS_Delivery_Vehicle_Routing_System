@@ -3,65 +3,135 @@ import streamlit
 from optimisation.backend import optimisation_logic
 
 def render_optimisation_tab(ss):
-    # Renders the UI components for the Optimisation Technique Selection Tab.
-    streamlit.header("Select Optimisation Technique")
+    streamlit.header("Load and Configure Optimisation Technique")
 
+    # It's good practice to allow script loading even if main config isn't ready,
+    # but running it will require the main config.
     if not ss.config_data:
-        streamlit.warning("Please load a configuration in the 'Configuration' tab first before selecting an optimisation technique.")
-        return
+        streamlit.info("INFO: Main configuration not yet loaded. You can load an optimisation script, but running it will require the main configuration from the 'Configuration' tab.")
 
-    # Prepare options for the selectbox
-    # Adding a "None" option to allow deselecting
-    technique_options = {"none": "--- Select a Technique ---"}
-    technique_options.update(ss.available_optimisation_techniques)
+    with streamlit.expander("Upload Optimisation Script (.py)", expanded=not ss.optimisation_script_loaded_successfully):
+        # The file uploader's state is managed by Streamlit.
+        # Its on_change callback (handle_optimisation_file_upload) is triggered upon upload.
+        # clear_optimisation_script sets the uploader's key in session_state to None to clear it.
+        streamlit.file_uploader(
+            "Upload your Python optimisation script (.py file)",
+            type=["py"],
+            key="optimisation_file_uploader_widget", # Session state key for the widget
+            on_change=optimisation_logic.handle_optimisation_file_upload,
+            args=(ss,),
+            help="The script must be UTF-8 encoded and contain 'get_params_schema()' and 'run_optimisation(config_data, params)' functions."
+        )
 
-    # Selectbox for choosing an optimisation technique
-    streamlit.selectbox(
-        "Available Optimisation Techniques:",
-        options = list(technique_options.keys()),
-        format_func = lambda x: technique_options[x],
-        key = "selected_optimisation_technique_id_widget", # Widget key
-        # Use current state (ss.selected_optimisation_technique_id) if available, else default to "none"
-        index = list(technique_options.keys()).index(ss.selected_optimisation_technique_id if ss.selected_optimisation_technique_id else "none"),
-        on_change = optimisation_logic.handle_optimisation_technique_selection,
-        args = (ss,)
-    )
+    if ss.optimisation_script_error_message:
+        streamlit.error(ss.optimisation_script_error_message)
 
-    if ss.selected_optimisation_technique_id:
-        selected_technique_name = ss.available_optimisation_techniques.get(ss.selected_optimisation_technique_id, "Unknown")
-        streamlit.info(f"Selected technique: **{selected_technique_name}**")
-
-        # Placeholder for technique-specific parameters
-        # streamlit.subheader("Technique Parameters")
-        # if ss.selected_optimisation_technique_id == "genetic_algorithm":
-        #     ss.optimisation_params["population_size"] = streamlit.number_input("Population Size", min_value=10, value=ss.optimisation_params.get("population_size", 50))
-        # Add more parameter inputs as needed based on the selected technique
-
-        col1, col2, _ = streamlit.columns([1, 1, 3]) # Adjust column ratios as needed
-        with col1:
-            if streamlit.button("Apply Technique", key="apply_technique_button", disabled=ss.optimisation_technique_loaded, use_container_width=True):
-                optimisation_logic.apply_selected_technique(ss)
-                # Force a rerun to update UI state if necessary, e.g. to disable button
-                streamlit.rerun()
-
-        with col2:
-            if streamlit.button("Clear Technique", key="clear_technique_button", disabled=not ss.optimisation_technique_loaded and not ss.selected_optimisation_technique_id, use_container_width=True):
-                optimisation_logic.clear_selected_technique(ss)
-                # Force a rerun to update UI state
-                streamlit.rerun()
+    if ss.optimisation_script_loaded_successfully and ss.optimisation_script_filename:
+        streamlit.success(f"Script '{ss.optimisation_script_filename}' loaded successfully.")
         
-        if ss.optimisation_technique_loaded:
-            streamlit.success(f"**{selected_technique_name}** is loaded and ready for the 'Run Optimisation' tab.")
-        else:
-            streamlit.warning(f"**{selected_technique_name}** is selected. Press 'Apply Technique' to load it.")
+        if ss.optimisation_script_param_schema and "parameters" in ss.optimisation_script_param_schema:
+            params_list = ss.optimisation_script_param_schema["parameters"]
+            if not params_list:
+                streamlit.info("The optimisation script does not define any configurable parameters.")
+            else:
+                streamlit.subheader("Configure Optimisation Parameters")
+                # Using a form for parameters. Values are updated in session state on widget interaction.
+                with streamlit.form(key="optimisation_params_form"):
+                    for param_info in params_list:
+                        name = param_info.get("name")
+                        label = param_info.get("label", name if name else "Unnamed Parameter")
+                        ptype = param_info.get("type", "string")
+                        # Get current value from state, which includes defaults initially.
+                        current_value = ss.optimisation_script_user_values.get(name) 
+                        help_text = param_info.get("help")
+                        widget_key = f"param_widget_{name}" # Unique key for each widget
 
-    else:
-        streamlit.write("No optimisation technique selected or applied.")
+                        if name is None: # Skip parameter if name is not defined
+                            streamlit.warning(f"Skipping parameter with no name: {param_info.get('label', '')}")
+                            continue
 
-    # Display current state for debugging or information (optional)
-    # with streamlit.expander("Current Optimisation State (Debug)"):
-    #     streamlit.json({
-    #         "selected_technique_id": ss.selected_optimisation_technique_id,
-    #         "technique_loaded": ss.optimisation_technique_loaded,
-    #         "params": ss.optimisation_params
-    #     })
+                        if ptype == "integer":
+                            # Ensure current_value is int, or use default from schema, or 0.
+                            val = current_value if isinstance(current_value, int) else param_info.get("default", 0)
+                            ss.optimisation_script_user_values[name] = streamlit.number_input(
+                                label, value=int(val),
+                                min_value=param_info.get("min"), max_value=param_info.get("max"),
+                                step=param_info.get("step", 1), help=help_text, key=widget_key
+                            )
+                        elif ptype == "float":
+                            val = current_value if isinstance(current_value, (float, int)) else param_info.get("default", 0.0)
+                            step = param_info.get("step", 0.01)
+                            # Determine format based on step precision.
+                            fmt = "%.5f" if step < 0.001 else ("%.3f" if step < 0.01 else "%.2f")
+                            ss.optimisation_script_user_values[name] = streamlit.number_input(
+                                label, value=float(val),
+                                min_value=param_info.get("min"), max_value=param_info.get("max"),
+                                step=step, format=fmt, help=help_text, key=widget_key
+                            )
+                        elif ptype == "boolean":
+                            val = current_value if isinstance(current_value, bool) else param_info.get("default", False)
+                            ss.optimisation_script_user_values[name] = streamlit.checkbox(
+                                label, value=bool(val), help=help_text, key=widget_key
+                            )
+                        elif ptype == "selectbox":
+                            options = param_info.get("options", [])
+                            val = current_value if current_value in options else (options[0] if options else None)
+                            idx = options.index(val) if val in options else 0
+                            if val is not None: # Only render if there are options and a valid value
+                                ss.optimisation_script_user_values[name] = streamlit.selectbox(
+                                    label, options=options, index=idx, help=help_text, key=widget_key
+                                )
+                            else:
+                                streamlit.warning(f"Parameter '{label}' (selectbox) has no options or valid default.")
+                        else: # Default to string/text input
+                            val = str(current_value) if current_value is not None else str(param_info.get("default", ""))
+                            ss.optimisation_script_user_values[name] = streamlit.text_input(
+                                label, value=val, help=help_text, key=widget_key
+                            )
+                    
+                    if streamlit.form_submit_button("Confirm Parameters"):
+                        # Parameters are already updated in ss.optimisation_script_user_values.
+                        # This button serves as an explicit confirmation step.
+                        streamlit.success("Parameters confirmed and updated.")
+                        streamlit.rerun() # Rerun to reflect any changes if needed by other parts of UI.
+        else: # No parameters defined or schema issue
+             streamlit.info("No configurable parameters found or schema is missing/invalid for the loaded script.")
+
+
+        # Action buttons area
+        st_cols = streamlit.columns([1, 1, 2]) # Adjust ratios for button layout
+        with st_cols[0]:
+            run_disabled = not (ss.optimisation_script_loaded_successfully and ss.config_data)
+            if streamlit.button("Run Optimisation Script", key="run_optimisation_script_button", disabled=run_disabled, use_container_width=True, help="Runs the loaded script with current configuration and parameters."):
+                if not ss.config_data: # Should be caught by disabled state, but double check.
+                     streamlit.error("Cannot run: Main configuration data is missing.")
+                else:
+                    optimisation_logic.execute_optimisation_script(ss)
+                    streamlit.rerun() # Rerun to display results or errors from execution.
+        
+        with st_cols[1]:
+            if streamlit.button("Clear Optimisation Script", key="clear_optimisation_script_button", use_container_width=True, help="Clears the loaded script and its parameters."):
+                optimisation_logic.clear_optimisation_script(ss)
+                streamlit.rerun() # Rerun to update UI (e.g., clear file uploader, hide params).
+
+        # Display execution results or errors
+        if ss.optimisation_run_error:
+            streamlit.error(f"Execution Error: {ss.optimisation_run_error}")
+        if ss.optimisation_run_complete:
+            if ss.optimisation_results is not None:
+                streamlit.success("Optimisation script executed successfully!")
+                with streamlit.expander("Optimisation Results", expanded=True):
+                    streamlit.json(ss.optimisation_results)
+            else: # Script ran but returned None
+                 streamlit.warning("Optimisation script completed but returned no results (None).")
+
+    elif ss.optimisation_script_filename and not ss.optimisation_script_error_message: 
+        # File uploaded but not yet fully processed (e.g. on_change triggered but logic pending rerun)
+        streamlit.info(f"Processing script '{ss.optimisation_script_filename}'...")
+    # else: No script uploaded, or cleared, and no error message to show from initial load attempt.
+        # streamlit.caption("Upload a Python script to begin configuring an optimisation technique.")
+
+    # Optional: Debug area to inspect session state related to optimisation
+    # with streamlit.expander("Optimisation State (Debug)"):
+    #     debug_data = {k: v for k, v in ss.items() if k.startswith("optimisation_script_") or k.startswith("optimisation_run_")}
+    #     streamlit.json(debug_data)

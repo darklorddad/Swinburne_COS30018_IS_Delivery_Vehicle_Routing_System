@@ -75,22 +75,35 @@ def _render_main_layout(ss):
             render_optimisation_tab(ss)
             
         with tab_run:
-            streamlit.header("Run Optimisation")
-            if ss.config_data is None:
+            streamlit.header("Optimisation Status & Summary") 
+            if not ss.get("config_data"): 
                 streamlit.warning("Please load a configuration in the 'Configuration' tab first.")
-            elif not ss.selected_optimisation_technique_id or not ss.optimisation_technique_loaded:
-                streamlit.warning("Please select and apply an optimisation technique in the 'Optimisation Technique' tab first.")
-            else:
-                selected_technique_name = ss.available_optimisation_techniques.get(ss.selected_optimisation_technique_id, "Unknown")
-                streamlit.write(f"Ready to run optimisation using **{selected_technique_name}**.")
-                streamlit.write("Using configuration:")
-                streamlit.json(ss.config_data)
-                streamlit.write("With parameters (example):")
-                streamlit.json(ss.optimisation_params if ss.optimisation_params else {"note": "No specific parameters set for this technique yet."})
-                # Add button to start optimisation process
-                if streamlit.button("Start Optimisation Process", key="start_optimisation_button"):
-                    streamlit.write("Optimisation process started... (placeholder)")
-                    # Here you would call the actual MRA logic with config_data and optimisation_params
+            elif not ss.get("optimisation_script_loaded_successfully"): 
+                streamlit.warning("Please load and configure an optimisation script in the 'Optimisation Technique' tab.")
+            else: # Script is loaded, now check run status
+                streamlit.info("The optimisation script is loaded. You can run it or adjust parameters in the 'Optimisation Technique' tab.")
+                if ss.get("optimisation_script_filename"):
+                    streamlit.write(f"Loaded script: **{ss.optimisation_script_filename}**")
+                if ss.get("optimisation_script_user_values"):
+                    streamlit.write("Current parameters for the script:")
+                    streamlit.json(ss.optimisation_script_user_values)
+
+                if ss.get("optimisation_run_complete"):
+                    if ss.get("optimisation_results") is not None:
+                        streamlit.success("Optimisation process completed successfully.")
+                        streamlit.subheader("Summary of Last Run:")
+                        streamlit.write("Using configuration:")
+                        streamlit.json(ss.config_data) # Assumes config_data is present if run was complete
+                        streamlit.write("Final parameters used:")
+                        streamlit.json(ss.optimisation_script_user_values)
+                        streamlit.write("Results:")
+                        streamlit.json(ss.optimisation_results)
+                    else:
+                        streamlit.warning("Optimisation script ran but returned no results (None).")
+                elif ss.get("optimisation_run_error"):
+                    streamlit.error(f"Optimisation run failed or has an error: {ss.optimisation_run_error}")
+                else: # Script loaded but not yet run, or run was not conclusive (e.g. no error but no completion flag)
+                    streamlit.warning("Optimisation has not been run yet with the current script/parameters. Please use the 'Run Optimisation Script' button in the 'Optimisation Technique' tab.")
 
         with tab_results:
             streamlit.header("Dashboard & Results")
