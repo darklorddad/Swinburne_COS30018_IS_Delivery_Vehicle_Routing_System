@@ -149,8 +149,3 @@ def render_optimisation_tab(ss):
     elif not ss.optimisation_script_error_message: # If not loaded successfully AND no error message is currently shown
         # This implies optimisation_script_loaded_successfully is False.
         streamlit.caption("Upload a Python script and click 'Load selected script' to begin configuring an optimisation technique.")
-
-    # Optional: Debug area to inspect session state related to optimisation
-    # with streamlit.expander("Optimisation State (Debug)"):
-    #     debug_data = {k: v for k, v in ss.items() if k.startswith("optimisation_script_") or k.startswith("optimisation_run_")}
-    #     streamlit.json(debug_data)
