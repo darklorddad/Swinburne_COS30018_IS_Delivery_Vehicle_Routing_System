@@ -77,11 +77,13 @@ def _render_main_layout(ss):
         with tab_run:
             streamlit.header("Optimisation Status & Summary") 
             if not ss.get("config_data"): 
-                streamlit.warning("Please load a configuration in the 'Configuration' tab first.")
+                streamlit.warning("Please load or create a configuration in the 'Configuration' tab first.")
+            elif ss.get("edit_mode", False):
+                streamlit.warning("Please save or cancel the current configuration edits in the 'Configuration' tab before viewing optimisation status or results.")
             elif not ss.get("optimisation_script_loaded_successfully"): 
-                streamlit.warning("Please load and configure an optimisation script in the 'Optimisation Technique' tab.")
-            else: # Script is loaded, now check run status
-                streamlit.info("The optimisation script is loaded. You can run it or adjust parameters in the 'Optimisation Technique' tab.")
+                streamlit.warning("Please load and configure an optimisation script in the 'Optimisation' tab.")
+            else: # Config loaded, not in edit mode, and script loaded
+                streamlit.info("The optimisation script is loaded. You can run it or adjust parameters in the 'Optimisation' tab.")
                 if ss.get("optimisation_script_filename"):
                     streamlit.write(f"Loaded script: **{ss.optimisation_script_filename}**")
                 if ss.get("optimisation_script_user_values"):

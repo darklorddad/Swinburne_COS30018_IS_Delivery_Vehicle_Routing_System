@@ -25,14 +25,13 @@ def render_optimisation_tab(ss):
     with streamlit.expander("Upload Optimisation Script", expanded = not ss.optimisation_script_loaded_successfully):
         streamlit.markdown("---")
         # The file uploader's state is managed by Streamlit.
-        # Its on_change callback (handle_optimisation_file_upload) is triggered upon upload.
         # clear_optimisation_script sets the uploader's key in session_state to None to clear it.
         streamlit.file_uploader(
             "Select a Python optimisation script to prepare for loading",
             type = ["py"],
             key = "optimisation_file_uploader_widget", # Session state key for the widget
-            # on_change callback removed, loading is now triggered by the button below
-            args = (ss,), # args might not be needed anymore if on_change is gone, but keeping for now.
+            # on_change callback removed; loading is now triggered by the button below.
+            # args parameter is not needed as on_change is removed.
             help = "The script must be UTF-8 encoded and contain 'get_params_schema()' and 'run_optimisation(config_data, params)' functions."
         )
 
