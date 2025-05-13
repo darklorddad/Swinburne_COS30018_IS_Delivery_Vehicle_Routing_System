@@ -1,5 +1,6 @@
 import streamlit
 from configuration.backend import config_logic
+from .ui_utils import display_operation_result # Import the utility function
 
 # Renders the initial view of the Configuration tab.
 def render_initial_view(ss):
@@ -33,6 +34,5 @@ def render_initial_view(ss):
              # Option to clear memory (this is still inside the outer "if ss.config_data is not None:")
              if streamlit.button("Clear configuration from memory", key = "clear_memory_btn", use_container_width = True, help = "Removes any loaded or new configuration from the current session"):
                 result = config_logic.clear_config_from_memory(ss)
-                if result and result.get('message'):
-                    streamlit.info(result['message'])
+                display_operation_result(result) # Use the utility function to display the message
                 streamlit.rerun()
