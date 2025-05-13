@@ -58,7 +58,7 @@ The project is marked out of 80 for the core tasks, with an additional potential
 * **Task 1 (10 marks):** Basic interaction between DAs and MRA, including capacity submission, MRA receiving requests and item lists, route generation, and MRA notifying DAs of routes. [cite: 25]
 * **Task 2 (20 marks):** MRA uses an optimization technique to generate optimal route assignments. [cite: 25]
 * **Task 3 (20 marks):** Complete either Alternative 1 (weight-based capacity) OR Alternative 2 (capacity mismatches). [cite: 25]
-* **GUI (10 marks):** Route Assignment Visualization Dashboard with associated cost for each route. [cite: 25]
+* **GUI (10 marks):** Route Assignment Visualisation Dashboard with associated cost for each route. [cite: 25]
 * **Project Report (10 marks)** [cite: 25]
 * **Project Presentation (Video - 10 marks)** [cite: 25]
 
