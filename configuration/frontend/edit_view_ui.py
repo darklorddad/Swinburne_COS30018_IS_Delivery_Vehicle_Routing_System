@@ -123,12 +123,12 @@ def render_edit_view(ss):
             streamlit.rerun()
 
     with col_save_edits_action:
-        if streamlit.button("Save", key = "save_edits_btn", use_container_width = True, help = "Saves the current configuration and returns to the menu"):
+        if streamlit.button("Save", key = "save_edits_btn", use_container_width = True):
             result = config_logic.handle_save_edits(ss)
             display_operation_result(result) # Display success message
             streamlit.rerun()
     
     with col_save_download_action:
-        if streamlit.button("Save and download", key = "save_download_btn", use_container_width = True, help = "Saves the current configuration, downloads it, and returns to the menu"):
+        if streamlit.button("Save and download", key = "save_download_btn", use_container_width = True):
             config_logic.handle_save_and_download(ss)
             streamlit.rerun()

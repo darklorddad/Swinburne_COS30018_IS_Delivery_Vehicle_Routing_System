@@ -8,12 +8,12 @@ def render_initial_view(ss):
         streamlit.markdown("---")
         col_create_btn, col_load_btn = streamlit.columns(2)
         with col_create_btn:
-            if streamlit.button("New configuration", key = "create_new_config_action_btn", help = "Create a new configuration", use_container_width = True):
+            if streamlit.button("New configuration", key = "create_new_config_action_btn", use_container_width = True):
                 config_logic.handle_new_config_action(ss)
                 streamlit.rerun()
         
         with col_load_btn:
-            if streamlit.button("Load configuration", key = "load_config_action_btn", help = "Load configuration by uploading a JSON configuration file", use_container_width = True):
+            if streamlit.button("Load configuration", key = "load_config_action_btn", use_container_width = True):
                 config_logic.handle_load_config_action(ss)
                 streamlit.rerun()
     
@@ -32,7 +32,7 @@ def render_initial_view(ss):
                  streamlit.rerun()
             
              # Option to clear memory (this is still inside the outer "if ss.config_data is not None:")
-             if streamlit.button("Clear configuration from memory", key = "clear_memory_btn", use_container_width = True, help = "Removes any loaded or new configuration from the current session"):
+             if streamlit.button("Clear configuration from memory", key = "clear_memory_btn", use_container_width = True):
                 result = config_logic.clear_config_from_memory(ss)
                 display_operation_result(result) # Use the utility function to display the message
                 streamlit.rerun()

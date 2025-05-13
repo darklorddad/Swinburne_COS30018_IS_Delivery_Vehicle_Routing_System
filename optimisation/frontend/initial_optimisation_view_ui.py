@@ -26,7 +26,7 @@ def render_initial_optimisation_view(ss):
             # Still show load script button below if there was an error
 
         # Button to load a script (new or replace existing)
-        load_button_text = "Load New Optimisation Script" if not ss.optimisation_script_loaded_successfully else "Load Another Optimisation Script"
+        load_button_text = "Load script" if not ss.optimisation_script_loaded_successfully else "Load Another Optimisation Script"
         load_button_help = "Load a Python script for optimisation." if not ss.optimisation_script_loaded_successfully else "Replace the current script with a new one."
         if streamlit.button(load_button_text, key="initiate_load_script_btn", use_container_width=True, help=load_button_help):
             optimisation_logic.handle_initiate_load_script_action(ss)
@@ -56,7 +56,7 @@ def render_initial_optimisation_view(ss):
 
         # Action button: Run Optimisation
         run_disabled = not (ss.optimisation_script_loaded_successfully and ss.config_data)
-        if streamlit.button("Run Optimisation Script", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True, help = "Runs the loaded script with current configuration and parameters."):
+        if streamlit.button("Run Optimisation Script", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True):
             if not ss.config_data: 
                  streamlit.error("Cannot run: Main configuration data is missing.")
             else:
