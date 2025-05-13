@@ -45,7 +45,7 @@ def render_edit_view(ss):
 
     with streamlit.expander("Parcels Management", expanded = True):
         streamlit.markdown("---")
-        col_p_id, col_p_x, col_p_y, col_p_weight = streamlit.columns([2,1,1,1])
+        col_p_id, col_p_x, col_p_y, col_p_weight = streamlit.columns([2, 1, 1, 1])
         new_parcel_id = col_p_id.text_input("Parcel ID", key = "new_parcel_id")
         new_parcel_x = col_p_x.number_input("Parcel X", value = 0, key = "new_parcel_x", format = "%d")
         new_parcel_y = col_p_y.number_input("Parcel Y", value = 0, key = "new_parcel_y", format = "%d")
@@ -86,7 +86,7 @@ def render_edit_view(ss):
 
     with streamlit.expander("Delivery Agents Management", expanded = True):
         streamlit.markdown("---")
-        col_a_id, col_a_cap_weight = streamlit.columns([2,1])
+        col_a_id, col_a_cap_weight = streamlit.columns([2, 1])
         new_agent_id = col_a_id.text_input("Agent ID", key = "new_agent_id_simplified")
         new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value = 0, min_value = 0, format = "%d", key = "new_agent_cap_weight_simplified")
 
@@ -121,7 +121,7 @@ def render_edit_view(ss):
         else:
             streamlit.info("No delivery agents added yet")
     
-    col_cancel_action, col_save_edits_action, col_save_download_action = streamlit.columns([1,1,1])
+    col_cancel_action, col_save_edits_action, col_save_download_action = streamlit.columns([1, 1, 1])
 
     with col_cancel_action:
         if streamlit.button("Cancel", key = "cancel_edit_btn", use_container_width = True):
