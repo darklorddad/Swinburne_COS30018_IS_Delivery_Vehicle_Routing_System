@@ -150,11 +150,9 @@ def render_optimisation_tab(ss):
             else: # Script ran but returned None
                  streamlit.warning("Optimisation script completed but returned no results (None).")
 
-    elif ss.optimisation_script_filename and not ss.optimisation_script_error_message: 
-        # File uploaded but not yet fully processed (e.g. on_change triggered but logic pending rerun)
-        streamlit.info(f"Processing script '{ss.optimisation_script_filename}'...")
-    # else: No script uploaded, or cleared, and no error message to show from initial load attempt.
-        # streamlit.caption("Upload a Python script to begin configuring an optimisation technique.")
+    elif not ss.optimisation_script_error_message: # If not loaded successfully AND no error message is currently shown
+        # This implies optimisation_script_loaded_successfully is False.
+        streamlit.caption("Upload a Python script and click 'Load selected script' to begin configuring an optimisation technique.")
 
     # Optional: Debug area to inspect session state related to optimisation
     # with streamlit.expander("Optimisation State (Debug)"):
