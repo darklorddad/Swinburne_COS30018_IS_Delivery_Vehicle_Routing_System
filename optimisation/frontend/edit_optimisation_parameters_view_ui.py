@@ -4,7 +4,7 @@ from configuration.frontend.ui_utils import display_operation_result # For displ
 
 # Renders the view for editing optimisation script parameters.
 def render_edit_optimisation_parameters_view(ss):
-    streamlit.subheader("Configure Optimisation Parameters")
+    # streamlit.subheader("Configure Optimisation Parameters") # Removed as per request
 
     if not ss.optimisation_script_param_schema or "parameters" not in ss.optimisation_script_param_schema:
         streamlit.warning("Parameter schema is not available. Cannot edit parameters.")
