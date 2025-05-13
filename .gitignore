@@ -1,3 +1,4 @@
 .aider*
 __pycache__/
-# dld/
+__pycache__
+dld/
