@@ -50,9 +50,8 @@ def render_edit_view(ss):
         new_parcel_x = col_p_x.number_input("Parcel X", value = 0, key = "new_parcel_x", format = "%d")
         new_parcel_y = col_p_y.number_input("Parcel Y", value = 0, key = "new_parcel_y", format = "%d")
         new_parcel_weight = col_p_weight.number_input("Weight", value = 0, key = "new_parcel_weight", min_value = 0, format = "%d")
-        
+            
         if streamlit.button("Add parcel", key = "add_parcel_btn", use_container_width = True):
-            from .ui_utils import handle_ui_action_with_conditional_rerun # Import locally or at top
             handle_ui_action_with_conditional_rerun(
                 config_logic.add_parcel,
                 ss, 
@@ -87,9 +86,8 @@ def render_edit_view(ss):
         col_a_id, col_a_cap_weight = streamlit.columns([2, 1])
         new_agent_id = col_a_id.text_input("Agent ID", key = "new_agent_id_simplified")
         new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value = 0, min_value = 0, format = "%d", key = "new_agent_cap_weight_simplified")
-
+    
         if streamlit.button("Add agent", key = "add_agent_btn_simplified", use_container_width = True):
-            from .ui_utils import handle_ui_action_with_conditional_rerun # Import locally or at top if not already
             handle_ui_action_with_conditional_rerun(
                 config_logic.add_delivery_agent,
                 ss,
