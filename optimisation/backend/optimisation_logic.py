@@ -148,7 +148,7 @@ def handle_optimisation_file_upload(ss):
 
 # Executes the loaded optimisation script.
 def execute_optimisation_script(ss):
-    if not ss.optimisation_script_loaded_successfully or not ss.optimisation_script_content:
+    if not ss.optimisation_script_loaded_successfully: # ss.optimisation_script_content would be set if loaded_successfully is True.
         ss.optimisation_run_error = "Optimisation script not loaded successfully. Please upload a valid script."
         ss.optimisation_run_complete = False
         return

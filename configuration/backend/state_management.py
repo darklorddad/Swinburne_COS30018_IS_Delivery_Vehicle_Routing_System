@@ -156,10 +156,10 @@ def handle_cancel_edit(ss):
         if ss.config_filename_snapshot is not None:
             ss.config_filename = ss.config_filename_snapshot
     else:
-        # Handles cases where config_data_snapshot is None.
-        # If it is a new config without a snapshot, it was never properly initialised.
+        # Handles cases where config_data_snapshot is None (e.g., if config_data itself is None or was cleared).
+        # If it was conceptually a 'new' config (never loaded from file) and is now effectively empty, ensure filename is also reset.
         if ss.last_uploaded_filename is None: # Indicates a new config.
-            ss.config_data = None
+            ss.config_data = None # Ensure data is None if snapshot was None.
             ss.config_filename = "config.json" # Resets filename.
             ss.config_filename_snapshot = None # No snapshot for a cleared new config.
 
