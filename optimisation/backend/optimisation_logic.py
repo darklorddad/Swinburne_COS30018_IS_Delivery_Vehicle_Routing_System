@@ -59,6 +59,9 @@ def initialise_session_state(ss):
         ss.optimisation_script_temp_dir_schema = None
         ss.optimisation_script_module_name_schema = None
 
+        # UI view state for optimisation tab
+        ss.optimisation_action_selected = None # None for initial view, "load_script" for loading view
+
         # Clean up old state variables from any previous version of this module.
         old_keys = [
             "optimisation_module_initialised", "selected_optimisation_technique_id",
@@ -136,11 +139,15 @@ def handle_optimisation_file_upload(ss):
                 ss.optimisation_script_error_message = "Script's get_params_schema() returned an invalid format. Expected a dictionary with a 'parameters' list."
         else:
             ss.optimisation_script_error_message = "Script must contain a callable 'get_params_schema()' function."
+        
+        if ss.optimisation_script_loaded_successfully:
+            ss.optimisation_action_selected = None # Return to initial view on success
             
     except Exception as e:
         ss.optimisation_script_error_message = f"Error loading script or getting schema: {str(e)}"
         # If module loading failed, _load_module_from_string should have cleaned up its own temp_dir and sys.modules entry.
         # Ensure ss state for these are also None.
+        # Keep user on load_script view by not changing ss.optimisation_action_selected
         ss.optimisation_script_temp_dir_schema = None
         ss.optimisation_script_module_name_schema = None
         ss.optimisation_script_loaded_successfully = False
@@ -204,3 +211,25 @@ def clear_optimisation_script(ss):
     # This should make the uploader appear empty on the next UI rerun.
     if "optimisation_file_uploader_widget" in ss: # Key used in the UI.
         ss.optimisation_file_uploader_widget = None
+    
+    ss.optimisation_action_selected = None # Reset to initial view
+
+
+# --- Optimisation Tab View Management ---
+
+# Switches to the script loading view.
+def handle_initiate_load_script_action(ss):
+    ss.optimisation_action_selected = "load_script"
+    # Clear any previous error messages when initiating a new load action
+    ss.optimisation_script_error_message = None 
+
+# Handles cancelling the script loading process.
+def handle_cancel_load_script_action(ss):
+    ss.optimisation_action_selected = None
+    # Clear the file uploader widget buffer if a file was selected but not loaded
+    if "optimisation_file_uploader_widget" in ss:
+        ss.optimisation_file_uploader_widget = None
+    # Clear any error messages from a failed load attempt
+    ss.optimisation_script_error_message = None
+    
+    ss.optimisation_action_selected = None # Reset to initial view
