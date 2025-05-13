@@ -29,21 +29,21 @@ def render_optimisation_tab(ss):
         # clear_optimisation_script sets the uploader's key in session_state to None to clear it.
         streamlit.file_uploader(
             "Select a Python optimisation script to prepare for loading",
-            type=["py"],
-            key="optimisation_file_uploader_widget", # Session state key for the widget
+            type = ["py"],
+            key = "optimisation_file_uploader_widget", # Session state key for the widget
             # on_change callback removed, loading is now triggered by the button below
-            args=(ss,), # args might not be needed anymore if on_change is gone, but keeping for now.
-            help="The script must be UTF-8 encoded and contain 'get_params_schema()' and 'run_optimisation(config_data, params)' functions."
+            args = (ss,), # args might not be needed anymore if on_change is gone, but keeping for now.
+            help = "The script must be UTF-8 encoded and contain 'get_params_schema()' and 'run_optimisation(config_data, params)' functions."
         )
 
     # Button to explicitly load the script after selection, moved outside the expander
     # Disable button if no file is selected in the uploader
     load_script_button_disabled = ss.get("optimisation_file_uploader_widget") is None
     if streamlit.button("Load selected script", 
-                        key="load_optimisation_script_button", 
-                        use_container_width=True, 
-                        disabled=load_script_button_disabled,
-                        help="Load the script selected in the uploader above. The button is disabled if no script is selected."):
+                        key = "load_optimisation_script_button", 
+                        use_container_width = True, 
+                        disabled = load_script_button_disabled,
+                        help = "Load the script selected in the uploader above. The button is disabled if no script is selected."):
         # The handle_optimisation_file_upload function internally checks 
         # if a file is present in ss.get("optimisation_file_uploader_widget").
         optimisation_logic.handle_optimisation_file_upload(ss)
@@ -62,7 +62,7 @@ def render_optimisation_tab(ss):
             else:
                 streamlit.subheader("Configure Optimisation Parameters")
                 # Using a form for parameters. Values are updated in session state on widget interaction.
-                with streamlit.form(key="optimisation_params_form"):
+                with streamlit.form(key = "optimisation_params_form"):
                     for param_info in params_list:
                         name = param_info.get("name")
                         label = param_info.get("label", name if name else "Unnamed Parameter")
@@ -80,9 +80,9 @@ def render_optimisation_tab(ss):
                             # Ensure current_value is int, or use default from schema, or 0.
                             val = current_value if isinstance(current_value, int) else param_info.get("default", 0)
                             ss.optimisation_script_user_values[name] = streamlit.number_input(
-                                label, value=int(val),
-                                min_value=param_info.get("min"), max_value=param_info.get("max"),
-                                step=param_info.get("step", 1), help=help_text, key=widget_key
+                                label, value = int(val),
+                                min_value = param_info.get("min"), max_value = param_info.get("max"),
+                                step = param_info.get("step", 1), help = help_text, key = widget_key
                             )
                         elif ptype == "float":
                             val = current_value if isinstance(current_value, (float, int)) else param_info.get("default", 0.0)
@@ -90,14 +90,14 @@ def render_optimisation_tab(ss):
                             # Determine format based on step precision.
                             fmt = "%.5f" if step < 0.001 else ("%.3f" if step < 0.01 else "%.2f")
                             ss.optimisation_script_user_values[name] = streamlit.number_input(
-                                label, value=float(val),
-                                min_value=param_info.get("min"), max_value=param_info.get("max"),
-                                step=step, format=fmt, help=help_text, key=widget_key
+                                label, value = float(val),
+                                min_value = param_info.get("min"), max_value = param_info.get("max"),
+                                step = step, format = fmt, help = help_text, key = widget_key
                             )
                         elif ptype == "boolean":
                             val = current_value if isinstance(current_value, bool) else param_info.get("default", False)
                             ss.optimisation_script_user_values[name] = streamlit.checkbox(
-                                label, value=bool(val), help=help_text, key=widget_key
+                                label, value = bool(val), help = help_text, key = widget_key
                             )
                         elif ptype == "selectbox":
                             options = param_info.get("options", [])
@@ -105,14 +105,14 @@ def render_optimisation_tab(ss):
                             idx = options.index(val) if val in options else 0
                             if val is not None: # Only render if there are options and a valid value
                                 ss.optimisation_script_user_values[name] = streamlit.selectbox(
-                                    label, options=options, index=idx, help=help_text, key=widget_key
+                                    label, options = options, index = idx, help = help_text, key = widget_key
                                 )
                             else:
                                 streamlit.warning(f"Parameter '{label}' (selectbox) has no options or valid default.")
                         else: # Default to string/text input
                             val = str(current_value) if current_value is not None else str(param_info.get("default", ""))
                             ss.optimisation_script_user_values[name] = streamlit.text_input(
-                                label, value=val, help=help_text, key=widget_key
+                                label, value = val, help = help_text, key = widget_key
                             )
                     
                     if streamlit.form_submit_button("Confirm Parameters"):
@@ -128,7 +128,7 @@ def render_optimisation_tab(ss):
         st_cols = streamlit.columns([1, 1, 2]) # Adjust ratios for button layout
         with st_cols[0]:
             run_disabled = not (ss.optimisation_script_loaded_successfully and ss.config_data)
-            if streamlit.button("Run Optimisation Script", key="run_optimisation_script_button", disabled=run_disabled, use_container_width=True, help="Runs the loaded script with current configuration and parameters."):
+            if streamlit.button("Run Optimisation Script", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True, help = "Runs the loaded script with current configuration and parameters."):
                 if not ss.config_data: # Should be caught by disabled state, but double check.
                      streamlit.error("Cannot run: Main configuration data is missing.")
                 else:
@@ -136,7 +136,7 @@ def render_optimisation_tab(ss):
                     streamlit.rerun() # Rerun to display results or errors from execution.
         
         with st_cols[1]:
-            if streamlit.button("Clear Optimisation Script", key="clear_optimisation_script_button", use_container_width=True, help="Clears the loaded script and its parameters."):
+            if streamlit.button("Clear Optimisation Script", key = "clear_optimisation_script_button", use_container_width = True, help = "Clears the loaded script and its parameters."):
                 optimisation_logic.clear_optimisation_script(ss)
                 streamlit.rerun() # Rerun to update UI (e.g., clear file uploader, hide params).
 
@@ -146,7 +146,7 @@ def render_optimisation_tab(ss):
         if ss.optimisation_run_complete:
             if ss.optimisation_results is not None:
                 streamlit.success("Optimisation script executed successfully!")
-                with streamlit.expander("Optimisation Results", expanded=True):
+                with streamlit.expander("Optimisation Results", expanded = True):
                     streamlit.json(ss.optimisation_results)
             else: # Script ran but returned None
                  streamlit.warning("Optimisation script completed but returned no results (None).")
