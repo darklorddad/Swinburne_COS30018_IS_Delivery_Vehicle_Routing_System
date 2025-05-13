@@ -5,16 +5,17 @@ from optimisation.backend import optimisation_logic
 def render_optimisation_tab(ss):
     # Check if config data is missing or if we are in edit mode in the configuration tab
     if not ss.config_data or ss.get("edit_mode", False):
-        streamlit.header("Optimisation Technique") # Show a basic header
+        # The tab name itself (now "Optimisation") serves as the title.
+        # No need for an additional streamlit.header() here when disabled.
         if not ss.config_data:
-            warning_message = "Please load a configuration in the 'Configuration' tab first. The Optimisation Technique tab requires an active configuration to proceed."
+            warning_message = "Please load a configuration in the 'Configuration' tab first. The Optimisation tab requires an active configuration to proceed."
         else: # Implies ss.edit_mode is True
             warning_message = "Please save or cancel the current configuration edits in the 'Configuration' tab before proceeding with optimisation setup."
         streamlit.warning(warning_message)
         return # Prevent rendering the rest of the tab
     
     # If config_data exists and not in edit_mode, proceed with the normal tab rendering.
-    # The main tab title "Optimisation Technique" is already provided by Streamlit's tab system.
+    # The main tab title "Optimisation" is already provided by Streamlit's tab system.
     # No need for an additional streamlit.header() here.
 
     # The info message below is now redundant due to the check above.
