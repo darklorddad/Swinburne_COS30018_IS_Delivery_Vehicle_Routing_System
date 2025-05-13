@@ -28,7 +28,7 @@ def render_optimisation_tab(ss):
         # Its on_change callback (handle_optimisation_file_upload) is triggered upon upload.
         # clear_optimisation_script sets the uploader's key in session_state to None to clear it.
         streamlit.file_uploader(
-            "Select a Python optimisation script",
+            "Select a Python optimisation script to prepare for loading",
             type=["py"],
             key="optimisation_file_uploader_widget", # Session state key for the widget
             # on_change callback removed, loading is now triggered by the button below
@@ -37,7 +37,7 @@ def render_optimisation_tab(ss):
         )
 
         # Button to explicitly load the script after selection
-        if streamlit.button("Load Selected Script", key="load_optimisation_script_button", use_container_width=True):
+        if streamlit.button("Load selected script", key="load_optimisation_script_button", use_container_width=True):
             # Check if a file has been uploaded first
             if ss.get("optimisation_file_uploader_widget") is not None:
                 optimisation_logic.handle_optimisation_file_upload(ss)
