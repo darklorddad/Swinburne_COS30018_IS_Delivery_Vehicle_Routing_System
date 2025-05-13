@@ -57,7 +57,6 @@ def remove_delivery_agent(ss, agent_id_to_remove):
     return _remove_entity(ss, "delivery_agents", agent_id_to_remove, "Agent")
 
 # --- General Settings in Edit Mode ---
-# Updates the config_filename in session_state.
 # Triggered by changes in the filename input widget.
 def handle_filename_update(ss):
     new_filename_base = ss.get("filename_input_widget")
@@ -67,7 +66,6 @@ def handle_filename_update(ss):
     # If new_filename_base is empty, config_filename remains unchanged.
     # This prevents the filename from becoming just ".json".
 
-# Updates warehouse_coordinates_x_y in config_data.
 # Triggered by changes in warehouse coordinate input widgets.
 def handle_warehouse_coordinates_update(ss):
     wh_x_val = ss.get("wh_x_input_widget")
