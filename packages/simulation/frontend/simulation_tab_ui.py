@@ -1,0 +1,107 @@
+import streamlit
+from ..backend import simulation_logic
+from packages.configuration.frontend.ui_utils import display_operation_result 
+
+# Renders the Simulation tab for JADE interaction.
+def render_simulation_tab(ss):
+    streamlit.header("Agent-Based Simulation Control (JADE)")
+
+    # --- JADE Platform Control ---
+    with streamlit.expander("JADE Platform Management", expanded=True):
+        streamlit.markdown("---")
+        col_start_jade, col_stop_jade = streamlit.columns(2)
+        with col_start_jade:
+            if streamlit.button("Start JADE Platform", 
+                                key="start_jade_platform_btn", 
+                                use_container_width=True,
+                                disabled=ss.get("jade_platform_running", False)):
+                simulation_logic.handle_start_jade(ss)
+                streamlit.rerun()
+        with col_stop_jade:
+            if streamlit.button("Stop JADE Platform", 
+                                key="stop_jade_platform_btn", 
+                                use_container_width=True,
+                                disabled=not ss.get("jade_platform_running", False)):
+                simulation_logic.handle_stop_jade(ss)
+                streamlit.rerun()
+
+        if ss.get("jade_platform_status_message"):
+            # Determine message type based on keywords for better display
+            msg = ss.jade_platform_status_message
+            if "success" in msg.lower() or "started" in msg.lower() or "stopped" in msg.lower() or "running" in msg.lower() or "requested" in msg.lower() or "terminated" in msg.lower():
+                display_operation_result({'type': 'success', 'message': msg})
+            elif "fail" in msg.lower() or "error" in msg.lower():
+                display_operation_result({'type': 'error', 'message': msg})
+            else:
+                display_operation_result({'type': 'info', 'message': msg})
+    
+    # --- Agent Management (only if JADE is running) ---
+    if ss.get("jade_platform_running"):
+        with streamlit.expander("Agent Creation & Management", expanded=True):
+            streamlit.markdown("---")
+            # Pre-requisite checks for creating agents
+            config_loaded = ss.config_data is not None
+            
+            if not config_loaded:
+                 streamlit.warning("A configuration must be loaded ('Configuration' tab) before agents can be created.")
+
+            if streamlit.button("Create Agents in JADE", 
+                                key="create_jade_agents_btn", 
+                                use_container_width=True,
+                                disabled=not config_loaded or ss.get("jade_agents_created", False)):
+                result = simulation_logic.handle_create_agents(ss)
+                display_operation_result(result) # This will display success or error
+                streamlit.rerun()
+
+            # Display status message for agent creation if it's an error/warning and agents aren't marked as created,
+            # or if agents are created and there's a success message.
+            agent_creation_msg = ss.get("jade_agent_creation_status_message")
+            agents_created_flag = ss.get("jade_agents_created", False)
+
+            if agent_creation_msg:
+                if agents_created_flag: # If flag is true, assume message is success or informational
+                     display_operation_result({'type': 'success', 'message': agent_creation_msg})
+                # If flag is false, message could be error, warning, or info from a failed/partial attempt
+                elif "fail" in agent_creation_msg.lower() or "error" in agent_creation_msg.lower():
+                    display_operation_result({'type': 'error', 'message': agent_creation_msg})
+                elif "warn" in agent_creation_msg.lower():
+                     display_operation_result({'type': 'warning', 'message': agent_creation_msg})
+                # else: # Could be an informational message about why creation didn't proceed
+                #    display_operation_result({'type': 'info', 'message': agent_creation_msg})
+
+
+        # --- Simulation Run (only if JADE is running and agents are created) ---
+        if ss.get("jade_agents_created"):
+            with streamlit.expander("Simulation Execution", expanded=True):
+                streamlit.markdown("---")
+                # Pre-requisite checks for running simulation
+                optimisation_complete = ss.get("optimisation_run_complete", False) and ss.get("optimisation_results") is not None
+
+                if not optimisation_complete:
+                    streamlit.warning("Optimisation results are not available. Please run an optimisation in the 'Optimisation' tab first.")
+
+                if streamlit.button("Run Simulation with JADE Agents", 
+                                    key="run_jade_simulation_btn", 
+                                    use_container_width=True,
+                                    disabled=not optimisation_complete):
+                    result = simulation_logic.handle_run_simulation(ss)
+                    display_operation_result(result) # Displays success/error/warning
+                    # streamlit.rerun() # Rerun might not be needed if status is just displayed
+                
+                # Display simulation status message
+                sim_status_msg = ss.get("jade_simulation_status_message")
+                if sim_status_msg:
+                    if "success" in sim_status_msg.lower() or "triggered" in sim_status_msg.lower() :
+                         display_operation_result({'type': 'success', 'message': sim_status_msg})
+                    elif "fail" in sim_status_msg.lower() or "error" in sim_status_msg.lower():
+                         display_operation_result({'type': 'error', 'message': sim_status_msg})
+                    elif "warn" in sim_status_msg.lower(): # e.g. "Optimisation results not available"
+                         display_operation_result({'type': 'warning', 'message': sim_status_msg})
+                    else: # Other informational messages
+                         display_operation_result({'type': 'info', 'message': sim_status_msg})
+
+        elif ss.get("jade_platform_running"): # Platform running, but agents not created
+            streamlit.info("Create agents in JADE to enable simulation execution.")
+
+    else: # JADE platform not running
+        streamlit.info("Start the JADE platform to enable agent management and simulation.")
