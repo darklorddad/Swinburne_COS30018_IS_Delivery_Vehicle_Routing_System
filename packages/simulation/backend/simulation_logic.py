@@ -18,7 +18,9 @@ def initialise_session_state(ss):
         # Store JADE process info (e.g., Popen object from subprocess or simulated dict)
         ss.jade_process_info = None 
         # Store Py4J gateway object if used
-        ss.py4j_gateway_object = None # Renamed to avoid conflict if 'gateway' is a common var name
+        ss.py4j_gateway_object = None 
+        # Event to stop JADE log reader threads
+        ss.jade_log_stop_event = None
 
 def handle_start_jade(ss):
     if ss.get("jade_platform_running", False):
@@ -33,46 +35,53 @@ def handle_start_jade(ss):
         ss.jade_platform_running = False
         ss.jade_process_info = None
         ss.py4j_gateway_object = None
+        ss.jade_log_stop_event = None # Clear stop event
         ss.jade_agents_created = False # Reset as platform didn't start
         ss.jade_agent_creation_status_message = None
-        ss.jade_dispatch_status_message = None # Renamed
+        ss.jade_dispatch_status_message = None 
         return
 
     # If compilation was successful, proceed with starting JADE.
-    # start_jade_platform now returns: success, message, process_obj, gateway_obj
-    success, message, process_obj, gateway_obj = jade_controller.start_jade_platform()
+    # start_jade_platform now returns: success, message, process_obj, gateway_obj, log_stop_event_obj
+    success, message, process_obj, gateway_obj, log_stop_event = jade_controller.start_jade_platform()
     
     ss.jade_platform_status_message = message # Store the detailed message from start_jade_platform
 
     if success: # JADE process started (Py4J connection might have succeeded or failed, message reflects this)
         ss.jade_platform_running = True # Mark platform as "running" if process started
         ss.jade_process_info = process_obj
+        ss.jade_log_stop_event = log_stop_event # Store the stop event
         if gateway_obj:
             ss.py4j_gateway_object = gateway_obj
-            # Message already includes Py4J status, no need to overwrite here unless adding more info
         else:
             ss.py4j_gateway_object = None
-            # Message from start_jade_platform should indicate Py4J failure if process_obj is not None
     else: # JADE process failed to start
         ss.jade_platform_running = False
-        ss.jade_process_info = None # Ensure process_info is None if start failed
+        ss.jade_process_info = None 
+        ss.py4j_gateway_object = None
+        ss.jade_log_stop_event = None # Clear stop event
         ss.jade_platform_status_message = message or "Failed to start JADE platform."
     
     # Reset downstream states as platform state changed
     ss.jade_agents_created = False
     ss.jade_agent_creation_status_message = None
-    ss.jade_dispatch_status_message = None # Renamed
+    ss.jade_dispatch_status_message = None 
 
 def handle_stop_jade(ss):
     if not ss.get("jade_platform_running", False):
         ss.jade_platform_status_message = "JADE platform is not running."
         return
 
-    success, message = jade_controller.stop_jade_platform(ss.get("jade_process_info"), ss.get("py4j_gateway_object"))
+    success, message = jade_controller.stop_jade_platform(
+        ss.get("jade_process_info"), 
+        ss.get("py4j_gateway_object"),
+        ss.get("jade_log_stop_event") # Pass the stop event
+    )
     if success:
         ss.jade_platform_running = False
         ss.jade_process_info = None
         ss.py4j_gateway_object = None
+        ss.jade_log_stop_event = None # Clear stop event
         ss.jade_platform_status_message = message or "JADE platform stopped successfully."
     else:
         # If stop fails, the platform might still be considered running or in an indeterminate state.

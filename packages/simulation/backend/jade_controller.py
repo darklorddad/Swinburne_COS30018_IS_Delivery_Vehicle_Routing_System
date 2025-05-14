@@ -3,6 +3,7 @@ import os
 import time # Added for checking JADE startup
 import platform # Added for OS-specific stop logic
 import json # For serializing arguments to JADE agents
+import threading # For redirecting JADE process output
 from py4j.java_gateway import JavaGateway, GatewayParameters, Py4JNetworkError # For JADE communication
 
 # Attempt to locate jade.jar. This is a common location.
@@ -20,14 +21,36 @@ JSON_JAR_PATH = os.path.join("dependencies", "java", "libs", "json-20250107.jar"
 PY4J_PORT = 25333
 PY4J_ADDRESS = "127.0.0.1"
 
+# Helper function to read from a stream in a separate thread
+def _stream_reader_thread(stream, stop_event, prefix=""):
+    try:
+        # iter(callable, sentinel) reads until callable returns sentinel
+        for line in iter(stream.readline, ''): 
+            if stop_event.is_set():
+                # print(f"Stream reader ({prefix}) stopping due to event.", flush=True)
+                break
+            if line: # Ensure line is not empty
+                print(f"{prefix}{line.strip()}", flush=True)
+    except Exception as e:
+        # This might happen if the stream is closed abruptly, e.g., process killed
+        if not stop_event.is_set(): # Don't log error if we intended to stop
+             print(f"Exception in stream reader thread ({prefix}): {e}", flush=True)
+    finally:
+        if hasattr(stream, 'close') and not stream.closed:
+            try:
+                stream.close()
+            except Exception as e_close:
+                print(f"Exception closing stream in reader thread ({prefix}): {e_close}", flush=True)
+        # print(f"Stream reader thread ({prefix}) finished.", flush=True)
+
 def start_jade_platform():
     """
-    Attempts to start the JADE platform and connect via Py4J.
-    Returns: (success_bool, message_str, process_obj_or_None, gateway_obj_or_None)
+    Attempts to start the JADE platform, connect via Py4J, and redirect its stdout/stderr.
+    Returns: (success_bool, message_str, process_obj_or_None, gateway_obj_or_None, log_stop_event_or_None)
     """
     print(f"Attempting to start JADE platform. JADE JAR expected at: {JADE_JAR_PATH}")
     if not os.path.exists(JADE_JAR_PATH):
-        return False, f"JADE JAR not found at {JADE_JAR_PATH}. Please check the path.", None, None
+        return False, f"JADE JAR not found at {JADE_JAR_PATH}. Please check the path.", None, None, None
     
     # Starting JADE with -gui. For Py4J, a GatewayServer would need to be started by a JADE agent.
     # The -host and -port parameters for JADE main container might be relevant.
@@ -74,30 +97,41 @@ def start_jade_platform():
         time.sleep(4) # Allow JADE time to initialize or fail
         
         if process.poll() is None:
-            # Process is still running, attempt Py4J connection.
+            # Process is still running. Start log reader threads.
+            log_stop_event = threading.Event()
+            
+            stdout_thread = threading.Thread(
+                target=_stream_reader_thread, 
+                args=(process.stdout, log_stop_event, "JADE STDOUT: "),
+                daemon=True 
+            )
+            stderr_thread = threading.Thread(
+                target=_stream_reader_thread,
+                args=(process.stderr, log_stop_event, "JADE STDERR: "),
+                daemon=True
+            )
+            stdout_thread.start()
+            stderr_thread.start()
+
             print("JADE process is running. Attempting Py4J connection...")
             gateway = None
             try:
-                # Allow some time for JADE and the Py4J GatewayServer within JADE to start.
                 print("Waiting for JADE Py4J GatewayServer to initialize...")
-                time.sleep(5) # Increased from 3 to 5 seconds
+                time.sleep(5) 
                 gateway = JavaGateway(
                     gateway_parameters=GatewayParameters(address=PY4J_ADDRESS, port=PY4J_PORT, auto_convert=True)
                 )
-                # Optionally, test the connection by calling a simple method on the entry_point
-                # gateway.jvm.System.out.println("Py4J Gateway Connected from Python!")
                 print(f"Successfully connected to Py4J GatewayServer on {PY4J_ADDRESS}:{PY4J_PORT}.")
-                return True, "JADE platform process is running and Py4J gateway connected.", process, gateway
+                return True, "JADE platform process is running and Py4J gateway connected.", process, gateway, log_stop_event
             except Py4JNetworkError as e:
                 err_msg = f"JADE process started, but Py4J connection failed: {str(e)}. Ensure a Py4J GatewayServer is running in JADE on port {PY4J_PORT}."
                 print(err_msg)
-                # Even if Py4J fails, the JADE process itself might be running (e.g., GUI is up).
-                # We return the process so it can be managed, but no gateway.
-                return True, err_msg, process, None # JADE running, Py4J failed
+                # If Py4J fails, still return process and stop event for management
+                return True, err_msg, process, None, log_stop_event # JADE running, Py4J failed
             except Exception as e_gw:
                 err_msg = f"JADE process started, but an unexpected error occurred with Py4J: {str(e_gw)}."
                 print(err_msg)
-                return True, err_msg, process, None # JADE running, Py4J failed
+                return True, err_msg, process, None, log_stop_event # JADE running, Py4J failed
         else:
             # Process terminated, JADE likely failed to start
             stdout_output = process.stdout.read().strip() if process.stdout else ""
@@ -117,11 +151,11 @@ def start_jade_platform():
             else:
                 full_error_msg += " No output captured on stdout/stderr."
             print(full_error_msg)
-            return False, full_error_msg, None, None
+            return False, full_error_msg, None, None, None
     except FileNotFoundError:
-        return False, "Java command not found. Is Java installed and in PATH?", None, None
+        return False, "Java command not found. Is Java installed and in PATH?", None, None, None
     except Exception as e:
-        return False, f"Error starting JADE: {str(e)}", None, None
+        return False, f"Error starting JADE: {str(e)}", None, None, None
 
 def compile_java_agents():
     """
@@ -202,13 +236,21 @@ def compile_java_agents():
         print(err_msg)
         return False, err_msg
 
-def stop_jade_platform(process_info, gateway_obj):
+def stop_jade_platform(process_info, gateway_obj, log_stop_event):
     """
-    Attempts to stop the JADE platform process and shutdown Py4J gateway.
+    Attempts to stop the JADE platform process, Py4J gateway, and log reader threads.
     'process_info' is expected to be a subprocess.Popen object.
+    'log_stop_event' is a threading.Event to signal log reader threads to stop.
     Returns: (success_bool, message_str)
     """
     print("Attempting to stop JADE platform...")
+
+    if log_stop_event:
+        # print("Signalling JADE log reader threads to stop...", flush=True)
+        log_stop_event.set()
+        # Give threads a moment to stop. Since they are daemonic, explicit join isn't strictly
+        # necessary for program exit, but good if we want to ensure they finish before process kill.
+        # For simplicity here, we'll rely on them being daemonic and the event signal.
     
     py4j_shutdown_msg = ""
     if gateway_obj:
