@@ -74,6 +74,13 @@ def handle_create_agents(ss):
     if not ss.get("jade_platform_running"):
         ss.jade_agent_creation_status_message = "Cannot create agents: JADE platform is not running."
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
+
+    # Attempt to compile Java agents first
+    compile_success, compile_message = jade_controller.compile_java_agents()
+    if not compile_success:
+        ss.jade_agent_creation_status_message = f"Agent creation failed: {compile_message}"
+        return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
+    # If compilation was successful, proceed with agent creation logic
     
     py4j_gateway = ss.get("py4j_gateway_object")
     if not py4j_gateway:

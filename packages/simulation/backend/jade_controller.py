@@ -8,6 +8,9 @@ from py4j.java_gateway import JavaGateway, GatewayParameters, Py4JNetworkError #
 # Attempt to locate jade.jar. This is a common location.
 # Users might need to configure this path if it's different.
 JADE_JAR_PATH = os.path.join("dependencies", "JADE-all-4.6.0", "jade", "lib", "jade.jar")
+# Path to the Py4J JAR, required for compiling agents that use Py4J (e.g., Py4jGatewayAgent)
+PY4J_JAR_PATH = os.path.join("dependencies", "py4j-0.10.9.9", "share", "py4j", "py4j0.10.9.9.jar")
+
 
 # Default Py4J connection parameters
 PY4J_PORT = 25333
@@ -105,6 +108,79 @@ def start_jade_platform():
         return False, "Java command not found. Is Java installed and in PATH?", None, None
     except Exception as e:
         return False, f"Error starting JADE: {str(e)}", None, None
+
+def compile_java_agents():
+    """
+    Compiles the JADE agent Java source files.
+    Returns: (success_bool, message_str)
+    """
+    print("Attempting to compile JADE agent Java source files...")
+    
+    source_path = os.path.join("packages", "simulation", "java", "src", "jadeagents")
+    output_classes_path = os.path.join("packages", "simulation", "java", "classes")
+    
+    # Ensure the output directory for classes exists
+    try:
+        os.makedirs(output_classes_path, exist_ok=True)
+    except Exception as e:
+        err_msg = f"Error creating output directory for compiled classes '{output_classes_path}': {str(e)}"
+        print(err_msg)
+        return False, err_msg
+
+    if not os.path.exists(JADE_JAR_PATH):
+        err_msg = f"JADE JAR not found at '{JADE_JAR_PATH}' for compilation."
+        print(err_msg)
+        return False, err_msg
+    if not os.path.exists(PY4J_JAR_PATH):
+        err_msg = f"Py4J JAR not found at '{PY4J_JAR_PATH}' for compilation."
+        print(err_msg)
+        return False, err_msg
+
+    # Check if source files exist
+    java_source_files = [f for f in os.listdir(source_path) if f.endswith(".java")]
+    if not java_source_files:
+        err_msg = f"No Java source files found in '{source_path}'."
+        print(err_msg)
+        return False, err_msg
+    
+    source_files_pattern = os.path.join(source_path, "*.java")
+
+    classpath_separator = ";" if platform.system() == "Windows" else ":"
+    compile_classpath = f"{JADE_JAR_PATH}{classpath_separator}{PY4J_JAR_PATH}"
+
+    # Construct the javac command
+    # Using os.path.normpath to ensure paths are in the correct format for the OS.
+    javac_cmd = [
+        "javac",
+        "-cp", compile_classpath,
+        "-d", os.path.normpath(output_classes_path),
+        os.path.normpath(source_files_pattern) # Path to all .java files in the source directory
+    ]
+
+    print(f"Compilation command: {' '.join(javac_cmd)}")
+
+    try:
+        # Using shell=False is generally safer. subprocess.run handles arguments as a list.
+        result = subprocess.run(javac_cmd, capture_output=True, text=True, check=False)
+        
+        if result.returncode == 0:
+            print("Java agents compiled successfully.")
+            return True, "JADE agents compiled successfully."
+        else:
+            # Compilation failed, provide error details.
+            error_output = result.stderr if result.stderr else result.stdout
+            err_msg = f"JADE agent compilation failed (exit code {result.returncode}):\n{error_output}"
+            print(err_msg)
+            return False, err_msg
+            
+    except FileNotFoundError:
+        err_msg = "javac command not found. Is Java Development Kit (JDK) installed and in PATH?"
+        print(err_msg)
+        return False, err_msg
+    except Exception as e:
+        err_msg = f"An unexpected error occurred during Java agent compilation: {str(e)}"
+        print(err_msg)
+        return False, err_msg
 
 def stop_jade_platform(process_info, gateway_obj):
     """
