@@ -22,8 +22,8 @@ def start_jade_platform():
     
     # Starting JADE with -gui. For Py4J, a GatewayServer would need to be started by a JADE agent.
     # The -host and -port parameters for JADE main container might be relevant.
-    # Using port 40018 to attempt to find an available port.
-    cmd = ["java", "-cp", JADE_JAR_PATH, "jade.Boot", "-gui", "-port", "40018"]
+    # Setting port back to 30018 as requested.
+    cmd = ["java", "-cp", JADE_JAR_PATH, "jade.Boot", "-gui", "-port", "30018"]
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0)
         
