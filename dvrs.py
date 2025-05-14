@@ -3,6 +3,8 @@ from packages.configuration.backend import config_logic
 from packages.configuration.frontend.config_tab_ui import render_config_tab
 from packages.optimisation.backend import optimisation_logic
 from packages.optimisation.frontend.optimisation_tab_ui import render_optimisation_tab
+from packages.simulation.backend import simulation_logic # New import for simulation
+from packages.simulation.frontend.simulation_tab_ui import render_simulation_tab # New import
 
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
@@ -60,10 +62,10 @@ def _render_main_layout(ss):
     with col2: # This is the main content area, styled as a card.
         streamlit.title("Delivery Vehicle Routing System")
 
-        tab_config, tab_optimisation, tab_run, tab_results, tab_settings = streamlit.tabs([
+        tab_config, tab_optimisation, tab_simulation, tab_results, tab_settings = streamlit.tabs([
             "Configuration",
-            "Optimisation", # Renamed tab
-            "Run Optimisation",
+            "Optimisation", 
+            "Simulation", # Renamed tab
             "Dashboard & Results",
             "Settings"
         ])
@@ -74,38 +76,8 @@ def _render_main_layout(ss):
         with tab_optimisation:
             render_optimisation_tab(ss)
             
-        with tab_run:
-            streamlit.header("Optimisation Status & Summary") 
-            if not ss.get("config_data"): 
-                streamlit.warning("Please load or create a configuration in the 'Configuration' tab first.")
-            elif ss.get("edit_mode", False):
-                streamlit.warning("Please save or cancel the current configuration edits in the 'Configuration' tab before viewing optimisation status or results.")
-            elif not ss.get("optimisation_script_loaded_successfully"): 
-                streamlit.warning("Please load and configure an optimisation script in the 'Optimisation' tab.")
-            else: # Config loaded, not in edit mode, and script loaded
-                streamlit.info("The optimisation script is loaded. You can run it or adjust parameters in the 'Optimisation' tab.")
-                if ss.get("optimisation_script_filename"):
-                    streamlit.write(f"Loaded script: **{ss.optimisation_script_filename}**")
-                if ss.get("optimisation_script_user_values"):
-                    streamlit.write("Current parameters for the script:")
-                    streamlit.json(ss.optimisation_script_user_values)
-
-                if ss.get("optimisation_run_complete"):
-                    if ss.get("optimisation_results") is not None:
-                        streamlit.success("Optimisation process completed successfully.")
-                        streamlit.subheader("Summary of Last Run:")
-                        streamlit.write("Using configuration:")
-                        streamlit.json(ss.config_data) # Assumes config_data is present if run was complete
-                        streamlit.write("Final parameters used:")
-                        streamlit.json(ss.optimisation_script_user_values)
-                        streamlit.write("Results:")
-                        streamlit.json(ss.optimisation_results)
-                    else:
-                        streamlit.warning("Optimisation script ran but returned no results (None).")
-                elif ss.get("optimisation_run_error"):
-                    streamlit.error(f"Optimisation run failed or has an error: {ss.optimisation_run_error}")
-                else: # Script loaded but not yet run, or run was not conclusive (e.g. no error but no completion flag)
-                    streamlit.warning("Optimisation has not been run yet with the current script/parameters. Please use the 'Run Optimisation Script' button in the 'Optimisation' tab.")
+        with tab_simulation: # Changed from tab_run
+            render_simulation_tab(ss) # Call the new rendering function
 
         with tab_results:
             streamlit.header("Dashboard & Results")
@@ -133,6 +105,7 @@ def main():
     ss = streamlit.session_state
     config_logic.initialise_session_state(ss)
     optimisation_logic.initialise_session_state(ss) # Initialise optimisation state
+    simulation_logic.initialise_session_state(ss) # Initialise simulation state
 
     _apply_custom_styling(ss)
     _render_main_layout(ss)
