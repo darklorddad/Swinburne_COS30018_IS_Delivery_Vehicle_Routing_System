@@ -1,5 +1,5 @@
 import streamlit
-import pandas as pd # Added for displaying results in a table
+# import pandas as pd # Removed pandas
 from optimisation.backend import optimisation_logic
 
 # Renders the initial view of the Optimisation tab, 
@@ -48,7 +48,8 @@ def render_initial_optimisation_view(ss):
         # If parameters exist, they are edited in the "Edit Script Parameters" view.
         # No need to display them here in read-only mode.
 
-        with streamlit.expander("Execute Optimisation & View Plan", expanded=True): # Renamed expander
+        with streamlit.expander("Route Optimisation", expanded=True): # Renamed expander
+            streamlit.markdown("---") # Divider above "Run optimisation" button
             # Action button: Run Optimisation
             run_disabled = not (ss.optimisation_script_loaded_successfully and ss.config_data)
             if streamlit.button("Run optimisation", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True): # Renamed button
@@ -58,7 +59,7 @@ def render_initial_optimisation_view(ss):
                     optimisation_logic.execute_optimisation_script(ss)
                     streamlit.rerun() 
             
-            streamlit.markdown("---") # Divider between button and feedback message
+            # Removed divider between button and feedback message
 
             # Display execution results or errors
             if ss.optimisation_run_error:
@@ -69,7 +70,7 @@ def render_initial_optimisation_view(ss):
                     streamlit.success("Route optimised") # Renamed success message
                     streamlit.markdown("---") # Divider between feedback message and results
 
-                    # Display results using tables/dataframes
+                    # Display results using streamlit.text, streamlit.markdown, and streamlit.table
                     results = ss.optimisation_results
                     
                     if "optimised_routes" in results and results["optimised_routes"]:
@@ -83,20 +84,18 @@ def render_initial_optimisation_view(ss):
                             parcels_details = route.get("parcels_assigned_details", [])
                             if parcels_details:
                                 streamlit.markdown("Assigned Parcels:")
-                                parcels_df = pd.DataFrame(parcels_details)
-                                # Ensure essential columns exist, provide defaults if not for display
-                                display_cols = {}
-                                for col in ['id', 'weight', 'coordinates_x_y']:
-                                    if col in parcels_df.columns:
-                                        display_cols[col] = parcels_df[col]
-                                    else:
-                                        # Create a series of N/A if column is missing
-                                        display_cols[col] = pd.Series(["N/A"] * len(parcels_df), name=col) 
-                                
-                                display_df = pd.DataFrame(display_cols)
-                                if 'coordinates_x_y' in display_df.columns: # Prettify coordinates
-                                     display_df['coordinates_x_y'] = display_df['coordinates_x_y'].apply(lambda x: f"({x[0]}, {x[1]})" if isinstance(x, list) and len(x)==2 else "N/A")
-                                streamlit.dataframe(display_df, use_container_width=True)
+                                # Prepare data for streamlit.table - list of dicts
+                                table_data = []
+                                for p in parcels_details:
+                                    coords = p.get('coordinates_x_y', ['N/A', 'N/A'])
+                                    coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A"
+                                    table_data.append({
+                                        "ID": p.get('id', 'N/A'),
+                                        "Weight": p.get('weight', 'N/A'),
+                                        "Coordinates": coord_str
+                                    })
+                                if table_data:
+                                    streamlit.table(table_data)
                             else:
                                 streamlit.info("No parcels assigned to this agent in this route.")
                             if i < len(results["optimised_routes"]) - 1:
@@ -105,18 +104,17 @@ def render_initial_optimisation_view(ss):
                     
                     if "unassigned_parcels_details" in results and results["unassigned_parcels_details"]:
                         streamlit.subheader("Unassigned Parcels")
-                        unassigned_df = pd.DataFrame(results["unassigned_parcels_details"])
-                        display_cols_unassigned = {}
-                        for col in ['id', 'weight', 'coordinates_x_y']:
-                             if col in unassigned_df.columns:
-                                 display_cols_unassigned[col] = unassigned_df[col]
-                             else:
-                                 display_cols_unassigned[col] = pd.Series(["N/A"] * len(unassigned_df), name=col)
-                        
-                        display_df_unassigned = pd.DataFrame(display_cols_unassigned)
-                        if 'coordinates_x_y' in display_df_unassigned.columns: # Prettify coordinates
-                             display_df_unassigned['coordinates_x_y'] = display_df_unassigned['coordinates_x_y'].apply(lambda x: f"({x[0]}, {x[1]})" if isinstance(x, list) and len(x)==2 else "N/A")
-                        streamlit.dataframe(display_df_unassigned, use_container_width=True)
+                        unassigned_table_data = []
+                        for p in results["unassigned_parcels_details"]:
+                            coords = p.get('coordinates_x_y', ['N/A', 'N/A'])
+                            coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A"
+                            unassigned_table_data.append({
+                                "ID": p.get('id', 'N/A'),
+                                "Weight": p.get('weight', 'N/A'),
+                                "Coordinates": coord_str
+                            })
+                        if unassigned_table_data:
+                            streamlit.table(unassigned_table_data)
                     elif "optimised_routes" in results: # Only show if routes were processed
                         streamlit.info("All parcels were assigned.")
                         

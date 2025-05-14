@@ -15,7 +15,7 @@ def render_edit_optimisation_parameters_view(ss):
 
     params_list = ss.optimisation_script_param_schema["parameters"]
     if not params_list:
-        streamlit.info("The optimisation script does not define any configurable parameters.")
+        streamlit.info("The optimisation script does not define any configurable parameters") # Removed period
         if streamlit.button("Cancel", key="cancel_opt_menu_no_params", use_container_width=True): # Renamed and made full width for consistency
             optimisation_logic.handle_cancel_edit_parameters_action(ss)
             streamlit.rerun()
