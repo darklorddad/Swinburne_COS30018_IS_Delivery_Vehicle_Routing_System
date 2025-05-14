@@ -83,20 +83,22 @@ def render_initial_optimisation_view(ss):
                     # Display results using a combination of columns for route summary and st.table for parcel details
                     if "optimised_routes" in results and results["optimised_routes"]:
                         for i, route in enumerate(results["optimised_routes"]):
-                            # Vertical block for Agent ID
-                            streamlit.markdown("**Route for Agent**")
-                            streamlit.caption(f"{route.get('agent_id', 'N/A')}")
-                            
-                            # Columns for Distance and Weight
-                            col1, col2 = streamlit.columns(2)
-                            with col1:
+                            # Row 1: Agent ID and Total Distance
+                            col_agent, col_dist = streamlit.columns(2)
+                            with col_agent:
+                                streamlit.markdown("**Route for Agent**")
+                                streamlit.caption(f"{route.get('agent_id', 'N/A')}")
+                            with col_dist:
                                 streamlit.markdown("**Total Distance**")
                                 streamlit.caption(f"{route.get('total_distance', 'N/A')} units")
-                            with col2:
+                            
+                            # Row 2: Carried Weight (in a column for consistent block structure)
+                            col_weight, _ = streamlit.columns(2) # Use one column, leave the other empty
+                            with col_weight:
                                 streamlit.markdown("**Carried Weight**")
                                 streamlit.caption(f"{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (capacity)")
                             
-                            # Vertical block for Stop Sequence
+                            # Row 3: Stop Sequence (full width as it can be long)
                             streamlit.markdown("**Stop Sequence**")
                             streamlit.caption(f"{' -> '.join(route.get('route_stop_ids', []))}")
                             
