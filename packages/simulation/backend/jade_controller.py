@@ -9,7 +9,7 @@ from py4j.java_gateway import JavaGateway, GatewayParameters, Py4JNetworkError #
 # Users might need to configure this path if it's different.
 JADE_JAR_PATH = os.path.join("dependencies", "JADE-all-4.6.0", "jade", "lib", "jade.jar")
 # Path to the Py4J JAR, required for compiling agents that use Py4J (e.g., Py4jGatewayAgent)
-PY4J_JAR_PATH = os.path.join("dependencies", "py4j-0.10.9.9", "share", "py4j", "py4j0.10.9.9.jar")
+PY4J_JAR_PATH = os.path.join("dependencies", "py4j-0.10.9.9", "py4j-java", "py4j0.10.9.9.jar")
 
 
 # Default Py4J connection parameters
