@@ -13,7 +13,7 @@ def get_params_schema():
                 "min": 10,
                 "max": 1000,
                 "step": 10,
-                "help": "The number of iterations the algorithm should run."
+                "help": "The number of iterations the algorithm should run"
             },
             {
                 "name": "alpha_value", 
@@ -23,14 +23,14 @@ def get_params_schema():
                 "min": 0.01,
                 "max": 1.0,
                 "step": 0.01,
-                "help": "A learning rate parameter for the algorithm."
+                "help": "A learning rate parameter for the algorithm"
             },
             {
                 "name": "use_heuristic_crossover", 
                 "type": "boolean", 
                 "default": True, 
                 "label": "Use Heuristic Crossover",
-                "help": "Enable or disable a specific heuristic crossover method."
+                "help": "Enable or disable a specific heuristic crossover method"
             },
             {
                 "name": "selection_strategy",
@@ -38,14 +38,14 @@ def get_params_schema():
                 "default": "roulette_wheel",
                 "label": "Parent Selection Strategy",
                 "options": ["roulette_wheel", "tournament", "rank_based"],
-                "help": "Choose the strategy for selecting parents."
+                "help": "Choose the strategy for selecting parents"
             },
             {
                 "name": "solver_mode",
                 "type": "string", # Example of a string input, rendered as text_input
                 "default": "fast",
                 "label": "Solver Mode",
-                "help": "Enter a mode for the solver (e.g., 'fast', 'balanced', 'quality')."
+                "help": "Enter a mode for the solver (e.g., 'fast', 'balanced', 'quality')"
             }
         ]
     }
