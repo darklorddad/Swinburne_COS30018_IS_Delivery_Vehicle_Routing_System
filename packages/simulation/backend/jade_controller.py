@@ -392,29 +392,65 @@ def create_da_agent(gateway_obj, agent_name, agent_java_class, agent_config_dict
         return False, f"Error serializing agent_config_dict for DA '{agent_name}' to JSON: {str(e)}"
     return _create_agent_in_jade(gateway_obj, agent_name, agent_java_class, agent_args_str)
 
-def trigger_mra_optimisation_and_notify_das(gateway_obj, mra_agent_name, optimisation_results_py_dict):
+def dispatch_routes_to_delivery_agents(gateway_obj, optimisation_results_py_dict):
     """
-    Sends optimisation results to the MRA in JADE via Py4J.
-    The MRA would then parse these results and manage DAs.
+    Dispatches individual routes to Delivery Agents via Py4J.
+    Iterates through optimised_routes, converts each route to JSON,
+    and calls a method on Py4jGatewayAgent to send it to the respective DA.
     Returns: (success_bool, message_str)
     """
     if not gateway_obj:
-        return False, "Py4J Gateway not available. Cannot trigger simulation."
+        return False, "Py4J Gateway not available. Cannot dispatch routes."
+
+    if not optimisation_results_py_dict or "optimised_routes" not in optimisation_results_py_dict:
+        return False, "Optimisation results are missing or do not contain 'optimised_routes'."
+
+    optimised_routes = optimisation_results_py_dict.get("optimised_routes", [])
+    if not optimised_routes:
+        return True, "No optimised routes to dispatch." # Not an error, but nothing to do.
+
+    jade_entry_point = gateway_obj.entry_point
+    all_dispatches_successful = True
+    dispatch_messages = []
+
+    print(f"Py4J: Attempting to dispatch {len(optimised_routes)} routes to DAs...")
+
+    for route_detail in optimised_routes:
+        da_name = route_detail.get("agent_id")
+        if not da_name:
+            dispatch_messages.append("Skipping route with no agent_id.")
+            all_dispatches_successful = False # Consider this a partial failure in dispatch
+            continue
         
-    try:
-        results_json_str = json.dumps(optimisation_results_py_dict)
-        
-        # Assume the JADE entry point or a specific controller has a method
-        # to send this data to the MRA, e.g., by posting an ACL message.
-        # public String sendOptimisationResultsToMRA(String mraName, String resultsJson)
-        jade_entry_point = gateway_obj.entry_point
-        response_message = jade_entry_point.sendOptimisationResultsToMRA(mra_agent_name, results_json_str)
-        
-        print(f"Py4J: Sent optimisation results to MRA '{mra_agent_name}'. JADE response: {response_message}")
-        if "error" in response_message.lower() or "fail" in response_message.lower():
-            return False, f"JADE reported an error sending results to MRA '{mra_agent_name}': {response_message}"
-        return True, f"Optimisation results sent to MRA '{mra_agent_name}'. JADE response: {response_message}"
-    except Py4JNetworkError as e:
-        return False, f"Py4J Network Error sending results to MRA '{mra_agent_name}': {str(e)}. Check JADE GatewayServer."
-    except Exception as e:
-        return False, f"Error sending results to MRA '{mra_agent_name}' via Py4J: {str(e)}"
+        try:
+            # Convert the individual route_detail dictionary to a JSON string
+            route_json_string = json.dumps(route_detail)
+            
+            # Call the new method on Py4jGatewayAgent
+            # public String dispatchIndividualRoute(String agentName, String routeJsonString)
+            response_message = jade_entry_point.dispatchIndividualRoute(da_name, route_json_string)
+            dispatch_messages.append(f"Route for DA '{da_name}': {response_message}")
+            
+            if "error" in response_message.lower() or "fail" in response_message.lower():
+                all_dispatches_successful = False
+                print(f"Py4J: Error dispatching route to DA '{da_name}': {response_message}")
+            else:
+                print(f"Py4J: Successfully dispatched route to DA '{da_name}'.")
+
+        except Py4JNetworkError as e:
+            msg = f"Py4J Network Error dispatching route to DA '{da_name}': {str(e)}"
+            dispatch_messages.append(msg)
+            print(msg)
+            all_dispatches_successful = False
+            # Potentially break or decide if one failure means total failure
+        except Exception as e:
+            msg = f"Error preparing or dispatching route for DA '{da_name}': {str(e)}"
+            dispatch_messages.append(msg)
+            print(msg)
+            all_dispatches_successful = False
+
+    final_status_message = "Route dispatch summary: " + " | ".join(dispatch_messages)
+    if all_dispatches_successful:
+        return True, final_status_message
+    else:
+        return False, final_status_message

@@ -160,16 +160,15 @@ def handle_run_simulation(ss):
 
     optimisation_results = ss.optimisation_results
 
-    # Tell the MRA in JADE to start the process, passing it the optimisation_results.
-    success, message = jade_controller.trigger_mra_optimisation_and_notify_das(
-        py4j_gateway, # Pass the gateway object
-        DEFAULT_MRA_NAME, # Name of the MRA agent in JADE
+    # Dispatch individual routes to DAs via Py4jGatewayAgent
+    success, message = jade_controller.dispatch_routes_to_delivery_agents(
+        py4j_gateway, 
         optimisation_results
     )
 
     if success:
-        ss.jade_simulation_status_message = message or "JADE simulation triggered successfully."
+        ss.jade_simulation_status_message = message or "Routes dispatched to Delivery Agents successfully."
         return {'type': 'success', 'message': ss.jade_simulation_status_message}
     else:
-        ss.jade_simulation_status_message = message or "Failed to trigger JADE simulation."
+        ss.jade_simulation_status_message = message or "Failed to dispatch one or more routes to Delivery Agents."
         return {'type': 'error', 'message': ss.jade_simulation_status_message}

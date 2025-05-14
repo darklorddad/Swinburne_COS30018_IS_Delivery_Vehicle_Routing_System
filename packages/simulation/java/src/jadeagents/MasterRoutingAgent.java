@@ -25,7 +25,10 @@ public class MasterRoutingAgent extends Agent {
             System.out.println("MRA: No arguments provided.");
         }
 
-        // Add behaviour to listen for optimisation results
+        // The MRA no longer directly receives the full VRPResults via this mechanism.
+        // Route dispatch is handled by Py4jGatewayAgent based on Python's instructions.
+        // This behaviour can be removed or adapted if MRA has other message-based interactions.
+        /*
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 // Listen for messages with the "VRPResults" ontology
@@ -35,23 +38,16 @@ public class MasterRoutingAgent extends Agent {
                     System.out.println("MRA " + myAgent.getLocalName() + ": Received message from " + msg.getSender().getName());
                     System.out.println("MRA: Message content (Optimisation Results JSON): " + msg.getContent());
                     
-                    // Here, the MRA would:
-                    // 1. Parse the resultsJson.
-                    // 2. Determine routes for each DA.
-                    // 3. Send individual route messages to DAs.
-                    // For now, we just print the received content.
-
-                    // Example: Send a reply (optional)
-                    // ACLMessage reply = msg.createReply();
-                    // reply.setPerformative(ACLMessage.INFORM);
-                    // reply.setContent("MRA received results.");
-                    // myAgent.send(reply);
+                    // Original MRA logic for parsing and dispatching would have gone here.
+                    // For now, this is handled by Python calling dispatchIndividualRoute on Py4jGatewayAgent.
 
                 } else {
                     block(); // Wait for the next message
                 }
             }
         });
+        */
+        System.out.println("MRA " + getAID().getName() + " is set up. It will not actively dispatch routes in this flow.");
     }
 
     protected void takeDown() {

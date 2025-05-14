@@ -31,9 +31,16 @@ public class DeliveryAgent extends Agent {
                 MessageTemplate mt = MessageTemplate.MatchOntology("VRPAssignment");
                 ACLMessage msg = myAgent.receive(mt);
                 if (msg != null) {
-                    System.out.println("DA " + myAgent.getLocalName() + ": Received route assignment from " + msg.getSender().getName());
-                    System.out.println("DA " + myAgent.getLocalName() + ": Route details: " + msg.getContent());
+                    System.out.println("DA " + myAgent.getLocalName() + ": Received route assignment from " + msg.getSender().getName() + " with ontology " + msg.getOntology());
+                    System.out.println("DA " + myAgent.getLocalName() + ": Route details (JSON): " + msg.getContent());
                     // Here, the DA would parse its route and simulate delivery.
+                    // For now, we simulate processing by logging.
+                    System.out.println("DA " + myAgent.getLocalName() + ": Processing assigned route...");
+                    // Example: Iterate through parcels if JSON was parsed.
+                    // For instance, if routeJsonString was {"parcels_assigned_ids": ["P001", "P002"], ...}
+                    // A real implementation would parse this JSON.
+                    // System.out.println("DA " + myAgent.getLocalName() + ": Simulating delivery of parcels mentioned in the route.");
+                    System.out.println("DA " + myAgent.getLocalName() + ": Route processing complete (simulated). Waiting for next assignment.");
                 } else {
                     block();
                 }
