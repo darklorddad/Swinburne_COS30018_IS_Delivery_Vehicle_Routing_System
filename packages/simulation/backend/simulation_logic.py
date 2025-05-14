@@ -151,34 +151,35 @@ def handle_create_agents(ss):
         return {'type': 'error', 'message': final_message}
 
 
-def handle_dispatch_routes(ss): # Renamed from handle_run_simulation
+def handle_trigger_mra_processing(ss): # Renamed from handle_dispatch_routes
     if not ss.get("jade_platform_running"):
-        ss.jade_dispatch_status_message = "Cannot dispatch routes: JADE platform is not running."
+        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: JADE platform is not running."
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
     
     py4j_gateway = ss.get("py4j_gateway_object")
     if not py4j_gateway:
-        ss.jade_dispatch_status_message = "Cannot dispatch routes: Py4J Gateway to JADE is not available."
+        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Py4J Gateway to JADE is not available."
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
         
     if not ss.get("jade_agents_created"):
-        ss.jade_dispatch_status_message = "Cannot dispatch routes: Agents have not been created in JADE."
+        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Agents have not been created in JADE."
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
     if not ss.get("optimisation_run_complete") or not ss.get("optimisation_results"):
-        ss.jade_dispatch_status_message = "Cannot dispatch routes: Optimisation results not available. Please run optimisation in the 'Optimisation' tab first."
+        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Optimisation results not available. Please run optimisation in the 'Optimisation' tab first."
         return {'type': 'warning', 'message': ss.jade_dispatch_status_message}
 
     optimisation_results = ss.optimisation_results
 
-    # Dispatch individual routes to DAs via Py4jGatewayAgent
-    success, message = jade_controller.dispatch_routes_to_delivery_agents(
-        py4j_gateway, 
+    # Send full optimisation results to MRA via Py4jGatewayAgent
+    success, message = jade_controller.send_optimisation_results_to_mra(
+        py4j_gateway,
+        DEFAULT_MRA_NAME, # Name of the MRA agent in JADE
         optimisation_results
     )
 
     if success:
-        ss.jade_dispatch_status_message = message or "Routes dispatched to Delivery Agents successfully."
+        ss.jade_dispatch_status_message = message or "Optimisation results sent to MRA for processing and dispatch."
         return {'type': 'success', 'message': ss.jade_dispatch_status_message}
     else:
-        ss.jade_dispatch_status_message = message or "Failed to dispatch one or more routes to Delivery Agents."
+        ss.jade_dispatch_status_message = message or "Failed to send optimisation results to MRA."
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}

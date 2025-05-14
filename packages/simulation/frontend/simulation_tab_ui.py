@@ -74,11 +74,11 @@ def render_jade_operations_tab(ss):
                 if not optimisation_complete:
                     streamlit.warning("Optimisation results are not available. Please run an optimisation in the 'Optimisation' tab first.")
 
-                if streamlit.button("Dispatch Routes to JADE Agents", 
-                                    key="dispatch_routes_btn", 
+                if streamlit.button("Send Results to MRA for Dispatch", 
+                                    key="trigger_mra_dispatch_btn", 
                                     use_container_width=True,
                                     disabled=not optimisation_complete):
-                    result = simulation_logic.handle_dispatch_routes(ss) # Renamed function
+                    result = simulation_logic.handle_trigger_mra_processing(ss) # Renamed function
                     displayed = display_operation_result(result) # Displays success/error/warning
                     # Only rerun if display_operation_result did NOT display anything (e.g. bad result format)
                     # This makes all messages (success, error, warning, info) persist.

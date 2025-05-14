@@ -67,31 +67,30 @@ public class Py4jGatewayAgent extends Agent {
     }
 
     /**
-     * Called by Python to dispatch an individual route to a specific agent.
-     * @param agentName The local name of the target Delivery Agent.
-     * @param routeJsonString A JSON string containing the route details for the agent.
-     * @return A string message indicating success or failure.
+     * Called by Python to forward the complete optimisation results to the MasterRoutingAgent.
+     * @param mraName The local name of the MasterRoutingAgent.
+     * @param fullResultsJson A JSON string containing all optimisation results and routes.
+     * @return A string message indicating success or failure of forwarding.
      */
-    public String dispatchIndividualRoute(String agentName, String routeJsonString) {
-        System.out.println("Py4jGatewayAgent: Received request to dispatch route to agent: " + agentName);
+    public String forwardOptimisationResultsToMRA(String mraName, String fullResultsJson) {
+        System.out.println("Py4jGatewayAgent: Received request to forward optimisation results to MRA: " + mraName);
         try {
-            ACLMessage msg = new ACLMessage(ACLMessage.INFORM); // Using INFORM for route assignment
-            AID targetAgentAID = new AID(agentName, AID.ISLOCALNAME);
-            msg.addReceiver(targetAgentAID);
-            msg.setContent(routeJsonString);
-            msg.setOntology("VRPAssignment"); // Ontology DAs will listen for
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST); // MRA will process this request
+            AID mraAID = new AID(mraName, AID.ISLOCALNAME);
+            msg.addReceiver(mraAID);
+            msg.setContent(fullResultsJson);
+            msg.setOntology("FullVRPResults"); // MRA listens for this
             msg.setLanguage("JSON");
 
             send(msg);
-            System.out.println("Py4jGatewayAgent: Route dispatched to " + agentName + " successfully.");
-            return "Route dispatched to agent '" + agentName + "' successfully.";
+            System.out.println("Py4jGatewayAgent: Full optimisation results forwarded to MRA '" + mraName + "' successfully.");
+            return "Full optimisation results forwarded to MRA '" + mraName + "' successfully.";
         } catch (Exception e) {
-            System.err.println("Py4jGatewayAgent: Error dispatching route to agent " + agentName + ": " + e.getMessage());
+            System.err.println("Py4jGatewayAgent: Error forwarding results to MRA " + mraName + ": " + e.getMessage());
             e.printStackTrace();
-            return "Error dispatching route to agent '" + agentName + "': " + e.getMessage();
+            return "Error forwarding results to MRA '" + mraName + "': " + e.getMessage();
         }
     }
 
-    // The sendOptimisationResultsToMRA method is removed as route dispatch is now per DA.
-    // If MRA needs a general "start" signal, a separate method could be added for that.
+    // dispatchIndividualRoute method is removed. MRA now handles individual dispatch.
 }

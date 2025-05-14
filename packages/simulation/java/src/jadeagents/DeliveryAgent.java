@@ -1,51 +1,90 @@
-package jadeagents; // Changed from dld.jadeagents
+package jadeagents;
 
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.WakerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 public class DeliveryAgent extends Agent {
+    private static final long TRAVEL_TIME_PER_STOP_MS = 2000; // Simulate 2 seconds travel/stop time
 
     protected void setup() {
-        System.out.println("DeliveryAgent " + getAID().getName() + " is ready.");
-
-        // Print arguments (expected to be a JSON string with this DA's config)
+        System.out.println("DeliveryAgent " + getAID().getName() + " is ready and waiting for routes.");
         Object[] args = getArguments();
-        if (args != null && args.length > 0) {
-            for (int i = 0; i < args.length; i++) {
-                System.out.println("DA " + getLocalName() + " Argument " + i + ": " + args[i]);
-            }
-            // You would typically parse this JSON string here
-            if (args[0] instanceof String) {
-                System.out.println("DA " + getLocalName() + " Configuration (JSON): " + args[0]);
-            }
-        } else {
-            System.out.println("DA " + getLocalName() + ": No arguments provided.");
+        if (args != null && args.length > 0 && args[0] instanceof String) {
+            System.out.println("DA " + getLocalName() + " Configuration (JSON): " + args[0]);
         }
 
-        // Add behaviour to listen for its route from MRA (example)
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
-                // Listen for messages with an ontology like "VRPAssignment"
                 MessageTemplate mt = MessageTemplate.MatchOntology("VRPAssignment");
                 ACLMessage msg = myAgent.receive(mt);
                 if (msg != null) {
-                    System.out.println("DA " + myAgent.getLocalName() + ": Received route assignment from " + msg.getSender().getName() + " with ontology " + msg.getOntology());
-                    System.out.println("DA " + myAgent.getLocalName() + ": Route details (JSON): " + msg.getContent());
-                    // Here, the DA would parse its route and simulate delivery.
-                    // For now, we simulate processing by logging.
-                    System.out.println("DA " + myAgent.getLocalName() + ": Processing assigned route...");
-                    // Example: Iterate through parcels if JSON was parsed.
-                    // For instance, if routeJsonString was {"parcels_assigned_ids": ["P001", "P002"], ...}
-                    // A real implementation would parse this JSON.
-                    // System.out.println("DA " + myAgent.getLocalName() + ": Simulating delivery of parcels mentioned in the route.");
-                    System.out.println("DA " + myAgent.getLocalName() + ": Route processing complete (simulated). Waiting for next assignment.");
+                    System.out.println("DA " + myAgent.getLocalName() + ": Received route assignment from " + msg.getSender().getName());
+                    String routeJson = msg.getContent();
+                    System.out.println("DA " + myAgent.getLocalName() + ": Route details (JSON): " + routeJson);
+                    
+                    // Add a new sequential behaviour to perform the delivery
+                    addBehaviour(new PerformDeliveryBehaviour(myAgent, routeJson));
                 } else {
                     block();
                 }
             }
         });
+    }
+
+    private class PerformDeliveryBehaviour extends SequentialBehaviour {
+        public PerformDeliveryBehaviour(Agent a, String routeJson) {
+            super(a);
+            try {
+                JSONObject route = new JSONObject(routeJson);
+                JSONArray stopIds = route.getJSONArray("route_stop_ids"); // e.g., ["Warehouse", "P001", "P002", "Warehouse"]
+
+                addSubBehaviour(new OneShotBehaviour(myAgent) {
+                    public void action() {
+                        System.out.println("DA " + myAgent.getLocalName() + ": Starting delivery for route. Stops: " + stopIds.toString());
+                    }
+                });
+
+                for (int i = 0; i < stopIds.length(); i++) {
+                    String stopId = stopIds.getString(i);
+                    final int stopIndex = i; // For use in inner class
+
+                    // Simulate travel to the stop
+                    addSubBehaviour(new WakerBehaviour(myAgent, TRAVEL_TIME_PER_STOP_MS) {
+                        protected void onWake() {
+                            System.out.println("DA " + myAgent.getLocalName() + ": Arrived at stop " + (stopIndex + 1) + "/" + stopIds.length() + ": " + stopId);
+                            if (!stopId.equals("Warehouse")) {
+                                System.out.println("DA " + myAgent.getLocalName() + ": Servicing stop " + stopId + ".");
+                            } else if (stopIndex > 0 && stopIndex == stopIds.length() -1) { // Last stop is warehouse
+                                System.out.println("DA " + myAgent.getLocalName() + ": Returned to Warehouse.");
+                            }
+                        }
+                    });
+                }
+
+                addSubBehaviour(new OneShotBehaviour(myAgent) {
+                    public void action() {
+                        System.out.println("DA " + myAgent.getLocalName() + ": Delivery route complete. Returning to idle state.");
+                    }
+                });
+
+            } catch (Exception e) {
+                System.err.println("DA " + myAgent.getLocalName() + ": Error parsing route JSON or creating delivery behaviours: " + e.getMessage());
+                e.printStackTrace();
+                // Add a simple error state behaviour if parsing fails
+                 addSubBehaviour(new OneShotBehaviour(myAgent) {
+                    public void action() {
+                        System.out.println("DA " + myAgent.getLocalName() + ": Failed to process route. Returning to idle state.");
+                    }
+                });
+            }
+        }
     }
 
     protected void takeDown() {
