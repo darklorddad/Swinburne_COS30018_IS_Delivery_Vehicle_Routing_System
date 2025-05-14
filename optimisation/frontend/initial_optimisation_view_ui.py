@@ -109,11 +109,11 @@ def render_initial_optimisation_view(ss):
                                 table_data = []
                                 for p_detail in parcels_details:
                                     coords = p_detail.get('coordinates_x_y', ['N/A', 'N/A'])
-                                    coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A"
+                                    # coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A" # No longer formatting as string
                                     table_data.append({
-                                        "id": p_detail.get('id', 'N/A'), # Changed to lowercase
-                                        "weight": p_detail.get('weight', 'N/A'), # Changed to lowercase
-                                        "coordinates": coord_str # Changed to lowercase
+                                        "id": p_detail.get('id', 'N/A'), 
+                                        "weight": p_detail.get('weight', 'N/A'), 
+                                        "coordinates_x_y": coords # Changed key and using raw list/tuple
                                     })
                                 if table_data:
                                     streamlit.dataframe(table_data, use_container_width=True) # Using st.dataframe
@@ -130,11 +130,11 @@ def render_initial_optimisation_view(ss):
                         unassigned_table_data = []
                         for p_detail in results["unassigned_parcels_details"]:
                             coords = p_detail.get('coordinates_x_y', ['N/A', 'N/A'])
-                            coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A"
+                            # coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A" # No longer formatting as string
                             unassigned_table_data.append({
-                                "id": p_detail.get('id', 'N/A'), # Changed to lowercase
-                                "weight": p_detail.get('weight', 'N/A'), # Changed to lowercase
-                                "coordinates": coord_str # Changed to lowercase
+                                "id": p_detail.get('id', 'N/A'), 
+                                "weight": p_detail.get('weight', 'N/A'), 
+                                "coordinates_x_y": coords # Changed key and using raw list/tuple
                             })
                         if unassigned_table_data:
                             streamlit.dataframe(unassigned_table_data, use_container_width=True) # Using st.dataframe
