@@ -50,8 +50,13 @@ def render_simulation_tab(ss):
                                 use_container_width=True,
                                 disabled=not config_loaded or ss.get("jade_agents_created", False)):
                 result = simulation_logic.handle_create_agents(ss)
-                display_operation_result(result) # This will display success or error
-                streamlit.rerun()
+                displayed = display_operation_result(result) # This will display success or error
+                # Only rerun if the operation was successful, allowing error/warning messages to persist.
+                if displayed and result.get('type') == 'success':
+                    streamlit.rerun()
+                elif not displayed: # Fallback if display_operation_result didn't show anything
+                    streamlit.rerun()
+
 
             # The status message is now handled by the display_operation_result call above.
             # The session state ss.jade_agent_creation_status_message is still set by
@@ -74,8 +79,12 @@ def render_simulation_tab(ss):
                                     use_container_width=True,
                                     disabled=not optimisation_complete):
                     result = simulation_logic.handle_run_simulation(ss)
-                    display_operation_result(result) # Displays success/error/warning
-                    streamlit.rerun() # Rerun to reflect any state changes consistently.
+                    displayed = display_operation_result(result) # Displays success/error/warning
+                    # Only rerun if the operation was successful, allowing error/warning messages to persist.
+                    if displayed and result.get('type') == 'success':
+                        streamlit.rerun()
+                    elif not displayed: # Fallback if display_operation_result didn't show anything
+                        streamlit.rerun()
                 
                 # The status message is now handled by the display_operation_result call above.
                 # The session state ss.jade_simulation_status_message is still set by
