@@ -34,7 +34,7 @@ def handle_save_and_download(ss):
     ss.action_selected = None
 
     # If it was a new configuration, mark it as having been saved at least once.
-    # This influences behavior in handle_cancel_edit if the user later cancels further edits
+    # This influences behaviour in handle_cancel_edit if the user later cancels further edits
     # to this (now saved and downloaded) new configuration.
     if was_new_config_being_saved:
         ss.new_config_saved_to_memory_at_least_once = True
