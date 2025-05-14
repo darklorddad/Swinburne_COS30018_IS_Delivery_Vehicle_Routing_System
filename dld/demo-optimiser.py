@@ -2,24 +2,21 @@
 import math
 
 def get_params_schema():
-    """
-    Defines the parameters that this script accepts.
-    For this basic greedy optimiser, no parameters are currently defined.
-    This can be expanded if needed (e.g., max parcels per agent).
-    """
+    # Defines the parameters accepted by this script.
+    # This basic greedy optimiser does not require any configurable parameters.
+    # The schema can be expanded if parameters are needed in the future.
     return {
         "parameters": [] # No parameters for this version
     }
 
 def _calculate_distance(coord1, coord2):
-    """Calculates Euclidean distance between two points."""
+    # Calculates Euclidean distance between two points.
     return math.sqrt((coord1[0] - coord2[0])**2 + (coord1[1] - coord2[1])**2)
 
 def run_optimisation(config_data, params):
-    """
-    Main optimisation function using a greedy nearest-neighbor approach.
-    Assigns parcels to delivery agents based on proximity and capacity.
-    """
+    # Main optimisation function.
+    # Implements a greedy nearest-neighbour approach to assign parcels to delivery agents
+    # based on proximity and capacity.
     warehouse_coords = config_data.get("warehouse_coordinates_x_y", [0,0])
     # Create a mutable list of parcels, including their original data
     unassigned_parcels = [dict(p) for p in config_data.get("parcels", [])]
@@ -94,47 +91,3 @@ def run_optimisation(config_data, params):
         "unassigned_parcels": [p["id"] for p in final_unassigned_parcels],
         "unassigned_parcels_details": final_unassigned_parcels
     }
-
-# Example of how you might test this script standalone (optional)
-if __name__ == "__main__":
-    # This part is not used by the DVRS application but can be useful for local testing.
-    print("--- Parameter Schema ---")
-    schema = get_params_schema()
-    print(schema)
-
-    print("\n--- Running with Dummy Data ---")
-    dummy_config = {
-        "warehouse_coordinates_x_y": [0, 0],
-        "parcels": [
-            {"id": "P001", "coordinates_x_y": [10, 10], "weight": 5},
-            {"id": "P002", "coordinates_x_y": [10, 15], "weight": 8}, # Closer to P001
-            {"id": "P003", "coordinates_x_y": [-5, -5], "weight": 3},
-            {"id": "P004", "coordinates_x_y": [20, 20], "weight": 10},
-            {"id": "P005", "coordinates_x_y": [12, 12], "weight": 2}, # Very close to P001
-        ],
-        "delivery_agents": [
-            {"id": "DA01", "capacity_weight": 15},
-            {"id": "DA02", "capacity_weight": 12}
-        ]
-    }
-    # No parameters for this version
-    dummy_params = {} 
-    
-    results = run_optimisation(dummy_config, dummy_params)
-    import json
-    print(json.dumps(results, indent=2))
-
-    print("\n--- Testing with another scenario (single agent, limited capacity) ---")
-    dummy_config_2 = {
-        "warehouse_coordinates_x_y": [0, 0],
-        "parcels": [
-            {"id": "P1", "coordinates_x_y": [1, 1], "weight": 10},
-            {"id": "P2", "coordinates_x_y": [2, 2], "weight": 10}, # Agent can only take one
-            {"id": "P3", "coordinates_x_y": [100, 100], "weight": 1}, # Far away
-        ],
-        "delivery_agents": [
-            {"id": "DA01", "capacity_weight": 15}
-        ]
-    }
-    results_2 = run_optimisation(dummy_config_2, dummy_params)
-    print(json.dumps(results_2, indent=2))

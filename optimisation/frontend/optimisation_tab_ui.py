@@ -6,16 +6,13 @@ from .edit_optimisation_parameters_view_ui import render_edit_optimisation_param
 
 # Renders the entire Optimisation tab.
 def render_optimisation_tab(ss):
-    # Check if config data is missing or if we are in edit mode in the configuration tab.
-    if not ss.config_data or ss.get("edit_mode", False):
-        if not ss.config_data:
-            warning_message = "Please create or load a configuration in the 'Configuration' tab first. The Optimisation tab requires an active configuration to proceed."
-        else: # Implies ss.edit_mode is True
-            warning_message = "Please save or cancel the current configuration edits in the 'Configuration' tab before proceeding with optimisation setup."
+    # Check if config data is missing.
+    if not ss.config_data:
+        warning_message = "Please create or load a configuration in the 'Configuration' tab first. The Optimisation tab requires an active configuration to proceed."
         streamlit.warning(warning_message)
         return # Prevent rendering the rest of the tab
     
-    # If config_data exists and not in edit_mode, proceed with view rendering.
+    # If config_data exists, proceed with view rendering.
     action = ss.get("optimisation_action_selected")
 
     if action == "load_script":
