@@ -98,9 +98,11 @@ def render_initial_optimisation_view(ss):
                                 streamlit.markdown("**Carried Weight**")
                                 streamlit.caption(f"{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (capacity)")
                             
-                            # Row 3: Stop Sequence (full width as it can be long)
-                            streamlit.markdown("**Stop Sequence**")
-                            streamlit.caption(f"{' -> '.join(route.get('route_stop_ids', []))}")
+                            # Row 3: Stop Sequence (in a column for consistent block structure)
+                            col_seq, _ = streamlit.columns(2) # Use one column, leave the other empty
+                            with col_seq:
+                                streamlit.markdown("**Stop Sequence**")
+                                streamlit.caption(f"{' -> '.join(route.get('route_stop_ids', []))}")
                             
                             parcels_details = route.get("parcels_assigned_details", [])
                             if parcels_details:
