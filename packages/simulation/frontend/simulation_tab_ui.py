@@ -145,13 +145,14 @@ def render_jade_operations_tab(ss):
             streamlit.info("Create agents in JADE to enable route management.")
 
     else: # JADE platform not running
-        streamlit.info("Start the JADE platform to enable agent and route management.")
+        streamlit.info("Start the JADE platform to enable agent and route management, and Logs.")
 
-    # --- JADE Logs & Communication ---
-    with streamlit.expander("JADE Logs & Communication", expanded=False):
-        streamlit.markdown("---")
-        log_messages_to_display = []
-        if ss.get("jade_platform_status_message"):
+    # --- Logs (only if JADE is running) ---
+    if ss.get("jade_platform_running"):
+        with streamlit.expander("Logs", expanded=False):
+            streamlit.markdown("---")
+            log_messages_to_display = []
+            if ss.get("jade_platform_status_message"):
             log_messages_to_display.append(("Platform Status", ss.jade_platform_status_message))
         if ss.get("jade_agent_creation_status_message"):
             log_messages_to_display.append(("Agent Creation Status", ss.jade_agent_creation_status_message))
