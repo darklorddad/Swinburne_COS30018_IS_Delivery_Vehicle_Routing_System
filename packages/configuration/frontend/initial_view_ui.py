@@ -16,6 +16,24 @@ def render_initial_view(ss):
             if streamlit.button("Load configuration", key = "load_config_action_btn", use_container_width = True):
                 config_logic.handle_load_config_action(ss)
                 streamlit.rerun()
+
+    # Display current configuration summary if a configuration is in memory
+    if ss.config_data is not None:
+        with streamlit.expander("Current Configuration Summary", expanded=False):
+            streamlit.markdown("---")
+            
+            streamlit.subheader("Parcels")
+            if ss.config_data.get("parcels"):
+                streamlit.dataframe(ss.config_data["parcels"], use_container_width=True)
+            else:
+                streamlit.info("No parcels currently defined in the configuration.")
+            
+            streamlit.markdown("---")
+            streamlit.subheader("Delivery Agents")
+            if ss.config_data.get("delivery_agents"):
+                streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)
+            else:
+                streamlit.info("No delivery agents currently defined in the configuration.")
     
     # Option to edit if a configuration is in memory
     if ss.config_data is not None:
