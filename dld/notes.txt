@@ -12,8 +12,11 @@ What if we use a JADE-based system (in Java) for agent communication and basic a
 /add packages\optimisation\*.py
 /add packages\optimisation\frontend\*.py 
 /add packages\optimisation\backend\*.py 
-/add dld\*.json
-/add dld\*.py
+/add packages\simulation\*.py
+/add packages\simulation\frontend\*.py
+/add packages\simulation\backend\*.py
+/add pnp\configs\*.json
+/add pnp\optimisers\*.py
 /add dld\dvrs.txt
 /add dld\guidelines.txt
 /add *.py
