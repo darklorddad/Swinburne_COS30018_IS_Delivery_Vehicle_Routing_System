@@ -63,10 +63,10 @@ def _render_main_layout(ss):
     with col2: # This is the main content area, styled as a card.
         streamlit.title("Delivery Vehicle Routing System")
 
-        tab_config, tab_optimisation, tab_jade_ops, tab_visualisation, tab_settings = streamlit.tabs([
+        tab_config, tab_optimisation, tab_jade, tab_visualisation, tab_settings = streamlit.tabs([
             "Configuration",
             "Optimisation", 
-            "JADE Operations", 
+            "JADE", 
             "Visualisation", # Renamed tab
             "Settings"
         ])
@@ -77,7 +77,7 @@ def _render_main_layout(ss):
         with tab_optimisation:
             render_optimisation_tab(ss)
             
-        with tab_jade_ops: 
+        with tab_jade: 
             render_jade_operations_tab(ss) 
 
         with tab_visualisation: # Changed from tab_results
