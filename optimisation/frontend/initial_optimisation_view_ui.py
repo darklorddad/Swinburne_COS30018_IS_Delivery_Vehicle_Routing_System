@@ -1,5 +1,5 @@
 import streamlit
-# import pandas as pd # Removed pandas
+import pandas as pd # Re-added pandas for DataFrame display
 from optimisation.backend import optimisation_logic
 
 # Renders the initial view of the Optimisation tab, 
@@ -70,32 +70,33 @@ def render_initial_optimisation_view(ss):
                     streamlit.success("Route optimised") # Renamed success message
                     streamlit.markdown("---") # Divider between feedback message and results
 
-                    # Display results using streamlit.text, streamlit.markdown, and streamlit.table
+                    # Display results using disabled text_input for route summary and pandas DataFrame for parcel details
                     results = ss.optimisation_results
                     
                     if "optimised_routes" in results and results["optimised_routes"]:
-                        streamlit.subheader("Optimised Routes")
+                        # streamlit.subheader("Optimised Routes") # Removed subheader
                         for i, route in enumerate(results["optimised_routes"]):
-                            streamlit.markdown(f"**Agent:** {route.get('agent_id', 'N/A')}")
-                            streamlit.text(f"Stop Sequence: {' -> '.join(route.get('route_stop_ids', []))}")
-                            streamlit.text(f"Total Distance: {route.get('total_distance', 'N/A')} units")
-                            streamlit.text(f"Carried Weight: {route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (capacity)")
+                            streamlit.text_input("Agent", value=route.get('agent_id', 'N/A'), disabled=True, key=f"agent_{i}")
+                            streamlit.text_input("Stop Sequence", value=' -> '.join(route.get('route_stop_ids', [])), disabled=True, key=f"sequence_{i}")
+                            streamlit.text_input("Total Distance", value=f"{route.get('total_distance', 'N/A')} units", disabled=True, key=f"distance_{i}")
+                            streamlit.text_input("Carried Weight", value=f"{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (capacity)", disabled=True, key=f"weight_{i}")
                             
                             parcels_details = route.get("parcels_assigned_details", [])
                             if parcels_details:
                                 streamlit.markdown("Assigned Parcels:")
-                                # Prepare data for streamlit.table - list of dicts
-                                table_data = []
-                                for p in parcels_details:
-                                    coords = p.get('coordinates_x_y', ['N/A', 'N/A'])
+                                parcels_df = pd.DataFrame(parcels_details)
+                                # Prepare display DataFrame
+                                display_data = []
+                                for p_detail in parcels_details:
+                                    coords = p_detail.get('coordinates_x_y', ['N/A', 'N/A'])
                                     coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A"
-                                    table_data.append({
-                                        "ID": p.get('id', 'N/A'),
-                                        "Weight": p.get('weight', 'N/A'),
+                                    display_data.append({
+                                        "ID": p_detail.get('id', 'N/A'),
+                                        "Weight": p_detail.get('weight', 'N/A'),
                                         "Coordinates": coord_str
                                     })
-                                if table_data:
-                                    streamlit.table(table_data)
+                                if display_data:
+                                    streamlit.dataframe(pd.DataFrame(display_data).set_index("ID"), use_container_width=True)
                             else:
                                 streamlit.info("No parcels assigned to this agent in this route.")
                             if i < len(results["optimised_routes"]) - 1:
@@ -104,17 +105,17 @@ def render_initial_optimisation_view(ss):
                     
                     if "unassigned_parcels_details" in results and results["unassigned_parcels_details"]:
                         streamlit.subheader("Unassigned Parcels")
-                        unassigned_table_data = []
-                        for p in results["unassigned_parcels_details"]:
-                            coords = p.get('coordinates_x_y', ['N/A', 'N/A'])
+                        unassigned_display_data = []
+                        for p_detail in results["unassigned_parcels_details"]:
+                            coords = p_detail.get('coordinates_x_y', ['N/A', 'N/A'])
                             coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A"
-                            unassigned_table_data.append({
-                                "ID": p.get('id', 'N/A'),
-                                "Weight": p.get('weight', 'N/A'),
+                            unassigned_display_data.append({
+                                "ID": p_detail.get('id', 'N/A'),
+                                "Weight": p_detail.get('weight', 'N/A'),
                                 "Coordinates": coord_str
                             })
-                        if unassigned_table_data:
-                            streamlit.table(unassigned_table_data)
+                        if unassigned_display_data:
+                             streamlit.dataframe(pd.DataFrame(unassigned_display_data).set_index("ID"), use_container_width=True)
                     elif "optimised_routes" in results: # Only show if routes were processed
                         streamlit.info("All parcels were assigned.")
                         
