@@ -7,13 +7,13 @@ from py4j.java_gateway import JavaGateway, GatewayParameters, Py4JNetworkError #
 
 # Attempt to locate jade.jar. This is a common location.
 # Users might need to configure this path if it's different.
-JADE_JAR_PATH = os.path.join("dependencies", "JADE-all-4.6.0", "jade", "lib", "jade.jar")
+JADE_JAR_PATH = os.path.join("dependencies", "java", "JADE-all-4.6.0", "jade", "lib", "jade.jar")
 # Path to the Py4J JAR, required for compiling agents that use Py4J (e.g., Py4jGatewayAgent)
 # and for JADE runtime to find Py4J classes.
-# Corrected path based on user-provided file location.
-PY4J_JAR_PATH = os.path.join("dependencies", "py4j-0.10.9.9", "py4j-java", "py4j0.10.9.9.jar")
+# Corrected path based on user-provided file location and new directory structure.
+PY4J_JAR_PATH = os.path.join("dependencies", "java", "py4j-0.10.9.9", "py4j-java", "py4j0.10.9.9.jar")
 # Path to the org.json JAR, required for JSON parsing in MasterRoutingAgent
-JSON_JAR_PATH = os.path.join("dependencies", "java-libs", "org.json.jar") # Adjust if you place it elsewhere
+JSON_JAR_PATH = os.path.join("dependencies", "java", "libs", "org.json.jar") # Updated path
 
 
 # Default Py4J connection parameters
