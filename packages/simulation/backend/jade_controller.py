@@ -13,7 +13,7 @@ JADE_JAR_PATH = os.path.join("dependencies", "java", "JADE-all-4.6.0", "jade", "
 # Corrected path based on user-provided file location and new directory structure.
 PY4J_JAR_PATH = os.path.join("dependencies", "java", "py4j-0.10.9.9", "py4j-java", "py4j0.10.9.9.jar")
 # Path to the org.json JAR, required for JSON parsing in MasterRoutingAgent
-JSON_JAR_PATH = os.path.join("dependencies", "java", "libs", "org.json.jar") # Updated path
+JSON_JAR_PATH = os.path.join("dependencies", "java", "libs", "json-20250107.jar") # Updated path and filename
 
 
 # Default Py4J connection parameters
