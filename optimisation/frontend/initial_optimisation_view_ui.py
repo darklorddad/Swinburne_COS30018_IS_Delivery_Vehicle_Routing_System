@@ -49,22 +49,25 @@ def render_initial_optimisation_view(ss):
         # If parameters exist, they are edited in the "Edit Script Parameters" view.
         # No need to display them here in read-only mode as per new request.
 
-        # Action button: Run Optimisation
-        run_disabled = not (ss.optimisation_script_loaded_successfully and ss.config_data)
-        if streamlit.button("Run Optimisation Script", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True):
-            if not ss.config_data: 
-                 streamlit.error("Cannot run: Main configuration data is missing.")
-            else:
-                optimisation_logic.execute_optimisation_script(ss)
-                streamlit.rerun() 
-        
-        # Display execution results or errors
-        if ss.optimisation_run_error:
-            streamlit.error(f"Execution Error: {ss.optimisation_run_error}")
-        if ss.optimisation_run_complete:
-            if ss.optimisation_results is not None:
-                streamlit.success("Optimisation script executed successfully!")
-                with streamlit.expander("Optimisation Results", expanded = True):
-                    streamlit.json(ss.optimisation_results)
-            else: 
-                 streamlit.warning("Optimisation script completed but returned no results (None).")
+        with streamlit.expander("Run Optimisation and View Results", expanded=True):
+            # Action button: Run Optimisation
+            run_disabled = not (ss.optimisation_script_loaded_successfully and ss.config_data)
+            if streamlit.button("Run Optimisation Script", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True):
+                if not ss.config_data: 
+                     streamlit.error("Cannot run: Main configuration data is missing.")
+                else:
+                    optimisation_logic.execute_optimisation_script(ss)
+                    streamlit.rerun() 
+            
+            # Display execution results or errors
+            if ss.optimisation_run_error:
+                streamlit.error(f"Execution Error: {ss.optimisation_run_error}")
+            
+            if ss.optimisation_run_complete:
+                if ss.optimisation_results is not None:
+                    streamlit.success("Optimisation script executed successfully!")
+                    # This inner expander will now be nested
+                    with streamlit.expander("Optimisation Results", expanded = True):
+                        streamlit.json(ss.optimisation_results)
+                else: 
+                     streamlit.warning("Optimisation script completed but returned no results (None).")
