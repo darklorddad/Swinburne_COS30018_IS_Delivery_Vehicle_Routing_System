@@ -66,8 +66,8 @@ def render_initial_optimisation_view(ss):
             if ss.optimisation_run_complete:
                 if ss.optimisation_results is not None:
                     streamlit.success("Optimisation script executed successfully!")
-                    # This inner expander will now be nested
-                    with streamlit.expander("Optimisation Results", expanded = True):
-                        streamlit.json(ss.optimisation_results)
+                    # Display results directly, removing the nested expander
+                    streamlit.caption("Optimisation Results:") # Optional: Add a caption for clarity
+                    streamlit.json(ss.optimisation_results)
                 else: 
                      streamlit.warning("Optimisation script completed but returned no results (None).")
