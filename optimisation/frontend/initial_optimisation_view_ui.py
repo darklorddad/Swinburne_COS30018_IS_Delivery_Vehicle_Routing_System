@@ -83,7 +83,8 @@ def render_initial_optimisation_view(ss):
                     # Display results using a combination of columns for route summary and st.table for parcel details
                     if "optimised_routes" in results and results["optimised_routes"]:
                         for i, route in enumerate(results["optimised_routes"]):
-                            streamlit.markdown(f"#### Route for Agent: {route.get('agent_id', 'N/A')}")
+                            streamlit.markdown("**Route for Agent**")
+                            streamlit.caption(f"{route.get('agent_id', 'N/A')}")
                             
                             col1, col2 = streamlit.columns(2)
                             with col1:
@@ -109,7 +110,7 @@ def render_initial_optimisation_view(ss):
                                         "Coordinates": coord_str
                                     })
                                 if table_data:
-                                    streamlit.table(table_data) # Using st.table
+                                    streamlit.dataframe(table_data, use_container_width=True) # Using st.dataframe
                             else:
                                 streamlit.info("No parcels assigned to this agent in this route.")
                             
@@ -130,7 +131,7 @@ def render_initial_optimisation_view(ss):
                                 "Coordinates": coord_str
                             })
                         if unassigned_table_data:
-                            streamlit.table(unassigned_table_data) # Using st.table
+                            streamlit.dataframe(unassigned_table_data, use_container_width=True) # Using st.dataframe
                     # The "elif" for "All parcels assigned" is now handled above the main results display.
                         
                 else: 
