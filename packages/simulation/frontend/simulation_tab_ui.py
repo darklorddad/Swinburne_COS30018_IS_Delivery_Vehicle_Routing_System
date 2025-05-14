@@ -2,9 +2,9 @@ import streamlit
 from ..backend import simulation_logic
 from packages.configuration.frontend.ui_utils import display_operation_result 
 
-# Renders the Simulation tab for JADE interaction.
-def render_simulation_tab(ss):
-    streamlit.header("Agent-Based Simulation Control (JADE)")
+# Renders the JADE Operations tab for JADE interaction.
+def render_jade_operations_tab(ss):
+    streamlit.header("JADE Agent Operations")
 
     # --- JADE Platform Control ---
     with streamlit.expander("JADE Platform Management", expanded=True):
@@ -64,35 +64,34 @@ def render_simulation_tab(ss):
             # but we don't need to re-display it here immediately after the button action.
 
 
-        # --- Simulation Run (only if JADE is running and agents are created) ---
+        # --- Route Dispatch (only if JADE is running and agents are created) ---
         if ss.get("jade_agents_created"):
-            with streamlit.expander("Simulation Execution", expanded=True):
+            with streamlit.expander("Route Dispatch Management", expanded=True):
                 streamlit.markdown("---")
-                # Pre-requisite checks for running simulation
+                # Pre-requisite checks for dispatching routes
                 optimisation_complete = ss.get("optimisation_run_complete", False) and ss.get("optimisation_results") is not None
 
                 if not optimisation_complete:
                     streamlit.warning("Optimisation results are not available. Please run an optimisation in the 'Optimisation' tab first.")
 
-                if streamlit.button("Run Simulation with JADE Agents", 
-                                    key="run_jade_simulation_btn", 
+                if streamlit.button("Dispatch Routes to JADE Agents", 
+                                    key="dispatch_routes_btn", 
                                     use_container_width=True,
                                     disabled=not optimisation_complete):
-                    result = simulation_logic.handle_run_simulation(ss)
+                    result = simulation_logic.handle_dispatch_routes(ss) # Renamed function
                     displayed = display_operation_result(result) # Displays success/error/warning
-                    # Only rerun if the operation was successful, allowing error/warning messages to persist.
-                    if displayed and result.get('type') == 'success':
-                        streamlit.rerun()
-                    elif not displayed: # Fallback if display_operation_result didn't show anything
+                    # Only rerun if display_operation_result did NOT display anything (e.g. bad result format)
+                    # This makes all messages (success, error, warning, info) persist.
+                    if not displayed:
                         streamlit.rerun()
                 
                 # The status message is now handled by the display_operation_result call above.
-                # The session state ss.jade_simulation_status_message is still set by
-                # simulation_logic.handle_run_simulation for potential other uses,
+                # The session state (e.g., ss.jade_dispatch_status_message) is still set by
+                # the backend logic for potential other uses,
                 # but we don't need to re-display it here immediately after the button action.
 
         elif ss.get("jade_platform_running"): # Platform running, but agents not created
-            streamlit.info("Create agents in JADE to enable simulation execution.")
+            streamlit.info("Create agents in JADE to enable route dispatch.")
 
     else: # JADE platform not running
-        streamlit.info("Start the JADE platform to enable agent management and simulation.")
+        streamlit.info("Start the JADE platform to enable agent management and route dispatch.")

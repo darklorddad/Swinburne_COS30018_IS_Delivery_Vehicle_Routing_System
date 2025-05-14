@@ -13,7 +13,7 @@ def initialise_session_state(ss):
         ss.jade_platform_status_message = None
         ss.jade_agents_created = False
         ss.jade_agent_creation_status_message = None
-        ss.jade_simulation_status_message = None
+        ss.jade_dispatch_status_message = None # Renamed from jade_simulation_status_message
         
         # Store JADE process info (e.g., Popen object from subprocess or simulated dict)
         ss.jade_process_info = None 
@@ -35,7 +35,7 @@ def handle_start_jade(ss):
         ss.py4j_gateway_object = None
         ss.jade_agents_created = False # Reset as platform didn't start
         ss.jade_agent_creation_status_message = None
-        ss.jade_simulation_status_message = None
+        ss.jade_dispatch_status_message = None # Renamed
         return
 
     # If compilation was successful, proceed with starting JADE.
@@ -61,7 +61,7 @@ def handle_start_jade(ss):
     # Reset downstream states as platform state changed
     ss.jade_agents_created = False
     ss.jade_agent_creation_status_message = None
-    ss.jade_simulation_status_message = None
+    ss.jade_dispatch_status_message = None # Renamed
 
 def handle_stop_jade(ss):
     if not ss.get("jade_platform_running", False):
@@ -82,7 +82,7 @@ def handle_stop_jade(ss):
     # Reset downstream states
     ss.jade_agents_created = False
     ss.jade_agent_creation_status_message = None
-    ss.jade_simulation_status_message = None
+    ss.jade_dispatch_status_message = None # Renamed
 
 def handle_create_agents(ss):
     if not ss.get("jade_platform_running"):
@@ -151,22 +151,22 @@ def handle_create_agents(ss):
         return {'type': 'error', 'message': final_message}
 
 
-def handle_run_simulation(ss):
+def handle_dispatch_routes(ss): # Renamed from handle_run_simulation
     if not ss.get("jade_platform_running"):
-        ss.jade_simulation_status_message = "Cannot run simulation: JADE platform is not running."
-        return {'type': 'error', 'message': ss.jade_simulation_status_message}
+        ss.jade_dispatch_status_message = "Cannot dispatch routes: JADE platform is not running."
+        return {'type': 'error', 'message': ss.jade_dispatch_status_message}
     
     py4j_gateway = ss.get("py4j_gateway_object")
     if not py4j_gateway:
-        ss.jade_simulation_status_message = "Cannot run simulation: Py4J Gateway to JADE is not available."
-        return {'type': 'error', 'message': ss.jade_simulation_status_message}
+        ss.jade_dispatch_status_message = "Cannot dispatch routes: Py4J Gateway to JADE is not available."
+        return {'type': 'error', 'message': ss.jade_dispatch_status_message}
         
     if not ss.get("jade_agents_created"):
-        ss.jade_simulation_status_message = "Cannot run simulation: Agents have not been created in JADE."
-        return {'type': 'error', 'message': ss.jade_simulation_status_message}
+        ss.jade_dispatch_status_message = "Cannot dispatch routes: Agents have not been created in JADE."
+        return {'type': 'error', 'message': ss.jade_dispatch_status_message}
     if not ss.get("optimisation_run_complete") or not ss.get("optimisation_results"):
-        ss.jade_simulation_status_message = "Cannot run simulation: Optimisation results not available. Please run optimisation in the 'Optimisation' tab first."
-        return {'type': 'warning', 'message': ss.jade_simulation_status_message}
+        ss.jade_dispatch_status_message = "Cannot dispatch routes: Optimisation results not available. Please run optimisation in the 'Optimisation' tab first."
+        return {'type': 'warning', 'message': ss.jade_dispatch_status_message}
 
     optimisation_results = ss.optimisation_results
 
@@ -177,8 +177,8 @@ def handle_run_simulation(ss):
     )
 
     if success:
-        ss.jade_simulation_status_message = message or "Routes dispatched to Delivery Agents successfully."
-        return {'type': 'success', 'message': ss.jade_simulation_status_message}
+        ss.jade_dispatch_status_message = message or "Routes dispatched to Delivery Agents successfully."
+        return {'type': 'success', 'message': ss.jade_dispatch_status_message}
     else:
-        ss.jade_simulation_status_message = message or "Failed to dispatch one or more routes to Delivery Agents."
-        return {'type': 'error', 'message': ss.jade_simulation_status_message}
+        ss.jade_dispatch_status_message = message or "Failed to dispatch one or more routes to Delivery Agents."
+        return {'type': 'error', 'message': ss.jade_dispatch_status_message}

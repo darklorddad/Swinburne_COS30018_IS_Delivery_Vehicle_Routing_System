@@ -3,8 +3,8 @@ from packages.configuration.backend import config_logic
 from packages.configuration.frontend.config_tab_ui import render_config_tab
 from packages.optimisation.backend import optimisation_logic
 from packages.optimisation.frontend.optimisation_tab_ui import render_optimisation_tab
-from packages.simulation.backend import simulation_logic # New import for simulation
-from packages.simulation.frontend.simulation_tab_ui import render_simulation_tab # New import
+from packages.simulation.backend import simulation_logic 
+from packages.simulation.frontend.simulation_tab_ui import render_jade_operations_tab # Updated import
 
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
@@ -62,10 +62,10 @@ def _render_main_layout(ss):
     with col2: # This is the main content area, styled as a card.
         streamlit.title("Delivery Vehicle Routing System")
 
-        tab_config, tab_optimisation, tab_simulation, tab_results, tab_settings = streamlit.tabs([
+        tab_config, tab_optimisation, tab_jade_ops, tab_results, tab_settings = streamlit.tabs([
             "Configuration",
             "Optimisation", 
-            "Simulation", # Renamed tab
+            "JADE Operations", # Renamed tab
             "Dashboard & Results",
             "Settings"
         ])
@@ -76,8 +76,8 @@ def _render_main_layout(ss):
         with tab_optimisation:
             render_optimisation_tab(ss)
             
-        with tab_simulation: # Changed from tab_run
-            render_simulation_tab(ss) # Call the new rendering function
+        with tab_jade_ops: # Changed from tab_simulation
+            render_jade_operations_tab(ss) # Call the updated rendering function
 
         with tab_results:
             streamlit.header("Dashboard & Results")
