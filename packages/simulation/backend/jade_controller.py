@@ -78,33 +78,53 @@ def stop_jade_platform(process_info, gateway_obj): # gateway_obj is unused
     print(f"Stopping JADE platform process (PID: {pid})...")
 
     if platform.system() == "Windows":
+        # On Windows, Popen.terminate() might not be enough for GUI apps or apps with child processes.
+        # We'll attempt a graceful terminate, then follow up with taskkill /F /T to be sure.
+        print(f"Attempting to stop JADE process (PID: {pid}) on Windows...")
         try:
-            # Try a softer terminate first
             process_info.terminate()
             try:
-                process_info.wait(timeout=2) # Short wait
-                print(f"JADE process (PID: {pid}) terminated via Popen.terminate().")
-                return True, "JADE platform terminated."
-            except subprocess.TimeoutExpired:
-                print(f"JADE process (PID: {pid}) did not respond to Popen.terminate() quickly. Using taskkill.")
-                # Forcefully terminate the process and its children
-                # Using CREATE_NO_WINDOW for taskkill to prevent flashing a console window
-                kill_cmd = ["taskkill", "/PID", str(pid), "/F", "/T"]
-                kill_result = subprocess.run(kill_cmd, capture_output=True, text=True, check=False, creationflags=subprocess.CREATE_NO_WINDOW)
-                
-                # Check if taskkill reported success or if the process is now dead
-                if kill_result.returncode == 0 or process_info.poll() is not None:
-                    # Exit code 128 for taskkill means "No such process"
-                    if kill_result.returncode == 128 and "could not be terminated" in kill_result.stderr.lower() and "reason: there is no running instance of the task" in kill_result.stderr.lower():
-                         print(f"taskkill for PID {pid} reported process not found, likely already terminated.")
-                         return True, "JADE platform terminated (taskkill found no process)."
-                    print(f"JADE process (PID: {pid}) terminated via taskkill. Taskkill RC: {kill_result.returncode}, Process Poll: {process_info.poll()}")
-                    return True, "JADE platform forcefully terminated via taskkill."
+                # Wait briefly to see if it closes on its own
+                process_info.wait(timeout=1) 
+                if process_info.poll() is not None:
+                    print(f"JADE process (PID: {pid}) responded to Popen.terminate() with exit code {process_info.returncode}.")
                 else:
-                    error_message = kill_result.stderr.strip() or kill_result.stdout.strip() or "Unknown taskkill error"
-                    print(f"taskkill failed for PID {pid}. Error: {error_message}. Process Poll: {process_info.poll()}")
-                    return False, f"Failed to terminate JADE platform (PID: {pid}) using taskkill. Error: {error_message}"
+                    print(f"JADE process (PID: {pid}) still running after Popen.terminate() and brief wait.")
+            except subprocess.TimeoutExpired:
+                print(f"JADE process (PID: {pid}) did not respond to Popen.terminate() within brief wait (timeout).")
+            except Exception as e_wait: # Catch other potential errors during wait
+                print(f"Error during Popen.wait() for PID {pid}: {str(e_wait)}")
+
+            # Proceed with taskkill to ensure full termination of process tree
+            print(f"Using taskkill /F /T for PID {pid} to ensure JADE GUI and children are closed.")
+            # Using CREATE_NO_WINDOW for taskkill to prevent flashing a console window
+            kill_cmd = ["taskkill", "/PID", str(pid), "/F", "/T"]
+            kill_result = subprocess.run(kill_cmd, capture_output=True, text=True, check=False, creationflags=subprocess.CREATE_NO_WINDOW)
+            
+            final_poll_code = process_info.poll() # Check status after taskkill attempt
+
+            if kill_result.returncode == 0:
+                print(f"taskkill successfully terminated PID {pid}. Process poll after taskkill: {final_poll_code}")
+                return True, "JADE platform terminated via taskkill."
+            elif kill_result.returncode == 128: # "Process not found"
+                # This can happen if Popen.terminate() already fully killed it, or it was never running.
+                # Re-poll for absolute certainty.
+                final_poll_code_after_notfound = process_info.poll() 
+                if final_poll_code_after_notfound is not None:
+                    print(f"taskkill for PID {pid} reported process not found (RC: 128). Process poll confirms termination (exit code {final_poll_code_after_notfound}).")
+                    return True, "JADE platform terminated (taskkill confirmed process not running)."
+                else:
+                    # This is an odd state: taskkill says not found, but Popen object still thinks it's running.
+                    print(f"taskkill for PID {pid} reported process not found (RC: 128), but Popen object still reports process as running. This is unexpected. Taskkill stderr: {kill_result.stderr.strip()}")
+                    return False, f"Failed to confirm JADE termination for PID {pid} (taskkill: process not found, but Popen poll inconsistent)."
+            else: # taskkill failed for other reasons
+                error_message = kill_result.stderr.strip() or kill_result.stdout.strip() or f"Unknown taskkill error (RC: {kill_result.returncode})"
+                print(f"taskkill failed for PID {pid}. Error: {error_message}. Process poll after taskkill: {final_poll_code}")
+                if final_poll_code is not None: # If it died despite taskkill error message
+                    return True, f"JADE platform terminated (found dead after taskkill error for PID {pid}: {error_message})"
+                return False, f"Failed to terminate JADE platform (PID: {pid}) using taskkill. Error: {error_message}"
         except Exception as e:
+            # General exception during the Windows stop process
             print(f"Exception during Windows stop procedure for PID {pid}: {str(e)}")
             if process_info.poll() is not None: # Check if process died despite exception
                 return True, f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
