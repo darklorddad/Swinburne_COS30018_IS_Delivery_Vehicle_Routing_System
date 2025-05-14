@@ -111,9 +111,9 @@ def render_initial_optimisation_view(ss):
                                     coords = p_detail.get('coordinates_x_y', ['N/A', 'N/A'])
                                     coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A"
                                     table_data.append({
-                                        "ID": p_detail.get('id', 'N/A'),
-                                        "Weight": p_detail.get('weight', 'N/A'),
-                                        "Coordinates": coord_str
+                                        "id": p_detail.get('id', 'N/A'), # Changed to lowercase
+                                        "weight": p_detail.get('weight', 'N/A'), # Changed to lowercase
+                                        "coordinates": coord_str # Changed to lowercase
                                     })
                                 if table_data:
                                     streamlit.dataframe(table_data, use_container_width=True) # Using st.dataframe
@@ -132,9 +132,9 @@ def render_initial_optimisation_view(ss):
                             coords = p_detail.get('coordinates_x_y', ['N/A', 'N/A'])
                             coord_str = f"({coords[0]}, {coords[1]})" if isinstance(coords, list) and len(coords) == 2 else "N/A"
                             unassigned_table_data.append({
-                                "ID": p_detail.get('id', 'N/A'),
-                                "Weight": p_detail.get('weight', 'N/A'),
-                                "Coordinates": coord_str
+                                "id": p_detail.get('id', 'N/A'), # Changed to lowercase
+                                "weight": p_detail.get('weight', 'N/A'), # Changed to lowercase
+                                "coordinates": coord_str # Changed to lowercase
                             })
                         if unassigned_table_data:
                             streamlit.dataframe(unassigned_table_data, use_container_width=True) # Using st.dataframe
