@@ -68,7 +68,8 @@ def start_jade_platform():
             gateway = None
             try:
                 # Allow some time for JADE and the Py4J GatewayServer within JADE to start.
-                time.sleep(3) # Adjust as needed
+                print("Waiting for JADE Py4J GatewayServer to initialize...")
+                time.sleep(5) # Increased from 3 to 5 seconds
                 gateway = JavaGateway(
                     gateway_parameters=GatewayParameters(address=PY4J_ADDRESS, port=PY4J_PORT, auto_convert=True)
                 )

@@ -14,12 +14,14 @@ public class Py4jGatewayAgent extends Agent {
     public static final int PY4J_PORT = 25333; // Default Py4J port
 
     protected void setup() {
-        System.out.println("Py4jGatewayAgent " + getAID().getName() + " is ready.");
+        System.out.println("Py4jGatewayAgent " + getAID().getName() + " setup() method called.");
         // Register this agent as the entry point for Py4J
+        System.out.println("Py4jGatewayAgent: Attempting to initialize GatewayServer on port " + PY4J_PORT);
         server = new GatewayServer(this, PY4J_PORT);
+        System.out.println("Py4jGatewayAgent: GatewayServer object created. Attempting to start...");
         try {
             server.start();
-            System.out.println("Py4J GatewayServer started on port " + PY4J_PORT);
+            System.out.println("Py4J GatewayServer started successfully on port " + PY4J_PORT);
         } catch (Exception e) {
             System.err.println("Py4J GatewayServer failed to start: " + e.getMessage());
             e.printStackTrace();
