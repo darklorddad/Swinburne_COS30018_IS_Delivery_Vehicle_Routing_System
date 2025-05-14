@@ -2,6 +2,7 @@ package jadeagents; // Changed from dld.jadeagents
 
 import jade.core.Agent;
 import jade.core.AID;
+import jade.core.behaviours.CyclicBehaviour; // Added import for CyclicBehaviour
 // Unused imports ContainerID, Profile, ProfileImpl, Runtime were removed for cleanliness
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
@@ -29,14 +30,15 @@ public class Py4jGatewayAgent extends Agent {
         }
 
         // Add behaviour to listen for delivery confirmations from DAs
-        addBehaviour(new CyclicBehaviour(this) {
+        addBehaviour(new CyclicBehaviour(this) { // 'this' refers to the Py4jGatewayAgent instance
             public void action() {
-                MessageTemplate mt = MessageTemplate.MatchOntology("DeliveryConfirmation");
-                ACLMessage msg = myAgent.receive(mt);
+                // Correctly import MessageTemplate
+                jade.lang.acl.MessageTemplate mt = jade.lang.acl.MessageTemplate.MatchOntology("DeliveryConfirmation");
+                ACLMessage msg = receive(mt); // 'receive' is a method of Agent class, 'myAgent' is not needed here
                 if (msg != null) {
                     System.out.println("Py4jGatewayAgent: Received Delivery Confirmation from " + msg.getSender().getName() + ". Content: " + msg.getContent());
                 } else {
-                    block();
+                    block(); // block() is a method of Behaviour, so it's correctly called here on the CyclicBehaviour instance
                 }
             }
         });

@@ -1,6 +1,7 @@
 package jadeagents;
 
 import jade.core.Agent;
+import jade.core.AID; // Added import for AID
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
