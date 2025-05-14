@@ -71,6 +71,14 @@ public class DeliveryAgent extends Agent {
                 addSubBehaviour(new OneShotBehaviour(myAgent) {
                     public void action() {
                         System.out.println("DA " + myAgent.getLocalName() + ": Delivery route complete. Returning to idle state.");
+                        
+                        // Send confirmation message to Py4jGatewayAgent
+                        ACLMessage confirmationMsg = new ACLMessage(ACLMessage.INFORM);
+                        confirmationMsg.addReceiver(new AID("py4jgw", AID.ISLOCALNAME)); // Assuming Py4jGatewayAgent is named "py4jgw"
+                        confirmationMsg.setOntology("DeliveryConfirmation");
+                        confirmationMsg.setContent("DA " + myAgent.getLocalName() + " completed route.");
+                        myAgent.send(confirmationMsg);
+                        System.out.println("DA " + myAgent.getLocalName() + ": Sent delivery confirmation to py4jgw.");
                     }
                 });
 

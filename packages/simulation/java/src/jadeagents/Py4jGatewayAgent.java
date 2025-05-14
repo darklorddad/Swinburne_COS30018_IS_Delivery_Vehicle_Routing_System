@@ -27,6 +27,19 @@ public class Py4jGatewayAgent extends Agent {
             e.printStackTrace();
             doDelete(); // Self-terminate if server fails
         }
+
+        // Add behaviour to listen for delivery confirmations from DAs
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
+                MessageTemplate mt = MessageTemplate.MatchOntology("DeliveryConfirmation");
+                ACLMessage msg = myAgent.receive(mt);
+                if (msg != null) {
+                    System.out.println("Py4jGatewayAgent: Received Delivery Confirmation from " + msg.getSender().getName() + ". Content: " + msg.getContent());
+                } else {
+                    block();
+                }
+            }
+        });
     }
 
     protected void takeDown() {
