@@ -1,30 +1,3 @@
-package jadeagents; // Changed from dld.jadeagents
-
-import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-
-public class MasterRoutingAgent extends Agent {
-
-    protected void setup() {
-        System.out.println("MasterRoutingAgent " + getAID().getName() + " is ready.");
-        
-        // Print arguments (expected to be a JSON string with config)
-        Object[] args = getArguments();
-        if (args != null && args.length > 0) {
-            for (int i = 0; i < args.length; i++) {
-                System.out.println("MRA Argument " + i + ": " + args[i]);
-            }
-            // You would typically parse this JSON string here (e.g., using Gson or Jackson)
-            // For now, just printing it.
-            if (args[0] instanceof String) {
-                System.out.println("MRA Configuration (JSON): " + args[0]);
-            }
-        } else {
-            System.out.println("MRA: No arguments provided.");
-        }
-
 package jadeagents;
 
 import jade.core.Agent;

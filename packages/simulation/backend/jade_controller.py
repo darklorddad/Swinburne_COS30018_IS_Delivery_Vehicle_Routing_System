@@ -12,6 +12,8 @@ JADE_JAR_PATH = os.path.join("dependencies", "JADE-all-4.6.0", "jade", "lib", "j
 # and for JADE runtime to find Py4J classes.
 # Corrected path based on user-provided file location.
 PY4J_JAR_PATH = os.path.join("dependencies", "py4j-0.10.9.9", "py4j-java", "py4j0.10.9.9.jar")
+# Path to the org.json JAR, required for JSON parsing in MasterRoutingAgent
+JSON_JAR_PATH = os.path.join("dependencies", "java-libs", "org.json.jar") # Adjust if you place it elsewhere
 
 
 # Default Py4J connection parameters
@@ -44,10 +46,19 @@ def start_jade_platform():
     # The agent is specified as agentName:fully.qualified.ClassName
     # Arguments to the agent can be passed in parentheses, e.g., agentName(arg1 arg2):className
     # We don't need arguments for Py4jGatewayAgent at startup via command line.
+    # Construct classpath for JADE runtime
+    runtime_classpath_list = [JADE_JAR_PATH, PY4J_JAR_PATH, compiled_classes_path]
+    if os.path.exists(JSON_JAR_PATH):
+        runtime_classpath_list.append(JSON_JAR_PATH)
+    else:
+        print(f"WARNING: org.json.jar not found at '{JSON_JAR_PATH}' for JADE runtime. MasterRoutingAgent might fail if it uses org.json.")
+    
+    runtime_classpath = classpath_separator.join(runtime_classpath_list)
+
     cmd = [
         "java", 
         "-cp", 
-        f"{JADE_JAR_PATH}{classpath_separator}{PY4J_JAR_PATH}{classpath_separator}{compiled_classes_path}", 
+        runtime_classpath, 
         "jade.Boot", 
         "-gui", 
         "-port", "30018",
@@ -149,7 +160,14 @@ def compile_java_agents():
     source_files_pattern = os.path.join(source_path, "*.java")
 
     classpath_separator = ";" if platform.system() == "Windows" else ":"
-    compile_classpath = f"{JADE_JAR_PATH}{classpath_separator}{PY4J_JAR_PATH}"
+    if not os.path.exists(JSON_JAR_PATH):
+        # This check is a bit late, ideally done earlier or handled more gracefully.
+        # For now, it prevents compilation from failing silently if JSON_JAR_PATH is wrong.
+        print(f"WARNING: org.json.jar not found at '{JSON_JAR_PATH}'. Compilation might fail if agents use org.json.")
+        compile_classpath = f"{JADE_JAR_PATH}{classpath_separator}{PY4J_JAR_PATH}"
+    else:
+        compile_classpath = f"{JADE_JAR_PATH}{classpath_separator}{PY4J_JAR_PATH}{classpath_separator}{JSON_JAR_PATH}"
+
 
     # Construct the javac command
     # Using os.path.normpath to ensure paths are in the correct format for the OS.
