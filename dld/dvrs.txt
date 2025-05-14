@@ -15,7 +15,7 @@ The solution will assign a route to each DA to ensure all parcels are delivered 
 
 * **Search/Optimisation Techniques:** The MRA can use any search or optimisation technique covered in the unit (e.g., Genetic Algorithms, Ant Colony Optimisation, Particle Swarm Optimisation, Constraint Satisfaction Problems) or a combination of them. [cite: 8] You are required to implement a search/optimisation technique of your own. [cite: 9, 12] While you can use Google OR-Tools or OptaPlanner as a baseline for testing, your core solution must be your own implementation. [cite: 9, 10, 11, 12]
 * **Interaction Protocols:** DAs and the MRA must use clearly defined interaction protocols for communication and coordination. [cite: 13] A sequence diagram for the implemented service calls is required in your report. [cite: 14] Agents can use any standard content language. [cite: 15]
-* **User Interface:** A GUI is needed for user input, parameter settings, and visualization. A configuration file should be used for default settings. [cite: 15]
+* **User Interface:** A GUI is needed for user input, parameter settings, and visualisation. A configuration file should be used for default settings. [cite: 15]
 * **Cost/Time Calculation:** Assume the cost/time to travel between two points (A and B) is calculated using the straight-line distance. [cite: 15]
 
 ### System Requirements:

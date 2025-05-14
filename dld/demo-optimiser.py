@@ -1,4 +1,4 @@
-# DVRS Optimisation Script: Greedy Nearest Neighbor
+# DVRS Optimisation Script: Greedy Nearest Neighbour
 import math
 
 def get_params_schema():
