@@ -262,6 +262,7 @@ def handle_cancel_load_action(ss):
 def handle_load_config_action(ss):
     ss.action_selected = "load"
 
+# Toggles the visibility of the Streamlit header.
 def handle_show_header_toggle(ss):
     ss.show_header = ss.get("show_header_toggle_widget", False)
 

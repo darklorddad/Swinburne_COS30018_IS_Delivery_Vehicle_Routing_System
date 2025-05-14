@@ -36,7 +36,7 @@ def _load_module_from_string(script_content, module_name_prefix="user_opt_script
     # Return module, its name, and temp_dir for caller to manage (especially for cleanup)
     return module, module_name, temp_dir
 
-
+# Initialises session state variables specific to the optimisation module.
 def initialise_session_state(ss):
     # Use a new key to ensure this initialisation logic runs if old state exists.
     if "optimisation_module_initialised_v2" not in ss:
@@ -83,7 +83,7 @@ def _cleanup_previous_schema_script(ss):
     ss.optimisation_script_temp_dir_schema = None
     ss.optimisation_script_module_name_schema = None
 
-# Handles the upload of an optimisation script.
+# Handles the upload of an optimisation script, extracting its schema and setting up parameters.
 def handle_optimisation_file_upload(ss):
     _cleanup_previous_schema_script(ss) # Clean up any old script resources first.
 
@@ -155,7 +155,7 @@ def handle_optimisation_file_upload(ss):
         ss.optimisation_script_loaded_successfully = False
 
 
-# Executes the loaded optimisation script.
+# Executes the loaded optimisation script with the current configuration and parameters.
 def execute_optimisation_script(ss):
     if not ss.optimisation_script_loaded_successfully: # ss.optimisation_script_content would be set if loaded_successfully is True.
         ss.optimisation_run_error = "Optimisation script not loaded successfully. Please upload a valid script."
@@ -194,7 +194,7 @@ def execute_optimisation_script(ss):
         if exec_temp_dir and os.path.isdir(exec_temp_dir):
             shutil.rmtree(exec_temp_dir)
 
-# Clears all state related to the optimisation script.
+# Clears all state related to the currently loaded optimisation script.
 def clear_optimisation_script(ss):
     _cleanup_previous_schema_script(ss) # Clean up schema module and temp files.
 
@@ -219,13 +219,13 @@ def clear_optimisation_script(ss):
 
 # --- Optimisation Tab View Management ---
 
-# Switches to the script loading view.
+# Switches the UI to the script loading view.
 def handle_initiate_load_script_action(ss):
     ss.optimisation_action_selected = "load_script"
     # Clear any previous error messages when initiating a new load action
     ss.optimisation_script_error_message = None 
 
-# Handles cancelling the script loading process.
+# Handles cancelling the script loading process and returns to the initial optimisation view.
 def handle_cancel_load_script_action(ss):
     ss.optimisation_action_selected = None
     # Clear our application's concept of a pending file by resetting script content/filename if necessary,
@@ -240,7 +240,7 @@ def handle_cancel_load_script_action(ss):
 
 # --- Optimisation Parameter Editing View Management ---
 
-# Switches to the parameter editing view.
+# Switches the UI to the parameter editing view, taking a snapshot of current parameter values.
 def handle_edit_parameters_action(ss):
     import copy # For deepcopy
     ss.optimisation_script_user_values_snapshot = copy.deepcopy(ss.optimisation_script_user_values)
@@ -249,12 +249,12 @@ def handle_edit_parameters_action(ss):
 # Saves the edited parameters and returns to the initial optimisation view.
 def handle_save_parameters_action(ss):
     # Parameters are already updated in ss.optimisation_script_user_values by form widgets.
-    # Here, we just commit this state by clearing the snapshot and changing view.
+    # This function commits this state by clearing the snapshot and changing the view.
     ss.optimisation_script_user_values_snapshot = {} 
     ss.optimisation_action_selected = None # Return to initial view
     return {'type': 'success', 'message': "Parameters updated successfully."}
 
-# Cancels parameter editing, reverting to snapshot, and returns to initial view.
+# Cancels parameter editing, reverting values to their state before editing, and returns to the initial view.
 def handle_cancel_edit_parameters_action(ss):
     import copy # For deepcopy
     ss.optimisation_script_user_values = copy.deepcopy(ss.optimisation_script_user_values_snapshot)
