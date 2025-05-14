@@ -63,13 +63,45 @@ def _render_main_layout(ss):
     with col2: # This is the main content area, styled as a card.
         streamlit.title("Delivery Vehicle Routing System")
 
-        tab_config, tab_optimisation, tab_jade, tab_visualisation, tab_settings = streamlit.tabs([
-            "Configuration",
-            "Optimisation", 
-            "JADE", 
-            "Visualisation", # Renamed tab
-            "Settings"
-        ])
+        # Determine JADE tab accessibility
+        config_loaded = ss.config_data is not None
+        script_loaded = ss.get("optimisation_script_loaded_successfully", False)
+        optimisation_run = ss.get("optimisation_run_complete", False)
+        optimisation_results_exist = ss.get("optimisation_results") is not None
+        
+        jade_tab_accessible = config_loaded and script_loaded and optimisation_run and optimisation_results_exist
+
+        if jade_tab_accessible:
+            tabs_list = [
+                "Configuration",
+                "Optimisation", 
+                "JADE", 
+                "Visualisation",
+                "Settings"
+            ]
+            tab_config, tab_optimisation, tab_jade, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
+        else:
+            tabs_list = [
+                "Configuration",
+                "Optimisation", 
+                "Visualisation",
+                "Settings"
+            ]
+            tab_config, tab_optimisation, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
+            
+            prereq_messages_list = []
+            if not config_loaded:
+                prereq_messages_list.append("A configuration must be loaded (Configuration tab).")
+            if not script_loaded:
+                prereq_messages_list.append("An optimisation script must be loaded (Optimisation tab).")
+            if not optimisation_run or not optimisation_results_exist:
+                prereq_messages_list.append("Optimisation must be successfully run and produce results (Optimisation tab).")
+            
+            if prereq_messages_list:
+                streamlit.info(
+                    "The JADE tab is currently unavailable. Please ensure the following steps are completed:\n\n" + 
+                    "\n".join([f"- {msg}" for msg in prereq_messages_list])
+                )
 
         with tab_config:
             render_config_tab(ss)
@@ -77,8 +109,9 @@ def _render_main_layout(ss):
         with tab_optimisation:
             render_optimisation_tab(ss)
             
-        with tab_jade: 
-            render_jade_operations_tab(ss) 
+        if jade_tab_accessible: # Conditionally render JADE tab content
+            with tab_jade: 
+                render_jade_operations_tab(ss) 
 
         with tab_visualisation: # Changed from tab_results
             render_visualisation_tab(ss) # Call the new rendering function
