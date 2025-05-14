@@ -53,21 +53,10 @@ def render_simulation_tab(ss):
                 display_operation_result(result) # This will display success or error
                 streamlit.rerun()
 
-            # Display status message for agent creation if it's an error/warning and agents aren't marked as created,
-            # or if agents are created and there's a success message.
-            agent_creation_msg = ss.get("jade_agent_creation_status_message")
-            agents_created_flag = ss.get("jade_agents_created", False)
-
-            if agent_creation_msg:
-                if agents_created_flag: # If flag is true, assume message is success or informational
-                     display_operation_result({'type': 'success', 'message': agent_creation_msg})
-                # If flag is false, message could be error, warning, or info from a failed/partial attempt
-                elif "fail" in agent_creation_msg.lower() or "error" in agent_creation_msg.lower():
-                    display_operation_result({'type': 'error', 'message': agent_creation_msg})
-                elif "warn" in agent_creation_msg.lower():
-                     display_operation_result({'type': 'warning', 'message': agent_creation_msg})
-                # else: # Could be an informational message about why creation didn't proceed
-                #    display_operation_result({'type': 'info', 'message': agent_creation_msg})
+            # The status message is now handled by the display_operation_result call above.
+            # The session state ss.jade_agent_creation_status_message is still set by
+            # simulation_logic.handle_create_agents for potential other uses,
+            # but we don't need to re-display it here immediately after the button action.
 
 
         # --- Simulation Run (only if JADE is running and agents are created) ---
@@ -86,19 +75,12 @@ def render_simulation_tab(ss):
                                     disabled=not optimisation_complete):
                     result = simulation_logic.handle_run_simulation(ss)
                     display_operation_result(result) # Displays success/error/warning
-                    # streamlit.rerun() # Rerun might not be needed if status is just displayed
+                    streamlit.rerun() # Rerun to reflect any state changes consistently.
                 
-                # Display simulation status message
-                sim_status_msg = ss.get("jade_simulation_status_message")
-                if sim_status_msg:
-                    if "success" in sim_status_msg.lower() or "triggered" in sim_status_msg.lower() :
-                         display_operation_result({'type': 'success', 'message': sim_status_msg})
-                    elif "fail" in sim_status_msg.lower() or "error" in sim_status_msg.lower():
-                         display_operation_result({'type': 'error', 'message': sim_status_msg})
-                    elif "warn" in sim_status_msg.lower(): # e.g. "Optimisation results not available"
-                         display_operation_result({'type': 'warning', 'message': sim_status_msg})
-                    else: # Other informational messages
-                         display_operation_result({'type': 'info', 'message': sim_status_msg})
+                # The status message is now handled by the display_operation_result call above.
+                # The session state ss.jade_simulation_status_message is still set by
+                # simulation_logic.handle_run_simulation for potential other uses,
+                # but we don't need to re-display it here immediately after the button action.
 
         elif ss.get("jade_platform_running"): # Platform running, but agents not created
             streamlit.info("Create agents in JADE to enable simulation execution.")
