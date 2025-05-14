@@ -1,7 +1,8 @@
 import sys
 import os
 import shutil # For removing temp directory
-from . import script_utils # Import the new utility module
+from . import script_utils
+from . import parameter_logic # Import the new parameter logic module
 
 # Initialises session state variables specific to the optimisation module.
 def initialise_session_state(ss):
@@ -205,21 +206,18 @@ def handle_cancel_load_script_action(ss):
 
 # Switches the UI to the parameter editing view, taking a snapshot of current parameter values.
 def handle_edit_parameters_action(ss):
-    import copy # For deepcopy
-    ss.optimisation_script_user_values_snapshot = copy.deepcopy(ss.optimisation_script_user_values)
+    parameter_logic.take_parameter_snapshot(ss)
     ss.optimisation_action_selected = "edit_parameters"
 
 # Saves the edited parameters and returns to the initial optimisation view.
 def handle_save_parameters_action(ss):
     # Parameters are already updated in ss.optimisation_script_user_values by form widgets.
-    # This function commits this state by clearing the snapshot and changing the view.
-    ss.optimisation_script_user_values_snapshot = {} 
+    # Delegate committing changes (like clearing snapshot) to parameter_logic.
+    result = parameter_logic.commit_parameter_changes(ss)
     ss.optimisation_action_selected = None # Return to initial view
-    return {'type': 'success', 'message': "Parameters updated successfully."}
+    return result
 
 # Cancels parameter editing, reverting values to their state before editing, and returns to the initial view.
 def handle_cancel_edit_parameters_action(ss):
-    import copy # For deepcopy
-    ss.optimisation_script_user_values = copy.deepcopy(ss.optimisation_script_user_values_snapshot)
-    ss.optimisation_script_user_values_snapshot = {}
+    parameter_logic.revert_parameter_changes(ss)
     ss.optimisation_action_selected = None # Return to initial view
