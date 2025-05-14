@@ -274,6 +274,7 @@ def _create_agent_in_jade(gateway_obj, agent_name, agent_class, agent_args_list_
         # The method signature on the Java side should be:
         # public String createAgentByController(String agentName, String agentClass, String[] agentArgs)
         # It should return a message indicating success or failure.
+        print(f"Py4J: Calling createAgentByController with Name: {agent_name}, Class: {agent_class}, Args: {agent_args_list_of_strings}")
         result_message = jade_entry_point.createAgentByController(agent_name, agent_class, java_args_array)
         
         print(f"Py4J: Agent creation request for '{agent_name}' (Class: {agent_class}) sent. JADE response: {result_message}")
