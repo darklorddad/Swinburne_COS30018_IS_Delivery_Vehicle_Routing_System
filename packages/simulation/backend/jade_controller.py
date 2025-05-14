@@ -1,5 +1,7 @@
 import subprocess
 import os
+import time # Added for checking JADE startup
+import platform # Added for OS-specific stop logic
 # import json # Would be needed for serializing complex agent arguments
 
 # Attempt to locate jade.jar. This is a common location.
@@ -21,59 +23,116 @@ def start_jade_platform():
     # Starting JADE with -gui. For Py4J, a GatewayServer would need to be started by a JADE agent.
     # The -host and -port parameters for JADE main container might be relevant.
     # Using port 30018 as requested.
-    cmd = ["java", "-cp", JADE_JAR_PATH, "jade.Boot", "-gui", "-port", "30018"] 
+    cmd = ["java", "-cp", JADE_JAR_PATH, "jade.Boot", "-gui", "-port", "30018"]
     try:
-        # Using shell=True can be a security risk if cmd parts are from unsanitized user input,
-        # but for a fixed command like this, it can help with path/environment issues on Windows.
-        # For better security, avoid shell=True and ensure java is in PATH.
-        # For simplicity here, let's assume java is in PATH and avoid shell=True for now.
-        process = subprocess.Popen(cmd)
-        # Note: Py4J GatewayServer is NOT started here. That needs to be done from within a JADE agent in Java.
-        # The Py4J connection part (JavaGateway(...)) would also happen after the Java-side server is up.
-        # global py4j_gateway # Py4J parts remain commented for now
-        # from py4j.java_gateway import JavaGateway, GatewayParameters
-        # py4j_gateway = JavaGateway(gateway_parameters=GatewayParameters(auto_convert=True)) # This connects to a server
-        return True, "JADE platform (GUI) starting...", process
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0)
+        
+        # Wait a few seconds to see if JADE starts successfully or fails quickly
+        print("JADE process launched. Waiting a few seconds to check status...")
+        time.sleep(4) # Allow JADE time to initialize or fail
+        
+        if process.poll() is None:
+            # Process is still running, assume JADE started successfully for now.
+            print("JADE process is still running. Assuming successful start.")
+            return True, "JADE platform process is running.", process
+        else:
+            # Process terminated, JADE likely failed to start
+            stdout_output = process.stdout.read().strip() if process.stdout else ""
+            stderr_output = process.stderr.read().strip() if process.stderr else ""
+            exit_code = process.returncode
+            
+            error_details = []
+            if stdout_output:
+                # JADE often prints "JADE is closing down now." to stdout on port binding failure.
+                error_details.append(f"STDOUT: {stdout_output}")
+            if stderr_output:
+                error_details.append(f"STDERR: {stderr_output}")
+            
+            full_error_msg = f"JADE process terminated early (exit code {exit_code})."
+            if error_details:
+                full_error_msg += " Details: " + " | ".join(error_details)
+            else:
+                full_error_msg += " No output captured on stdout/stderr."
+            print(full_error_msg)
+            return False, full_error_msg, None
     except FileNotFoundError:
         return False, "Java command not found. Is Java installed and in PATH?", None
     except Exception as e:
         return False, f"Error starting JADE: {str(e)}", None
 
-def stop_jade_platform(process_info, gateway_obj):
+def stop_jade_platform(process_info, gateway_obj): # gateway_obj is unused
     """
     Attempts to stop the JADE platform process.
     'process_info' is expected to be a subprocess.Popen object.
-    'gateway_obj' would be a Py4J gateway object (currently unused as Py4J setup is pending).
     Returns: (success_bool, message_str)
     """
     print("Attempting to stop JADE platform...")
-    # Py4J gateway shutdown would happen here if it were used.
-    # if gateway_obj:
-    #     try:
-    #         gateway_obj.shutdown()
-    #         print("Py4J GatewayServer shut down.")
-    #     except Exception as e:
-    #         print(f"Error shutting down Py4J GatewayServer: {e}")
 
-    if process_info and hasattr(process_info, 'terminate'): # Check if it's a Popen object
+    if not process_info or not hasattr(process_info, 'pid'):
+        return False, "No valid JADE process information available to stop."
+
+    pid = process_info.pid # Get PID before poll, in case it terminates mid-check
+    if process_info.poll() is not None:
+        return True, f"JADE platform process (PID: {pid}) was already terminated (exit code {process_info.returncode})."
+
+    print(f"Stopping JADE platform process (PID: {pid})...")
+
+    if platform.system() == "Windows":
         try:
-            process_info.terminate() # Send SIGTERM
-            process_info.wait(timeout=5) # Wait for graceful termination
-            return True, "JADE platform termination requested."
-        except subprocess.TimeoutExpired:
-            print("JADE platform did not terminate gracefully, killing...")
-            process_info.kill() # Send SIGKILL
-            return True, "JADE platform forcefully terminated."
+            # Try a softer terminate first
+            process_info.terminate()
+            try:
+                process_info.wait(timeout=2) # Short wait
+                print(f"JADE process (PID: {pid}) terminated via Popen.terminate().")
+                return True, "JADE platform terminated."
+            except subprocess.TimeoutExpired:
+                print(f"JADE process (PID: {pid}) did not respond to Popen.terminate() quickly. Using taskkill.")
+                # Forcefully terminate the process and its children
+                # Using CREATE_NO_WINDOW for taskkill to prevent flashing a console window
+                kill_cmd = ["taskkill", "/PID", str(pid), "/F", "/T"]
+                kill_result = subprocess.run(kill_cmd, capture_output=True, text=True, check=False, creationflags=subprocess.CREATE_NO_WINDOW)
+                
+                # Check if taskkill reported success or if the process is now dead
+                if kill_result.returncode == 0 or process_info.poll() is not None:
+                    # Exit code 128 for taskkill means "No such process"
+                    if kill_result.returncode == 128 and "could not be terminated" in kill_result.stderr.lower() and "reason: there is no running instance of the task" in kill_result.stderr.lower():
+                         print(f"taskkill for PID {pid} reported process not found, likely already terminated.")
+                         return True, "JADE platform terminated (taskkill found no process)."
+                    print(f"JADE process (PID: {pid}) terminated via taskkill. Taskkill RC: {kill_result.returncode}, Process Poll: {process_info.poll()}")
+                    return True, "JADE platform forcefully terminated via taskkill."
+                else:
+                    error_message = kill_result.stderr.strip() or kill_result.stdout.strip() or "Unknown taskkill error"
+                    print(f"taskkill failed for PID {pid}. Error: {error_message}. Process Poll: {process_info.poll()}")
+                    return False, f"Failed to terminate JADE platform (PID: {pid}) using taskkill. Error: {error_message}"
         except Exception as e:
-            return False, f"Error stopping JADE process: {str(e)}"
-    elif process_info and isinstance(process_info, dict) and process_info.get("type") == "simulated_process":
-        # This case was for the old simulation, should ideally not be hit if start_jade_platform creates a real process.
-        print(f"Stopping a simulated JADE process: {process_info}")
-        return True, "JADE platform (simulated) stopped."
-    elif not process_info:
-        return False, "No JADE process information available to stop."
+            print(f"Exception during Windows stop procedure for PID {pid}: {str(e)}")
+            if process_info.poll() is not None: # Check if process died despite exception
+                return True, f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
+            return False, f"Error stopping JADE process (PID: {pid}) on Windows: {str(e)}"
+    else: # For non-Windows OS
+        try:
+            process_info.terminate() # SIGTERM
+            process_info.wait(timeout=5)
+            print(f"JADE process (PID: {pid}) terminated via Popen.terminate().")
+            return True, "JADE platform terminated."
+        except subprocess.TimeoutExpired:
+            print(f"JADE process (PID: {pid}) did not respond to terminate(). Using Popen.kill().")
+            process_info.kill() # SIGKILL
+            try:
+                process_info.wait(timeout=2) # Wait for kill to take effect
+                print(f"JADE process (PID: {pid}) terminated via Popen.kill().")
+                return True, "JADE platform forcefully killed."
+            except subprocess.TimeoutExpired:
+                print(f"JADE process (PID: {pid}) did not terminate even after Popen.kill(). This is unexpected.")
+                return False, f"Failed to confirm JADE platform (PID: {pid}) termination after kill."
+        except Exception as e:
+            print(f"Exception during non-Windows stop procedure for PID {pid}: {str(e)}")
+            if process_info.poll() is not None: # Check if process died despite exception
+                 return True, f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
+            return False, f"Error stopping JADE process (PID: {pid}): {str(e)}"
     
-    return False, "Could not determine how to stop JADE platform (unknown process_info type)."
+    # Fallback, should ideally not be reached
+    return False, "Could not stop JADE platform due to an unknown issue."
 
 def _create_agent_in_jade_simulated(agent_name, agent_class, agent_args_list_of_strings):
     """
