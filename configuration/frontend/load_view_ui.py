@@ -1,5 +1,5 @@
 import streamlit
-from configuration.backend import config_logic
+from packages.configuration.backend import config_logic
 from .ui_utils import display_operation_result
 
 # Renders the 'Load Configuration' view.

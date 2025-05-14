@@ -1,6 +1,6 @@
 import streamlit
 import json # For the download component
-from configuration.backend import config_logic
+from packages.configuration.backend import config_logic
 from .initial_view_ui import render_initial_view
 from .load_view_ui import render_load_view
 from .edit_view_ui import render_edit_view

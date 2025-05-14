@@ -1,8 +1,8 @@
 import streamlit
-from configuration.backend import config_logic
-from configuration.frontend.config_tab_ui import render_config_tab
-from optimisation.backend import optimisation_logic
-from optimisation.frontend.optimisation_tab_ui import render_optimisation_tab
+from packages.configuration.backend import config_logic
+from packages.configuration.frontend.config_tab_ui import render_config_tab
+from packages.optimisation.backend import optimisation_logic
+from packages.optimisation.frontend.optimisation_tab_ui import render_optimisation_tab
 
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):

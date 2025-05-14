@@ -1,5 +1,5 @@
 import streamlit
-from optimisation.backend import optimisation_logic
+from packages.optimisation.backend import optimisation_logic
 
 # --- Helper UI Rendering Functions (moved from ui_utils.py) ---
 

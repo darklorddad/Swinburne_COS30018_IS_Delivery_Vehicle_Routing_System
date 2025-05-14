@@ -1,6 +1,6 @@
 import streamlit
-from optimisation.backend import optimisation_logic
-from configuration.frontend.ui_utils import display_operation_result # For displaying save result
+from packages.optimisation.backend import optimisation_logic
+from packages.configuration.frontend.ui_utils import display_operation_result # For displaying save result
 
 # Renders the view for editing optimisation script parameters.
 def render_edit_optimisation_parameters_view(ss):

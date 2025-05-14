@@ -1,5 +1,5 @@
 import streamlit
-from optimisation.backend import optimisation_logic
+from packages.optimisation.backend import optimisation_logic
 from .initial_optimisation_view_ui import render_initial_optimisation_view
 from .load_optimisation_script_view_ui import render_load_optimisation_script_view
 from .edit_optimisation_parameters_view_ui import render_edit_optimisation_parameters_view

@@ -1,5 +1,5 @@
 import streamlit
-from optimisation.backend import optimisation_logic
+from packages.optimisation.backend import optimisation_logic
 
 # Renders the view for uploading and loading an optimisation script.
 def render_load_optimisation_script_view(ss):

@@ -1,5 +1,5 @@
 import streamlit
-from configuration.backend import config_logic
+from packages.configuration.backend import config_logic
 from .ui_utils import display_operation_result, handle_ui_action_with_conditional_rerun
 
 # Renders the 'Edit Configuration' view.
