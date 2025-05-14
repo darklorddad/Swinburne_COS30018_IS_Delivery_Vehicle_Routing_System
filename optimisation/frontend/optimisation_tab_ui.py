@@ -9,9 +9,9 @@ def render_optimisation_tab(ss):
     # Check if config data is missing or if the configuration is currently being edited.
     if not ss.config_data or ss.get("edit_mode", False):
         if not ss.config_data:
-            warning_message = "Please create or load a configuration in the 'Configuration' tab first. The Optimisation tab requires an active configuration to proceed."
+            warning_message = "Please create or load a configuration first"
         else: # This implies ss.config_data exists, so ss.get("edit_mode", False) must be True
-            warning_message = "Please save or cancel the current configuration edits in the 'Configuration' tab before proceeding with optimisation."
+            warning_message = "Please save or cancel the current configuration edits"
         streamlit.warning(warning_message)
         return # Prevent rendering the rest of the tab
     
