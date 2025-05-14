@@ -29,7 +29,8 @@ def start_jade_platform():
     # Define classpath: JADE JAR and the 'classes' directory for our compiled agents
     # On Windows, classpath separator is ';'. On Linux/macOS, it's ':'.
     classpath_separator = ";" if platform.system() == "Windows" else ":"
-    compiled_classes_path = "classes" # Relative to project root
+    # Updated path for compiled classes
+    compiled_classes_path = os.path.join("packages", "simulation", "java", "classes")
     
     # Ensure the 'classes' directory exists, or JADE might have issues, though javac creates it.
     # For robustness, one might check os.path.exists(compiled_classes_path) here.
@@ -45,7 +46,7 @@ def start_jade_platform():
         "jade.Boot", 
         "-gui", 
         "-port", "30018",
-        "py4jgw:dld.jadeagents.Py4jGatewayAgent" # Start our gateway agent, name it 'py4jgw'
+        "py4jgw:jadeagents.Py4jGatewayAgent" # Updated package for gateway agent
     ]
     print(f"JADE startup command: {' '.join(cmd)}") # Log the command for debugging
 

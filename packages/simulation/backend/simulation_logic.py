@@ -1,9 +1,9 @@
 from . import jade_controller 
 
-# Default JADE agent names and classes (placeholders)
+# Default JADE agent names and classes
 DEFAULT_MRA_NAME = "MasterRouter"
-DEFAULT_MRA_CLASS = "dld.jadeagents.MasterRoutingAgent" # Example Java class path
-DEFAULT_DA_CLASS = "dld.jadeagents.DeliveryAgent"     # Example Java class path
+DEFAULT_MRA_CLASS = "jadeagents.MasterRoutingAgent" # Updated package
+DEFAULT_DA_CLASS = "jadeagents.DeliveryAgent"     # Updated package
 
 def initialise_session_state(ss):
     if "simulation_module_initialised_v1" not in ss: # Use a versioned key
