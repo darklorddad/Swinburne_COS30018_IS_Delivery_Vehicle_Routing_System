@@ -83,9 +83,11 @@ def render_initial_optimisation_view(ss):
                     # Display results using a combination of columns for route summary and st.table for parcel details
                     if "optimised_routes" in results and results["optimised_routes"]:
                         for i, route in enumerate(results["optimised_routes"]):
+                            # Vertical block for Agent ID
                             streamlit.markdown("**Route for Agent**")
                             streamlit.caption(f"{route.get('agent_id', 'N/A')}")
                             
+                            # Columns for Distance and Weight
                             col1, col2 = streamlit.columns(2)
                             with col1:
                                 streamlit.markdown("**Total Distance**")
@@ -94,12 +96,13 @@ def render_initial_optimisation_view(ss):
                                 streamlit.markdown("**Carried Weight**")
                                 streamlit.caption(f"{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (capacity)")
                             
+                            # Vertical block for Stop Sequence
                             streamlit.markdown("**Stop Sequence**")
                             streamlit.caption(f"{' -> '.join(route.get('route_stop_ids', []))}")
                             
                             parcels_details = route.get("parcels_assigned_details", [])
                             if parcels_details:
-                                streamlit.markdown("**Assigned Parcels:**")
+                                # Removed streamlit.markdown("**Assigned Parcels:**")
                                 table_data = []
                                 for p_detail in parcels_details:
                                     coords = p_detail.get('coordinates_x_y', ['N/A', 'N/A'])
