@@ -2,23 +2,25 @@ import subprocess
 import os
 import time # Added for checking JADE startup
 import platform # Added for OS-specific stop logic
-# import json # Would be needed for serializing complex agent arguments
+import json # For serializing arguments to JADE agents
+from py4j.java_gateway import JavaGateway, GatewayParameters, Py4JNetworkError # For JADE communication
 
 # Attempt to locate jade.jar. This is a common location.
 # Users might need to configure this path if it's different.
 JADE_JAR_PATH = os.path.join("dependencies", "JADE-all-4.6.0", "jade", "lib", "jade.jar")
 
-# Placeholder for Py4J gateway, would be initialized if Py4J is used.
-# py4j_gateway = None 
+# Default Py4J connection parameters
+PY4J_PORT = 25333
+PY4J_ADDRESS = "127.0.0.1"
 
 def start_jade_platform():
     """
-    Attempts to start the JADE platform using subprocess.
-    Returns: (success_bool, message_str, process_obj_or_None)
+    Attempts to start the JADE platform and connect via Py4J.
+    Returns: (success_bool, message_str, process_obj_or_None, gateway_obj_or_None)
     """
     print(f"Attempting to start JADE platform. JADE JAR expected at: {JADE_JAR_PATH}")
     if not os.path.exists(JADE_JAR_PATH):
-        return False, f"JADE JAR not found at {JADE_JAR_PATH}. Please check the path.", None
+        return False, f"JADE JAR not found at {JADE_JAR_PATH}. Please check the path.", None, None
     
     # Starting JADE with -gui. For Py4J, a GatewayServer would need to be started by a JADE agent.
     # The -host and -port parameters for JADE main container might be relevant.
@@ -32,9 +34,29 @@ def start_jade_platform():
         time.sleep(4) # Allow JADE time to initialize or fail
         
         if process.poll() is None:
-            # Process is still running, assume JADE started successfully for now.
-            print("JADE process is still running. Assuming successful start.")
-            return True, "JADE platform process is running.", process
+            # Process is still running, attempt Py4J connection.
+            print("JADE process is running. Attempting Py4J connection...")
+            gateway = None
+            try:
+                # Allow some time for JADE and the Py4J GatewayServer within JADE to start.
+                time.sleep(3) # Adjust as needed
+                gateway = JavaGateway(
+                    gateway_parameters=GatewayParameters(address=PY4J_ADDRESS, port=PY4J_PORT, auto_convert=True)
+                )
+                # Optionally, test the connection by calling a simple method on the entry_point
+                # gateway.jvm.System.out.println("Py4J Gateway Connected from Python!")
+                print(f"Successfully connected to Py4J GatewayServer on {PY4J_ADDRESS}:{PY4J_PORT}.")
+                return True, "JADE platform process is running and Py4J gateway connected.", process, gateway
+            except Py4JNetworkError as e:
+                err_msg = f"JADE process started, but Py4J connection failed: {str(e)}. Ensure a Py4J GatewayServer is running in JADE on port {PY4J_PORT}."
+                print(err_msg)
+                # Even if Py4J fails, the JADE process itself might be running (e.g., GUI is up).
+                # We return the process so it can be managed, but no gateway.
+                return True, err_msg, process, None # JADE running, Py4J failed
+            except Exception as e_gw:
+                err_msg = f"JADE process started, but an unexpected error occurred with Py4J: {str(e_gw)}."
+                print(err_msg)
+                return True, err_msg, process, None # JADE running, Py4J failed
         else:
             # Process terminated, JADE likely failed to start
             stdout_output = process.stdout.read().strip() if process.stdout else ""
@@ -54,22 +76,32 @@ def start_jade_platform():
             else:
                 full_error_msg += " No output captured on stdout/stderr."
             print(full_error_msg)
-            return False, full_error_msg, None
+            return False, full_error_msg, None, None
     except FileNotFoundError:
-        return False, "Java command not found. Is Java installed and in PATH?", None
+        return False, "Java command not found. Is Java installed and in PATH?", None, None
     except Exception as e:
-        return False, f"Error starting JADE: {str(e)}", None
+        return False, f"Error starting JADE: {str(e)}", None, None
 
-def stop_jade_platform(process_info, gateway_obj): # gateway_obj is unused
+def stop_jade_platform(process_info, gateway_obj):
     """
-    Attempts to stop the JADE platform process.
+    Attempts to stop the JADE platform process and shutdown Py4J gateway.
     'process_info' is expected to be a subprocess.Popen object.
     Returns: (success_bool, message_str)
     """
     print("Attempting to stop JADE platform...")
+    
+    py4j_shutdown_msg = ""
+    if gateway_obj:
+        try:
+            gateway_obj.shutdown()
+            print("Py4J Gateway shut down successfully.")
+            py4j_shutdown_msg = "Py4J Gateway shut down. "
+        except Exception as e:
+            print(f"Error shutting down Py4J Gateway: {str(e)}")
+            py4j_shutdown_msg = f"Error shutting down Py4J Gateway: {str(e)}. "
 
     if not process_info or not hasattr(process_info, 'pid'):
-        return False, "No valid JADE process information available to stop."
+        return False, py4j_shutdown_msg + "No valid JADE process information available to stop."
 
     pid = process_info.pid # Get PID before poll, in case it terminates mid-check
     if process_info.poll() is not None:
@@ -160,8 +192,8 @@ def stop_jade_platform(process_info, gateway_obj): # gateway_obj is unused
             # General exception during the Windows stop process
             print(f"General exception during Windows stop procedure for PID {pid}: {str(e)}")
             if process_info.poll() is not None: # Check if process died despite exception
-                return True, f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
-            return False, f"Error stopping JADE process (PID: {pid}) on Windows: {str(e)}"
+                return True, py4j_shutdown_msg + f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
+            return False, py4j_shutdown_msg + f"Error stopping JADE process (PID: {pid}) on Windows: {str(e)}"
     else: # For non-Windows OS
         try:
             process_info.terminate() # SIGTERM
@@ -181,81 +213,104 @@ def stop_jade_platform(process_info, gateway_obj): # gateway_obj is unused
         except Exception as e:
             print(f"Exception during non-Windows stop procedure for PID {pid}: {str(e)}")
             if process_info.poll() is not None: # Check if process died despite exception
-                 return True, f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
-            return False, f"Error stopping JADE process (PID: {pid}): {str(e)}"
+                 return True, py4j_shutdown_msg + f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
+            return False, py4j_shutdown_msg + f"Error stopping JADE process (PID: {pid}): {str(e)}"
     
     # Fallback, should ideally not be reached
-    return False, "Could not stop JADE platform due to an unknown issue."
+    return False, py4j_shutdown_msg + "Could not stop JADE platform due to an unknown issue."
 
-def _create_agent_in_jade_simulated(agent_name, agent_class, agent_args_list_of_strings):
+def _create_agent_in_jade(gateway_obj, agent_name, agent_class, agent_args_list_of_strings):
     """
-    Simulates creating an agent in JADE.
-    In a real implementation, this would use Py4J to call JADE's agent creation methods.
-    'agent_args_list_of_strings' should be a list of strings. Complex objects need prior serialization.
+    Creates an agent in JADE using Py4J.
+    'gateway_obj' is the Py4J JavaGateway object.
+    'agent_args_list_of_strings' should be a list of strings. Complex objects need prior serialization (e.g., to JSON).
     Returns: (success_bool, message_str)
     """
-    # global py4j_gateway
-    # if py4j_gateway:
-    #     try:
-    #         # Example: Assuming a controller object on the Java side accessible via gateway
-    #         # java_controller = py4j_gateway.entry_point.getJadePlatformController()
-    #         # java_args_array = py4j_gateway.new_array(py4j_gateway.jvm.String, len(agent_args_list_of_strings))
-    #         # for i, arg_str in enumerate(agent_args_list_of_strings):
-    #         #     java_args_array[i] = arg_str
-    #         # java_controller.createAgent(agent_name, agent_class, java_args_array)
-    #         print(f"Py4J: Requesting creation of agent: {agent_name}, Class: {agent_class}, Args: {agent_args_list_of_strings}")
-    #         return True, f"Agent {agent_name} creation request sent to JADE (simulated)."
-    #     except Exception as e:
-    #         return False, f"Error creating agent {agent_name} via Py4J (simulated): {str(e)}"
-    # else:
-    #     return False, "Py4J Gateway not available (simulated)."
-    print(f"Simulating creation of JADE agent: Name='{agent_name}', Class='{agent_class}', Args='{agent_args_list_of_strings}'")
-    return True, f"Agent '{agent_name}' creation simulated successfully."
+    if not gateway_obj:
+        return False, "Py4J Gateway not available. Cannot create agent."
+    
+    try:
+        # This assumes your JADE GatewayServer's entry point provides an object
+        # (e.g., "jadePlatformController") that has a method "createAgent".
+        # You will need to implement this on the Java/JADE side.
+        # Example: java_controller = gateway_obj.entry_point.getJadePlatformController()
+        # For direct container controller access (less common for remote agent creation):
+        # main_container_controller = gateway_obj.jvm.jade.core.Runtime.instance().getContainer(True).getPlatformController()
+        
+        # A common approach is to have a dedicated JADE agent that listens for Py4J calls
+        # and then uses JADE's internal mechanisms to create agents.
+        # Let's assume an entry point 'jadeEntryPoint' with a method 'createAgentByController'.
+        jade_entry_point = gateway_obj.entry_point 
+        
+        # Convert Python list of strings to Java String array
+        java_args_array = gateway_obj.new_array(gateway_obj.jvm.java.lang.String, len(agent_args_list_of_strings))
+        for i, arg_str in enumerate(agent_args_list_of_strings):
+            java_args_array[i] = arg_str
+            
+        # The method signature on the Java side should be:
+        # public String createAgentByController(String agentName, String agentClass, String[] agentArgs)
+        # It should return a message indicating success or failure.
+        result_message = jade_entry_point.createAgentByController(agent_name, agent_class, java_args_array)
+        
+        print(f"Py4J: Agent creation request for '{agent_name}' (Class: {agent_class}) sent. JADE response: {result_message}")
+        # We assume the Java method returns a string that indicates success if it doesn't throw an exception
+        # or if the message doesn't explicitly state "error" or "fail". This might need refinement.
+        if "error" in result_message.lower() or "fail" in result_message.lower():
+            return False, f"JADE reported an error for agent '{agent_name}': {result_message}"
+        return True, f"Agent '{agent_name}' creation request processed by JADE. Response: {result_message}"
+    except Py4JNetworkError as e:
+        return False, f"Py4J Network Error creating agent '{agent_name}': {str(e)}. Check JADE GatewayServer."
+    except Exception as e:
+        # This can include errors if the Java method doesn't exist, wrong signature, or Java-side exceptions.
+        return False, f"Error creating agent '{agent_name}' via Py4J: {str(e)}"
 
-def create_mra_agent(agent_name, agent_java_class, config_data_dict):
+def create_mra_agent(gateway_obj, agent_name, agent_java_class, config_data_dict):
     """
-    Simulates creating the Master Routing Agent (MRA).
+    Creates the Master Routing Agent (MRA) in JADE.
     'config_data_dict' is the Python dictionary for configuration.
-    It would need to be passed appropriately, perhaps as a JSON string argument.
+    It is passed as a JSON string argument to the JADE agent.
     """
-    # For simulation, we might just pass a reference or key.
-    # In reality, you might pass the config as a JSON string.
-    # agent_args_str = [json.dumps(config_data_dict)] 
-    agent_args_str = ["config_placeholder_for_mra"] # Simplified for simulation
-    return _create_agent_in_jade_simulated(agent_name, agent_java_class, agent_args_str)
+    try:
+        agent_args_str = [json.dumps(config_data_dict)] 
+    except Exception as e:
+        return False, f"Error serializing config_data_dict for MRA to JSON: {str(e)}"
+    return _create_agent_in_jade(gateway_obj, agent_name, agent_java_class, agent_args_str)
 
-def create_da_agent(agent_name, agent_java_class, agent_config_dict):
+def create_da_agent(gateway_obj, agent_name, agent_java_class, agent_config_dict):
     """
-    Simulates creating a Delivery Agent (DA).
-    'agent_config_dict' is the Python dictionary for this specific agent's configuration.
+    Creates a Delivery Agent (DA) in JADE.
+    'agent_config_dict' is the Python dictionary for this specific agent's configuration,
+    passed as a JSON string argument.
     """
-    # agent_args_str = [json.dumps(agent_config_dict)]
-    agent_args_str = [f"config_for_{agent_name}"] # Simplified for simulation
-    return _create_agent_in_jade_simulated(agent_name, agent_java_class, agent_args_str)
+    try:
+        agent_args_str = [json.dumps(agent_config_dict)]
+    except Exception as e:
+        return False, f"Error serializing agent_config_dict for DA '{agent_name}' to JSON: {str(e)}"
+    return _create_agent_in_jade(gateway_obj, agent_name, agent_java_class, agent_args_str)
 
-def trigger_mra_optimisation_and_notify_das(mra_agent_name, optimisation_results_py_dict):
+def trigger_mra_optimisation_and_notify_das(gateway_obj, mra_agent_name, optimisation_results_py_dict):
     """
-    Simulates sending optimisation results to the MRA in JADE.
-    The MRA would then (in a real JADE implementation) parse these results,
-    create ACL messages with routes, and send them to the respective DAs.
+    Sends optimisation results to the MRA in JADE via Py4J.
+    The MRA would then parse these results and manage DAs.
     Returns: (success_bool, message_str)
     """
-    # global py4j_gateway
-    # if py4j_gateway:
-    #     try:
-    #         # results_json_str = json.dumps(optimisation_results_py_dict)
-    #         # Example: Send an ACL message via Py4J to the MRA
-    #         # acl = py4j_gateway.jvm.jade.lang.acl.ACLMessage(py4j_gateway.jvm.jade.lang.acl.ACLMessage.REQUEST)
-    #         # mra_aid = py4j_gateway.jvm.jade.core.AID(mra_agent_name, py4j_gateway.jvm.jade.core.AID.ISLOCALNAME)
-    #         # acl.addReceiver(mra_aid)
-    #         # acl.setContent(results_json_str)
-    #         # acl.setOntology("VRPResults")
-    #         # py4j_gateway.entry_point.getAgent(mra_agent_name).postMessage(acl) # Assuming agent has postMessage or similar
-    #         print(f"Py4J: Sending optimisation results to MRA {mra_agent_name} (simulated).")
-    #         return True, f"Optimisation results sent to MRA {mra_agent_name} (simulated)."
-    #     except Exception as e:
-    #         return False, f"Error sending results to MRA {mra_agent_name} via Py4J (simulated): {str(e)}"
-    # else:
-    #   return False, "Py4J Gateway not available (simulated)."
-    print(f"Simulating sending optimisation results to MRA '{mra_agent_name}'. Results: {optimisation_results_py_dict}")
-    return True, "Simulation triggered with MRA (simulated) and results sent."
+    if not gateway_obj:
+        return False, "Py4J Gateway not available. Cannot trigger simulation."
+        
+    try:
+        results_json_str = json.dumps(optimisation_results_py_dict)
+        
+        # Assume the JADE entry point or a specific controller has a method
+        # to send this data to the MRA, e.g., by posting an ACL message.
+        # public String sendOptimisationResultsToMRA(String mraName, String resultsJson)
+        jade_entry_point = gateway_obj.entry_point
+        response_message = jade_entry_point.sendOptimisationResultsToMRA(mra_agent_name, results_json_str)
+        
+        print(f"Py4J: Sent optimisation results to MRA '{mra_agent_name}'. JADE response: {response_message}")
+        if "error" in response_message.lower() or "fail" in response_message.lower():
+            return False, f"JADE reported an error sending results to MRA '{mra_agent_name}': {response_message}"
+        return True, f"Optimisation results sent to MRA '{mra_agent_name}'. JADE response: {response_message}"
+    except Py4JNetworkError as e:
+        return False, f"Py4J Network Error sending results to MRA '{mra_agent_name}': {str(e)}. Check JADE GatewayServer."
+    except Exception as e:
+        return False, f"Error sending results to MRA '{mra_agent_name}' via Py4J: {str(e)}"

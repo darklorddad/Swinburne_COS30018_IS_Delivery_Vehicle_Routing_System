@@ -25,14 +25,23 @@ def handle_start_jade(ss):
         ss.jade_platform_status_message = "JADE platform is already running."
         return
 
-    success, message, process_obj = jade_controller.start_jade_platform()
-    if success:
-        ss.jade_platform_running = True
+    # start_jade_platform now returns: success, message, process_obj, gateway_obj
+    success, message, process_obj, gateway_obj = jade_controller.start_jade_platform()
+    
+    ss.jade_platform_status_message = message # Store the detailed message from start_jade_platform
+
+    if success: # JADE process started (Py4J connection might have succeeded or failed, message reflects this)
+        ss.jade_platform_running = True # Mark platform as "running" if process started
         ss.jade_process_info = process_obj
-        # ss.py4j_gateway_object = ... # This would be set if py4j connection is made
-        ss.jade_platform_status_message = message or "JADE platform started successfully."
-    else:
+        if gateway_obj:
+            ss.py4j_gateway_object = gateway_obj
+            # Message already includes Py4J status, no need to overwrite here unless adding more info
+        else:
+            ss.py4j_gateway_object = None
+            # Message from start_jade_platform should indicate Py4J failure if process_obj is not None
+    else: # JADE process failed to start
         ss.jade_platform_running = False
+        ss.jade_process_info = None # Ensure process_info is None if start failed
         ss.jade_platform_status_message = message or "Failed to start JADE platform."
     
     # Reset downstream states as platform state changed
@@ -65,15 +74,19 @@ def handle_create_agents(ss):
     if not ss.get("jade_platform_running"):
         ss.jade_agent_creation_status_message = "Cannot create agents: JADE platform is not running."
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
+    
+    py4j_gateway = ss.get("py4j_gateway_object")
+    if not py4j_gateway:
+        ss.jade_agent_creation_status_message = "Cannot create agents: Py4J Gateway to JADE is not available. Ensure JADE started with Py4J support."
+        return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
 
     if not ss.config_data:
         ss.jade_agent_creation_status_message = "Cannot create agents: Configuration data not loaded."
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
 
     # Create MRA
-    # The MRA might need the full config_data or specific parts of it.
-    # For simulation, we pass the whole dict; actual implementation might pass a JSON string.
     mra_success, mra_msg = jade_controller.create_mra_agent(
+        py4j_gateway, # Pass the gateway object
         DEFAULT_MRA_NAME,
         DEFAULT_MRA_CLASS,
         ss.config_data 
@@ -100,6 +113,7 @@ def handle_create_agents(ss):
                 continue
 
             da_success, da_msg = jade_controller.create_da_agent(
+                py4j_gateway, # Pass the gateway object
                 da_id, # Use DA ID from config as agent name
                 DEFAULT_DA_CLASS,
                 agent_config # Pass individual DA's config
@@ -124,6 +138,12 @@ def handle_run_simulation(ss):
     if not ss.get("jade_platform_running"):
         ss.jade_simulation_status_message = "Cannot run simulation: JADE platform is not running."
         return {'type': 'error', 'message': ss.jade_simulation_status_message}
+    
+    py4j_gateway = ss.get("py4j_gateway_object")
+    if not py4j_gateway:
+        ss.jade_simulation_status_message = "Cannot run simulation: Py4J Gateway to JADE is not available."
+        return {'type': 'error', 'message': ss.jade_simulation_status_message}
+        
     if not ss.get("jade_agents_created"):
         ss.jade_simulation_status_message = "Cannot run simulation: Agents have not been created in JADE."
         return {'type': 'error', 'message': ss.jade_simulation_status_message}
@@ -134,15 +154,15 @@ def handle_run_simulation(ss):
     optimisation_results = ss.optimisation_results
 
     # Tell the MRA in JADE to start the process, passing it the optimisation_results.
-    # The MRA would then communicate routes to DAs.
     success, message = jade_controller.trigger_mra_optimisation_and_notify_das(
+        py4j_gateway, # Pass the gateway object
         DEFAULT_MRA_NAME, # Name of the MRA agent in JADE
         optimisation_results
     )
 
     if success:
-        ss.jade_simulation_status_message = message or "JADE simulation triggered successfully (simulated)."
+        ss.jade_simulation_status_message = message or "JADE simulation triggered successfully."
         return {'type': 'success', 'message': ss.jade_simulation_status_message}
     else:
-        ss.jade_simulation_status_message = message or "Failed to trigger JADE simulation (simulated)."
+        ss.jade_simulation_status_message = message or "Failed to trigger JADE simulation."
         return {'type': 'error', 'message': ss.jade_simulation_status_message}
