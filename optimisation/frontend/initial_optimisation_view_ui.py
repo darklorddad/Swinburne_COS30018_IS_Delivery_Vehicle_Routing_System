@@ -52,22 +52,27 @@ def _render_optimisation_results_display(results):
             # Row 1: Agent ID and Total Distance
             col_agent, col_dist = streamlit.columns(2)
             with col_agent:
-                streamlit.markdown("**Agent**") 
-                streamlit.caption(f"{route.get('agent_id', 'N/A')}")
+                agent_id_value = route.get('agent_id', 'N/A')
+                agent_text = f"<strong>Agent</strong><br><span style='font-size: 0.9em; color: #888;'>{agent_id_value}</span>"
+                streamlit.markdown(agent_text, unsafe_allow_html=True)
             with col_dist:
-                streamlit.markdown("**Total Distance**")
-                streamlit.caption(f"{route.get('total_distance', 'N/A')} units")
+                total_distance_value = f"{route.get('total_distance', 'N/A')} units"
+                total_distance_text = f"<strong>Total Distance</strong><br><span style='font-size: 0.9em; color: #888;'>{total_distance_value}</span>"
+                streamlit.markdown(total_distance_text, unsafe_allow_html=True)
             
             # Row 2: Capacity and Stop Sequence
             col_capacity, col_seq = streamlit.columns(2) 
             with col_capacity:
-                capacity_text = f"<strong>Capacity</strong><br><small>{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (weight)</small>"
+                # Using a span with inline styles to better mimic st.caption's appearance
+                capacity_value = f"{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (weight)"
+                capacity_text = f"<strong>Capacity</strong><br><span style='font-size: 0.9em; color: #888;'>{capacity_value}</span>"
                 streamlit.markdown(capacity_text, unsafe_allow_html=True)
             
             # Stop Sequence moved to be beside Capacity
             with col_seq:
-                streamlit.markdown("**Stop Sequence**")
-                streamlit.caption(f"{' -> '.join(route.get('route_stop_ids', []))}")
+                stop_sequence_value = ' -> '.join(route.get('route_stop_ids', []))
+                stop_sequence_text = f"<strong>Stop Sequence</strong><br><span style='font-size: 0.9em; color: #888;'>{stop_sequence_value}</span>"
+                streamlit.markdown(stop_sequence_text, unsafe_allow_html=True)
             
             parcels_details = route.get("parcels_assigned_details", [])
             if parcels_details:
