@@ -61,8 +61,8 @@ def _render_optimisation_results_display(results):
             # Row 2: Capacity and Stop Sequence
             col_capacity, col_seq = streamlit.columns(2) 
             with col_capacity:
-                streamlit.markdown("**Capacity**") 
-                streamlit.caption(f"{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (weight)") 
+                capacity_text = f"<strong>Capacity</strong><br><small>{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (weight)</small>"
+                streamlit.markdown(capacity_text, unsafe_allow_html=True)
             
             # Stop Sequence moved to be beside Capacity
             with col_seq:
