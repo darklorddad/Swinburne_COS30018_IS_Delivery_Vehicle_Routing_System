@@ -21,6 +21,32 @@ def _determine_message_type_from_string(message_str):
 
 # Renders the JADE tab for JADE interaction.
 def render_jade_operations_tab(ss):
+    # Check prerequisites for JADE tab functionality
+    config_loaded = ss.config_data is not None
+    script_loaded = ss.get("optimisation_script_loaded_successfully", False)
+    optimisation_run = ss.get("optimisation_run_complete", False)
+    optimisation_results_exist = ss.get("optimisation_results") is not None
+    
+    all_prerequisites_met = config_loaded and script_loaded and optimisation_run and optimisation_results_exist
+
+    if not all_prerequisites_met:
+        prereq_messages_list = []
+        if not config_loaded:
+            prereq_messages_list.append("A configuration must be loaded (Configuration tab).")
+        if not script_loaded:
+            prereq_messages_list.append("An optimisation script must be loaded (Optimisation tab).")
+        if not optimisation_run or not optimisation_results_exist:
+            prereq_messages_list.append("Optimisation must be successfully run and produce results (Optimisation tab).")
+        
+        if prereq_messages_list:
+            streamlit.info(
+                "The JADE features are currently unavailable. Please ensure the following steps are completed:\n\n" + 
+                "\n".join([f"- {msg}" for msg in prereq_messages_list])
+            )
+        else: # Should not happen if all_prerequisites_met is False, but as a fallback
+            streamlit.warning("JADE features are unavailable due to unmet prerequisites.")
+        return # Stop rendering the rest of the JADE tab
+
     # Removed streamlit.header("JADE Agent Operations")
 
     # --- JADE Platform Control ---
