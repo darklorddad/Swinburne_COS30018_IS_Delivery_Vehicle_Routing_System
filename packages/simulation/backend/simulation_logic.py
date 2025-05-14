@@ -124,12 +124,12 @@ def handle_create_agents(ss):
     
     if mra_success and all_das_successfully_created:
         ss.jade_agents_created = True
-        final_message = "All agents (MRA and DAs) processed for creation (simulated). Details: " + " | ".join(da_creation_messages)
+        final_message = "All agent creation requests (MRA and DAs) processed. Details: " + " | ".join(da_creation_messages)
         ss.jade_agent_creation_status_message = final_message
         return {'type': 'success', 'message': final_message}
     else:
         ss.jade_agents_created = False
-        final_message = "One or more agents failed to be created (simulated). Details: " + " | ".join(da_creation_messages)
+        final_message = "One or more agent creation requests failed or JADE reported errors. Details: " + " | ".join(da_creation_messages)
         ss.jade_agent_creation_status_message = final_message
         return {'type': 'error', 'message': final_message}
 
