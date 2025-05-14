@@ -25,7 +25,30 @@ def start_jade_platform():
     # Starting JADE with -gui. For Py4J, a GatewayServer would need to be started by a JADE agent.
     # The -host and -port parameters for JADE main container might be relevant.
     # Setting port back to 30018 as requested.
-    cmd = ["java", "-cp", JADE_JAR_PATH, "jade.Boot", "-gui", "-port", "30018"]
+    
+    # Define classpath: JADE JAR and the 'classes' directory for our compiled agents
+    # On Windows, classpath separator is ';'. On Linux/macOS, it's ':'.
+    classpath_separator = ";" if platform.system() == "Windows" else ":"
+    compiled_classes_path = "classes" # Relative to project root
+    
+    # Ensure the 'classes' directory exists, or JADE might have issues, though javac creates it.
+    # For robustness, one might check os.path.exists(compiled_classes_path) here.
+
+    # Command to start JADE, including our Py4jGatewayAgent
+    # The agent is specified as agentName:fully.qualified.ClassName
+    # Arguments to the agent can be passed in parentheses, e.g., agentName(arg1 arg2):className
+    # We don't need arguments for Py4jGatewayAgent at startup via command line.
+    cmd = [
+        "java", 
+        "-cp", 
+        f"{JADE_JAR_PATH}{classpath_separator}{compiled_classes_path}", 
+        "jade.Boot", 
+        "-gui", 
+        "-port", "30018",
+        "py4jgw:dld.jadeagents.Py4jGatewayAgent" # Start our gateway agent, name it 'py4jgw'
+    ]
+    print(f"JADE startup command: {' '.join(cmd)}") # Log the command for debugging
+
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0)
         
