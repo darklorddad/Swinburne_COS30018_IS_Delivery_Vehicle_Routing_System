@@ -86,20 +86,19 @@ def render_initial_optimisation_view(ss):
                             # Row 1: Agent ID and Total Distance
                             col_agent, col_dist = streamlit.columns(2)
                             with col_agent:
-                                streamlit.markdown("**Route for Agent**")
+                                streamlit.markdown("**Agent**") # Renamed
                                 streamlit.caption(f"{route.get('agent_id', 'N/A')}")
                             with col_dist:
                                 streamlit.markdown("**Total Distance**")
                                 streamlit.caption(f"{route.get('total_distance', 'N/A')} units")
                             
-                            # Row 2: Carried Weight (in a column for consistent block structure)
-                            col_weight, _ = streamlit.columns(2) # Use one column, leave the other empty
-                            with col_weight:
-                                streamlit.markdown("**Carried Weight**")
-                                streamlit.caption(f"{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (capacity)")
+                            # Row 2: Capacity and Stop Sequence
+                            col_capacity, col_seq = streamlit.columns(2) 
+                            with col_capacity:
+                                streamlit.markdown("**Capacity**") # Renamed
+                                streamlit.caption(f"{route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (weight)") # Changed (capacity) to (weight)
                             
-                            # Row 3: Stop Sequence (in a column for consistent block structure)
-                            col_seq, _ = streamlit.columns(2) # Use one column, leave the other empty
+                            # Stop Sequence moved to be beside Capacity
                             with col_seq:
                                 streamlit.markdown("**Stop Sequence**")
                                 streamlit.caption(f"{' -> '.join(route.get('route_stop_ids', []))}")
