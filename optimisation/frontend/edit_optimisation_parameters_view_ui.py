@@ -15,7 +15,7 @@ def render_edit_optimisation_parameters_view(ss):
 
     params_list = ss.optimisation_script_param_schema["parameters"]
     if not params_list:
-        streamlit.info("The optimisation script does not define any configurable parameters.")
+        streamlit.info("The optimisation script does not define any configurable parameters")
         if streamlit.button("Back to Optimisation Menu", key="back_to_opt_menu_no_params"):
             optimisation_logic.handle_cancel_edit_parameters_action(ss)
             streamlit.rerun()
