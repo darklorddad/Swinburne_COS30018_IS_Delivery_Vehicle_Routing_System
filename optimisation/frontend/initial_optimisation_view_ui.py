@@ -147,3 +147,8 @@ def render_initial_optimisation_view(ss):
         if ss.optimisation_script_content:
             with streamlit.expander("View Loaded Script Content", expanded=False):
                 streamlit.code(ss.optimisation_script_content, language="python")
+        
+        # Expander to view the raw optimisation output
+        if ss.optimisation_run_complete and ss.optimisation_results:
+            with streamlit.expander("View Raw Optimisation Output", expanded=False):
+                streamlit.json(ss.optimisation_results)
