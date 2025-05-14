@@ -4,7 +4,8 @@ from packages.configuration.frontend.config_tab_ui import render_config_tab
 from packages.optimisation.backend import optimisation_logic
 from packages.optimisation.frontend.optimisation_tab_ui import render_optimisation_tab
 from packages.simulation.backend import simulation_logic 
-from packages.simulation.frontend.simulation_tab_ui import render_jade_operations_tab # Updated import
+from packages.simulation.frontend.simulation_tab_ui import render_jade_operations_tab 
+from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab # New import
 
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
@@ -62,11 +63,11 @@ def _render_main_layout(ss):
     with col2: # This is the main content area, styled as a card.
         streamlit.title("Delivery Vehicle Routing System")
 
-        tab_config, tab_optimisation, tab_jade_ops, tab_results, tab_settings = streamlit.tabs([
+        tab_config, tab_optimisation, tab_jade_ops, tab_visualisation, tab_settings = streamlit.tabs([
             "Configuration",
             "Optimisation", 
-            "JADE Operations", # Renamed tab
-            "Dashboard & Results",
+            "JADE Operations", 
+            "Visualisation", # Renamed tab
             "Settings"
         ])
 
@@ -76,15 +77,11 @@ def _render_main_layout(ss):
         with tab_optimisation:
             render_optimisation_tab(ss)
             
-        with tab_jade_ops: # Changed from tab_simulation
-            render_jade_operations_tab(ss) # Call the updated rendering function
+        with tab_jade_ops: 
+            render_jade_operations_tab(ss) 
 
-        with tab_results:
-            streamlit.header("Dashboard & Results")
-            if ss.config_data is None: # Check if configuration data is available.
-                streamlit.warning("Please load a configuration and run optimisation to see results.")
-            else:
-                streamlit.write("Route visualisations and results will appear here.")
+        with tab_visualisation: # Changed from tab_results
+            render_visualisation_tab(ss) # Call the new rendering function
 
         with tab_settings:
             streamlit.header("UI Settings")
