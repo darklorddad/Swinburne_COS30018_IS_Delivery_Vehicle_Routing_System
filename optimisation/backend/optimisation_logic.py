@@ -1,40 +1,7 @@
-
-import importlib.util
 import sys
 import os
-import tempfile # For temporary file creation
 import shutil # For removing temp directory
-
-# Helper to load a Python script content as a module.
-# Manages temporary file creation and basic module loading.
-def _load_module_from_string(script_content, module_name_prefix="user_opt_script"):
-    temp_dir = tempfile.mkdtemp()
-    module_name = f"{module_name_prefix}_{os.path.basename(temp_dir)}" # Unique module name
-    temp_file_path = os.path.join(temp_dir, f"{module_name}.py")
-
-    try:
-        with open(temp_file_path, "w", encoding="utf-8") as f:
-            f.write(script_content)
-        
-        spec = importlib.util.spec_from_file_location(module_name, temp_file_path)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Could not create module spec for {module_name}")
-            
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module # Add to sys.modules before exec_module
-        
-        spec.loader.exec_module(module)
-    except Exception as e:
-        # If any error occurs during file writing, spec creation, or module execution,
-        # ensure cleanup of the temp directory and module from sys.modules.
-        if module_name in sys.modules:
-            del sys.modules[module_name]
-        if os.path.isdir(temp_dir): # Check if temp_dir was created
-            shutil.rmtree(temp_dir)
-        raise e # Re-raise the original exception
-
-    # Return module, its name, and temp_dir for caller to manage (especially for cleanup)
-    return module, module_name, temp_dir
+from . import script_utils # Import the new utility module
 
 # Initialises session state variables specific to the optimisation module.
 def initialise_session_state(ss):
@@ -75,11 +42,10 @@ def initialise_session_state(ss):
 
 # Cleans up resources (temp directory, loaded module) from a previously loaded script (schema module).
 def _cleanup_previous_schema_script(ss):
-    if ss.optimisation_script_module_name_schema and ss.optimisation_script_module_name_schema in sys.modules:
-        del sys.modules[ss.optimisation_script_module_name_schema]
-    if ss.optimisation_script_temp_dir_schema and os.path.isdir(ss.optimisation_script_temp_dir_schema):
-        shutil.rmtree(ss.optimisation_script_temp_dir_schema)
-    
+    script_utils.cleanup_script_module(
+        ss.optimisation_script_module_name_schema,
+        ss.optimisation_script_temp_dir_schema
+    )
     ss.optimisation_script_temp_dir_schema = None
     ss.optimisation_script_module_name_schema = None
 
@@ -124,7 +90,7 @@ def handle_optimisation_file_upload(ss):
     module_name = None
     temp_dir = None
     try:
-        module, module_name, temp_dir = _load_module_from_string(ss.optimisation_script_content, "user_schema_script")
+        module, module_name, temp_dir = script_utils._load_module_from_string(ss.optimisation_script_content, "user_schema_script")
         # Store these to be cleaned up later by _cleanup_previous_schema_script or clear_optimisation_script
         ss.optimisation_script_temp_dir_schema = temp_dir
         ss.optimisation_script_module_name_schema = module_name
@@ -176,7 +142,7 @@ def execute_optimisation_script(ss):
     exec_temp_dir = None
     try:
         # Load the script into a new, separate module for execution to ensure isolation.
-        exec_module, exec_module_name, exec_temp_dir = _load_module_from_string(ss.optimisation_script_content, "user_exec_script")
+        exec_module, exec_module_name, exec_temp_dir = script_utils._load_module_from_string(ss.optimisation_script_content, "user_exec_script")
 
         if hasattr(exec_module, "run_optimisation") and callable(exec_module.run_optimisation):
             results = exec_module.run_optimisation(ss.config_data, ss.optimisation_script_user_values)
@@ -189,10 +155,7 @@ def execute_optimisation_script(ss):
         ss.optimisation_run_error = f"Error executing optimisation script: {str(e)}"
     finally:
         # Clean up the module and temp directory created specifically for this execution.
-        if exec_module_name and exec_module_name in sys.modules:
-            del sys.modules[exec_module_name]
-        if exec_temp_dir and os.path.isdir(exec_temp_dir):
-            shutil.rmtree(exec_temp_dir)
+        script_utils.cleanup_script_module(exec_module_name, exec_temp_dir)
 
 # Clears all state related to the currently loaded optimisation script.
 def clear_optimisation_script(ss):
