@@ -149,6 +149,11 @@ def compile_java_agents():
         err_msg = f"Py4J JAR not found at '{PY4J_JAR_PATH}' for compilation."
         print(err_msg)
         return False, err_msg
+    
+    if not os.path.exists(JSON_JAR_PATH):
+        err_msg = f"org.json.jar not found at '{JSON_JAR_PATH}'. This is required for compiling JADE agents. Please ensure the JAR is present at this location."
+        print(err_msg)
+        return False, err_msg
 
     # Check if source files exist
     java_source_files = [f for f in os.listdir(source_path) if f.endswith(".java")]
@@ -160,14 +165,8 @@ def compile_java_agents():
     source_files_pattern = os.path.join(source_path, "*.java")
 
     classpath_separator = ";" if platform.system() == "Windows" else ":"
-    if not os.path.exists(JSON_JAR_PATH):
-        # This check is a bit late, ideally done earlier or handled more gracefully.
-        # For now, it prevents compilation from failing silently if JSON_JAR_PATH is wrong.
-        print(f"WARNING: org.json.jar not found at '{JSON_JAR_PATH}'. Compilation might fail if agents use org.json.")
-        compile_classpath = f"{JADE_JAR_PATH}{classpath_separator}{PY4J_JAR_PATH}"
-    else:
-        compile_classpath = f"{JADE_JAR_PATH}{classpath_separator}{PY4J_JAR_PATH}{classpath_separator}{JSON_JAR_PATH}"
-
+    # All required JARs (JADE, Py4J, JSON) are confirmed to exist at this point.
+    compile_classpath = f"{JADE_JAR_PATH}{classpath_separator}{PY4J_JAR_PATH}{classpath_separator}{JSON_JAR_PATH}"
 
     # Construct the javac command
     # Using os.path.normpath to ensure paths are in the correct format for the OS.
