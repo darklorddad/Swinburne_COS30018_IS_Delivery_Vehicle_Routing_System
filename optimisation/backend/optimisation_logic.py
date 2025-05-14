@@ -1,8 +1,11 @@
-import sys
-import os
-import shutil # For removing temp directory
-from . import script_utils
-from . import parameter_logic # Import the new parameter logic module
+# This module acts as a controller/facade for the optimisation backend.
+# It manages UI navigation state (optimisation_action_selected) and
+# orchestrates calls to script_lifecycle.py for script operations
+# and parameter_logic.py for parameter editing state.
+
+from . import script_utils # Retained if any direct utility use, but likely not needed
+from . import parameter_logic
+from . import script_lifecycle # Import the new script lifecycle module
 
 # Initialises session state variables specific to the optimisation module.
 def initialise_session_state(ss):
@@ -41,147 +44,40 @@ def initialise_session_state(ss):
             if key in ss:
                 del ss[key]
 
-# Cleans up resources (temp directory, loaded module) from a previously loaded script (schema module).
-def _cleanup_previous_schema_script(ss):
-    script_utils.cleanup_script_module(
-        ss.optimisation_script_module_name_schema,
-        ss.optimisation_script_temp_dir_schema
-    )
-    ss.optimisation_script_temp_dir_schema = None
-    ss.optimisation_script_module_name_schema = None
-
-# Handles the upload of an optimisation script, extracting its schema and setting up parameters.
+# Handles the upload of an optimisation script.
+# Delegates to script_lifecycle.load_and_process_script and updates UI view state.
 def handle_optimisation_file_upload(ss):
-    _cleanup_previous_schema_script(ss) # Clean up any old script resources first.
-
-    # Key for the file uploader widget, defined in the UI.
     uploaded_file = ss.get("optimisation_file_uploader_widget") 
 
-    if uploaded_file is None:
-        # This might be called if the file is cleared from UI; ensure state is reset.
-        # However, explicit clear via button is preferred. If called with no file, reset.
-        clear_optimisation_script(ss) # Call full clear to be safe
-        return
+    # script_lifecycle.load_and_process_script will update ss with content, schema, errors etc.
+    # and will also handle clearing previous script data if uploaded_file is None.
+    success = script_lifecycle.load_and_process_script(ss, uploaded_file)
 
-    try:
-        file_content_bytes = uploaded_file.getvalue()
-        file_content = file_content_bytes.decode("utf-8")
-    except UnicodeDecodeError:
-        ss.optimisation_script_error_message = "Error: Uploaded file is not UTF-8 encoded."
-        ss.optimisation_script_loaded_successfully = False
-        return
-    except Exception as e:
-        ss.optimisation_script_error_message = f"Error reading uploaded file: {str(e)}"
-        ss.optimisation_script_loaded_successfully = False
-        return
+    if success:
+        ss.optimisation_action_selected = None # Return to initial view on successful load
+    else:
+        # If loading failed, an error message is already set in ss by load_and_process_script.
+        # The user remains in the "load_script" view to see the error.
+        # If uploaded_file was None, load_and_process_script also sets an error message.
+        pass
 
-    # Reset relevant state variables before processing the new file.
-    ss.optimisation_script_content = file_content
-    ss.optimisation_script_filename = uploaded_file.name
-    ss.optimisation_script_param_schema = None
-    ss.optimisation_script_user_values = {}
-    ss.optimisation_script_user_values_snapshot = {} # Clear snapshot as well
-    ss.optimisation_script_loaded_successfully = False
-    ss.optimisation_script_error_message = None
-    ss.optimisation_results = None 
-    ss.optimisation_run_complete = False
-    ss.optimisation_run_error = None
-
-    module = None
-    module_name = None
-    temp_dir = None
-    try:
-        module, module_name, temp_dir = script_utils._load_module_from_string(ss.optimisation_script_content, "user_schema_script")
-        # Store these to be cleaned up later by _cleanup_previous_schema_script or clear_optimisation_script
-        ss.optimisation_script_temp_dir_schema = temp_dir
-        ss.optimisation_script_module_name_schema = module_name
-
-        if hasattr(module, "get_params_schema") and callable(module.get_params_schema):
-            schema = module.get_params_schema()
-            if isinstance(schema, dict) and "parameters" in schema and isinstance(schema["parameters"], list):
-                ss.optimisation_script_param_schema = schema
-                for param_info in schema.get("parameters", []):
-                    if "name" in param_info:
-                        ss.optimisation_script_user_values[param_info["name"]] = param_info.get("default")
-                ss.optimisation_script_loaded_successfully = True
-            else:
-                ss.optimisation_script_error_message = "Script's get_params_schema() returned an invalid format. Expected a dictionary with a 'parameters' list."
-        else:
-            ss.optimisation_script_error_message = "Script must contain a callable 'get_params_schema()' function."
-        
-        if ss.optimisation_script_loaded_successfully:
-            ss.optimisation_action_selected = None # Return to initial view on success
-            
-    except Exception as e:
-        ss.optimisation_script_error_message = f"Error loading script or getting schema: {str(e)}"
-        # If module loading failed, _load_module_from_string should have cleaned up its own temp_dir and sys.modules entry.
-        # Ensure ss state for these are also None.
-        # Keep user on load_script view by not changing ss.optimisation_action_selected
-        ss.optimisation_script_temp_dir_schema = None
-        ss.optimisation_script_module_name_schema = None
-        ss.optimisation_script_loaded_successfully = False
-
-
-# Executes the loaded optimisation script with the current configuration and parameters.
+# Executes the loaded optimisation script.
+# Delegates to script_lifecycle.run_script.
 def execute_optimisation_script(ss):
-    if not ss.optimisation_script_loaded_successfully: # ss.optimisation_script_content would be set if loaded_successfully is True.
-        ss.optimisation_run_error = "Optimisation script not loaded successfully. Please upload a valid script."
-        ss.optimisation_run_complete = False
-        return
-    
-    if not ss.config_data:
-        ss.optimisation_run_error = "Configuration data not loaded. Please load a configuration in the 'Configuration' tab first."
-        ss.optimisation_run_complete = False
-        return
-
-    ss.optimisation_results = None
-    ss.optimisation_run_complete = False
-    ss.optimisation_run_error = None
-
-    exec_module = None
-    exec_module_name = None
-    exec_temp_dir = None
-    try:
-        # Load the script into a new, separate module for execution to ensure isolation.
-        exec_module, exec_module_name, exec_temp_dir = script_utils._load_module_from_string(ss.optimisation_script_content, "user_exec_script")
-
-        if hasattr(exec_module, "run_optimisation") and callable(exec_module.run_optimisation):
-            results = exec_module.run_optimisation(ss.config_data, ss.optimisation_script_user_values)
-            ss.optimisation_results = results
-            ss.optimisation_run_complete = True
-        else:
-            ss.optimisation_run_error = "Script must contain a callable 'run_optimisation(config_data, params)' function."
-            
-    except Exception as e:
-        ss.optimisation_run_error = f"Error executing optimisation script: {str(e)}"
-    finally:
-        # Clean up the module and temp directory created specifically for this execution.
-        script_utils.cleanup_script_module(exec_module_name, exec_temp_dir)
+    # Pre-checks are handled within script_lifecycle.run_script
+    script_lifecycle.run_script(ss)
+    # No direct UI navigation change; results/errors are displayed in the current view.
 
 # Clears all state related to the currently loaded optimisation script.
+# Delegates data clearing to script_lifecycle.clear_script_data and resets UI view.
 def clear_optimisation_script(ss):
-    _cleanup_previous_schema_script(ss) # Clean up schema module and temp files.
-
-    ss.optimisation_script_content = None
-    ss.optimisation_script_filename = None
-    ss.optimisation_script_param_schema = None
-    ss.optimisation_script_user_values = {}
-    ss.optimisation_script_loaded_successfully = False
-    ss.optimisation_script_error_message = None
-    
-    ss.optimisation_results = None
-    ss.optimisation_run_complete = False
-    ss.optimisation_run_error = None
-    
-    # The file uploader widget's state is managed by Streamlit.
-    # Clearing our application-level script state (content, filename, etc.)
-    # is sufficient. The widget will show "No file selected" or the last
-    # selected file, but our logic will ignore it if ss.optimisation_script_content is None.
-    
+    script_lifecycle.clear_script_data(ss)
     ss.optimisation_action_selected = None # Reset to initial view
 
 
 # --- Optimisation Tab View Management ---
+# These functions manage the 'optimisation_action_selected' state variable,
+# which controls which UI view is displayed in the Optimisation tab.
 
 # Switches the UI to the script loading view.
 def handle_initiate_load_script_action(ss):
