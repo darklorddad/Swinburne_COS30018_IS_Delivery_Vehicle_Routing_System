@@ -22,14 +22,11 @@ def render_initial_view(ss):
         with streamlit.expander("Current Configuration Summary", expanded=False):
             streamlit.markdown("---")
             
-            streamlit.subheader("Parcels")
             if ss.config_data.get("parcels"):
                 streamlit.dataframe(ss.config_data["parcels"], use_container_width=True)
             else:
                 streamlit.info("No parcels currently defined in the configuration.")
             
-            streamlit.markdown("---")
-            streamlit.subheader("Delivery Agents")
             if ss.config_data.get("delivery_agents"):
                 streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)
             else:
