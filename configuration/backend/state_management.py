@@ -204,40 +204,6 @@ def handle_save_edits(ss):
     ss.fallback_config_state = None # Edits committed, fallback is irrelevant.
     return {'type': 'success', 'message': "Edits saved to memory"}
 
-# Handles logic for saving, preparing for download, and exiting edit mode.
-def handle_save_and_download(ss):
-    # Prepares config_to_save strictly according to DEFAULT_CONFIG_TEMPLATE.
-    config_data_internal = ss.config_data
-    config_to_save = {}
-    for key in DEFAULT_CONFIG_TEMPLATE.keys():
-        config_to_save[key] = config_data_internal.get(key, copy.deepcopy(DEFAULT_CONFIG_TEMPLATE[key]))
-        
-    # Ensures snapshot reflects the state being saved.
-    ss.config_data_snapshot = copy.deepcopy(ss.config_data)
-    ss.config_filename_snapshot = ss.config_filename # Commits current filename as snapshot.
-
-    # Sets up for download.
-    ss.pending_download_data = config_to_json_string(config_to_save)
-    ss.pending_download_filename = ss.config_filename
-    ss.initiate_download = True
-
-    was_new_config_being_saved = ss.last_uploaded_filename is None
-
-    ss.edit_mode = False
-    ss.action_selected = None
-
-    if was_new_config_being_saved:
-        ss.new_config_saved_to_memory_at_least_once = True
-    
-    ss.fallback_config_state = None # Config saved/downloaded, fallback is irrelevant.
-    # No direct message here; UI will trigger download and rerun.
-
-# Resets download-related flags after a download is initiated.
-def finalize_download(ss):
-    ss.initiate_download = False
-    ss.pending_download_data = None
-    ss.pending_download_filename = None
-
 # Updates the uploaded_file_buffer and related state.
 # Called on_change of the file_uploader widget.
 def handle_file_uploader_change(ss):
