@@ -1,4 +1,5 @@
 import streamlit
+import pandas as pd # Added for displaying results in a table
 from optimisation.backend import optimisation_logic
 
 # Renders the initial view of the Optimisation tab, 
@@ -43,31 +44,81 @@ def render_initial_optimisation_view(ss):
     # Parameter configuration itself is moved to a separate view.
     # The "Current Script Parameters (Read-Only)" expander has been removed.
     if ss.optimisation_script_loaded_successfully and ss.optimisation_script_filename:
-        # Information about parameters (if any)
-        if ss.optimisation_script_param_schema and "parameters" in ss.optimisation_script_param_schema and not ss.optimisation_script_param_schema["parameters"]:
-             streamlit.info("The loaded script does not define any configurable parameters.")
+        # The info message about no configurable parameters has been removed as per request.
         # If parameters exist, they are edited in the "Edit Script Parameters" view.
-        # No need to display them here in read-only mode as per new request.
+        # No need to display them here in read-only mode.
 
-        with streamlit.expander("Run Optimisation and View Results", expanded=True):
+        with streamlit.expander("Execute Optimisation & View Plan", expanded=True): # Renamed expander
             # Action button: Run Optimisation
             run_disabled = not (ss.optimisation_script_loaded_successfully and ss.config_data)
-            if streamlit.button("Run Optimisation Script", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True):
+            if streamlit.button("Run optimisation", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True): # Renamed button
                 if not ss.config_data: 
                      streamlit.error("Cannot run: Main configuration data is missing.")
                 else:
                     optimisation_logic.execute_optimisation_script(ss)
                     streamlit.rerun() 
             
+            streamlit.markdown("---") # Divider between button and feedback message
+
             # Display execution results or errors
             if ss.optimisation_run_error:
                 streamlit.error(f"Execution Error: {ss.optimisation_run_error}")
             
             if ss.optimisation_run_complete:
                 if ss.optimisation_results is not None:
-                    streamlit.success("Optimisation script executed successfully!")
-                    # Display results directly, removing the nested expander
-                    streamlit.caption("Optimisation Results:") # Optional: Add a caption for clarity
-                    streamlit.json(ss.optimisation_results)
+                    streamlit.success("Route optimised") # Renamed success message
+                    streamlit.markdown("---") # Divider between feedback message and results
+
+                    # Display results using tables/dataframes
+                    results = ss.optimisation_results
+                    
+                    if "optimised_routes" in results and results["optimised_routes"]:
+                        streamlit.subheader("Optimised Routes")
+                        for i, route in enumerate(results["optimised_routes"]):
+                            streamlit.markdown(f"**Agent:** {route.get('agent_id', 'N/A')}")
+                            streamlit.text(f"Stop Sequence: {' -> '.join(route.get('route_stop_ids', []))}")
+                            streamlit.text(f"Total Distance: {route.get('total_distance', 'N/A')} units")
+                            streamlit.text(f"Carried Weight: {route.get('total_weight', 'N/A')} / {route.get('capacity_weight', 'N/A')} (capacity)")
+                            
+                            parcels_details = route.get("parcels_assigned_details", [])
+                            if parcels_details:
+                                streamlit.markdown("Assigned Parcels:")
+                                parcels_df = pd.DataFrame(parcels_details)
+                                # Ensure essential columns exist, provide defaults if not for display
+                                display_cols = {}
+                                for col in ['id', 'weight', 'coordinates_x_y']:
+                                    if col in parcels_df.columns:
+                                        display_cols[col] = parcels_df[col]
+                                    else:
+                                        # Create a series of N/A if column is missing
+                                        display_cols[col] = pd.Series(["N/A"] * len(parcels_df), name=col) 
+                                
+                                display_df = pd.DataFrame(display_cols)
+                                if 'coordinates_x_y' in display_df.columns: # Prettify coordinates
+                                     display_df['coordinates_x_y'] = display_df['coordinates_x_y'].apply(lambda x: f"({x[0]}, {x[1]})" if isinstance(x, list) and len(x)==2 else "N/A")
+                                streamlit.dataframe(display_df, use_container_width=True)
+                            else:
+                                streamlit.info("No parcels assigned to this agent in this route.")
+                            if i < len(results["optimised_routes"]) - 1:
+                                streamlit.markdown("---") # Divider between routes
+                        streamlit.markdown("---") # Divider after all routes
+                    
+                    if "unassigned_parcels_details" in results and results["unassigned_parcels_details"]:
+                        streamlit.subheader("Unassigned Parcels")
+                        unassigned_df = pd.DataFrame(results["unassigned_parcels_details"])
+                        display_cols_unassigned = {}
+                        for col in ['id', 'weight', 'coordinates_x_y']:
+                             if col in unassigned_df.columns:
+                                 display_cols_unassigned[col] = unassigned_df[col]
+                             else:
+                                 display_cols_unassigned[col] = pd.Series(["N/A"] * len(unassigned_df), name=col)
+                        
+                        display_df_unassigned = pd.DataFrame(display_cols_unassigned)
+                        if 'coordinates_x_y' in display_df_unassigned.columns: # Prettify coordinates
+                             display_df_unassigned['coordinates_x_y'] = display_df_unassigned['coordinates_x_y'].apply(lambda x: f"({x[0]}, {x[1]})" if isinstance(x, list) and len(x)==2 else "N/A")
+                        streamlit.dataframe(display_df_unassigned, use_container_width=True)
+                    elif "optimised_routes" in results: # Only show if routes were processed
+                        streamlit.info("All parcels were assigned.")
+                        
                 else: 
                      streamlit.warning("Optimisation script completed but returned no results (None).")

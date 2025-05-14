@@ -8,15 +8,15 @@ def render_edit_optimisation_parameters_view(ss):
 
     if not ss.optimisation_script_param_schema or "parameters" not in ss.optimisation_script_param_schema:
         streamlit.warning("Parameter schema is not available. Cannot edit parameters.")
-        if streamlit.button("Back to Optimisation Menu", key="back_to_opt_menu_no_schema"):
-            optimisation_logic.handle_cancel_edit_parameters_action(ss) # Or a more generic back action
+        if streamlit.button("Cancel", key="cancel_opt_menu_no_schema", use_container_width=True): # Renamed and made full width for consistency
+            optimisation_logic.handle_cancel_edit_parameters_action(ss) 
             streamlit.rerun()
         return
 
     params_list = ss.optimisation_script_param_schema["parameters"]
     if not params_list:
-        streamlit.info("The optimisation script does not define any configurable parameters")
-        if streamlit.button("Back to Optimisation Menu", key="back_to_opt_menu_no_params"):
+        streamlit.info("The optimisation script does not define any configurable parameters.")
+        if streamlit.button("Cancel", key="cancel_opt_menu_no_params", use_container_width=True): # Renamed and made full width for consistency
             optimisation_logic.handle_cancel_edit_parameters_action(ss)
             streamlit.rerun()
         return
@@ -78,14 +78,14 @@ def render_edit_optimisation_parameters_view(ss):
                     label, value=val, help=help_text, key=widget_key
                 )
     
-    col_cancel, col_save = streamlit.columns(2)
-    with col_cancel:
-        if streamlit.button("Cancel", key="cancel_edit_params_btn", use_container_width=True):
-            optimisation_logic.handle_cancel_edit_parameters_action(ss)
-            streamlit.rerun()
-    
-    with col_save:
+    col_save, col_cancel = streamlit.columns(2) # Swapped columns
+    with col_save: # Save button now on the left
         if streamlit.button("Save", key="save_edit_params_btn", use_container_width=True):
             result = optimisation_logic.handle_save_parameters_action(ss)
             display_operation_result(result) # Show success message
+            streamlit.rerun()
+
+    with col_cancel: # Cancel button now on the right
+        if streamlit.button("Cancel", key="cancel_edit_params_btn", use_container_width=True):
+            optimisation_logic.handle_cancel_edit_parameters_action(ss)
             streamlit.rerun()
