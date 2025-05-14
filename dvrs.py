@@ -18,7 +18,7 @@ def _apply_custom_styling(ss):
             {header_style_properties}
         }}
 
-        /* Set a darker background color for the app */
+        /* Set a darker background colour for the app */
         .stApp {{
             background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), /* 50% Darkening Overlay */
             url(https://www.transparenttextures.com/patterns/otis-redding.png), 
