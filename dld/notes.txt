@@ -6,18 +6,18 @@ aider --model gemini/gemini-2.5-pro-preview-05-06 --edit-format diff-fenced --no
 
 What if we use a JADE-based system (in Java) for agent communication and basic agent management and then a Python-based system for the core routing logic, optimisation algorithms, GUI and etc?
 
-/add configuration\*.py
-/add configuration\frontend\*.py 
-/add configuration\backend\*.py 
-/add optimisation\*.py
-/add optimisation\frontend\*.py 
-/add optimisation\backend\*.py 
+/add packages\configuration\*.py
+/add packages\configuration\frontend\*.py 
+/add packages\configuration\backend\*.py 
+/add packages\optimisation\*.py
+/add packages\optimisation\frontend\*.py 
+/add packages\optimisation\backend\*.py 
 /add dld\*.json
 /add dld\*.py
 /add dld\dvrs.txt
 /add dld\guidelines.txt
 /add *.py
 
-Rename the Run Optimisation tab to Simulation. In there make it so that I can start and stop JADE. The JADE lib is located at JADE-all-4.6.0\jade\lib\
+Rename the Run Optimisation tab to Simulation. In there make it so that I can start and stop JADE.
 After JADE is running make it so that I can create the agents in JADE according to my config and then run the routes according to my optimiser. 
 Agent communication and basic agent management has to be in JADE.
