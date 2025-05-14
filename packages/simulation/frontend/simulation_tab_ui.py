@@ -153,22 +153,22 @@ def render_jade_operations_tab(ss):
             streamlit.markdown("---")
             log_messages_to_display = []
             if ss.get("jade_platform_status_message"):
-            log_messages_to_display.append(("Platform Status", ss.jade_platform_status_message))
-        if ss.get("jade_agent_creation_status_message"):
-            log_messages_to_display.append(("Agent Creation Status", ss.jade_agent_creation_status_message))
-        # Assuming 'jade_dispatch_status_message' is the correct key for route dispatch status
-        if ss.get("jade_dispatch_status_message"): 
-            log_messages_to_display.append(("Route Dispatch Status", ss.jade_dispatch_status_message))
+                log_messages_to_display.append(("Platform Status", ss.jade_platform_status_message))
+            if ss.get("jade_agent_creation_status_message"):
+                log_messages_to_display.append(("Agent Creation Status", ss.jade_agent_creation_status_message))
+            # Assuming 'jade_dispatch_status_message' is the correct key for route dispatch status
+            if ss.get("jade_dispatch_status_message"): 
+                log_messages_to_display.append(("Route Dispatch Status", ss.jade_dispatch_status_message))
 
-        if not log_messages_to_display:
-            streamlit.info("No JADE log messages to display yet.")
-        else:
-            for category, msg_str in reversed(log_messages_to_display): # Show most recent first
-                streamlit.caption(f"{category}:")
-                msg_type = _determine_message_type_from_string(msg_str)
-                
-                if msg_type == 'success': streamlit.success(msg_str)
-                elif msg_type == 'error': streamlit.error(msg_str)
-                elif msg_type == 'warning': streamlit.warning(msg_str)
-                else: streamlit.info(msg_str)
-                # streamlit.markdown("---") # Optional: Separator between log entries
+            if not log_messages_to_display:
+                streamlit.info("No JADE log messages to display yet.")
+            else:
+                for category, msg_str in reversed(log_messages_to_display): # Show most recent first
+                    streamlit.caption(f"{category}:")
+                    msg_type = _determine_message_type_from_string(msg_str)
+                    
+                    if msg_type == 'success': streamlit.success(msg_str)
+                    elif msg_type == 'error': streamlit.error(msg_str)
+                    elif msg_type == 'warning': streamlit.warning(msg_str)
+                    else: streamlit.info(msg_str)
+                    # streamlit.markdown("---") # Optional: Separator between log entries
