@@ -20,7 +20,8 @@ def start_jade_platform():
     
     # Starting JADE with -gui. For Py4J, a GatewayServer would need to be started by a JADE agent.
     # The -host and -port parameters for JADE main container might be relevant.
-    cmd = ["java", "-cp", JADE_JAR_PATH, "jade.Boot", "-gui"] 
+    # Using a different port (e.g., 12345) to avoid conflicts with the default 1099.
+    cmd = ["java", "-cp", JADE_JAR_PATH, "jade.Boot", "-gui", "-port", "12345"] 
     try:
         # Using shell=True can be a security risk if cmd parts are from unsanitized user input,
         # but for a fixed command like this, it can help with path/environment issues on Windows.
