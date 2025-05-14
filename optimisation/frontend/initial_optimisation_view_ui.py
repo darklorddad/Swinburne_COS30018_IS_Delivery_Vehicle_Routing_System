@@ -142,3 +142,8 @@ def render_initial_optimisation_view(ss):
                         
                 else: 
                      streamlit.warning("Optimisation script completed but returned no results (None).")
+        
+        # Expander to view the raw script content
+        if ss.optimisation_script_content:
+            with streamlit.expander("View Loaded Script Content", expanded=False):
+                streamlit.code(ss.optimisation_script_content, language="python")
