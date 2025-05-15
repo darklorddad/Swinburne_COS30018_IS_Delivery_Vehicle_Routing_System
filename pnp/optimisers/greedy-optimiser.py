@@ -121,7 +121,7 @@ def run_optimisation(config_data, params):
             total_dist += _calculate_distance(
                 route["stops"][i]["coords"], 
                 route["stops"][i+1]["coords"]
-            )
+            )  # <-- Added space before comment to ensure clean line ending
         route["total_distance"] = round(total_dist, 2)
         
         if route["parcels"]:
