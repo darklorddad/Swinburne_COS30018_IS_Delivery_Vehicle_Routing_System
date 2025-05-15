@@ -116,6 +116,7 @@ def run_optimisation(config_data, params):
         route["route_stop_ids"] = [stop["id"] for stop in route["stops"]]
         
         # Calculate total distance
+        total_dist = 0
         for i in range(len(route["stops"])-1):
             total_dist += _calculate_distance(route["stops"][i]["coords"], 
                                             route["stops"][i+1]["coords"])
