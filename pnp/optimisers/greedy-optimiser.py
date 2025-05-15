@@ -101,6 +101,7 @@ def run_optimisation(config_data, params):
                     "id": best_parcel["id"],
                     "coords": best_parcel["coordinates_x_y"]
                 })
+                route["route_stop_ids"] = [stop["id"] for stop in route["stops"]]
                 # Update location and remove parcel
                 current_loc = best_parcel["coordinates_x_y"].copy()
                 del parcels[best_idx]
@@ -111,8 +112,10 @@ def run_optimisation(config_data, params):
         if params["return_to_warehouse"] and route["stops"]:
             route["stops"].append({"id": "Warehouse", "coords": warehouse_coords})
         
+        # Update route stop IDs list
+        route["route_stop_ids"] = [stop["id"] for stop in route["stops"]]
+        
         # Calculate total distance
-        total_dist = 0
         for i in range(len(route["stops"])-1):
             total_dist += _calculate_distance(route["stops"][i]["coords"], 
                                             route["stops"][i+1]["coords"])
