@@ -6,16 +6,17 @@ from .ui_utils import display_operation_result # Import the utility function
 def render_initial_view(ss):
     with streamlit.expander("Create or Load Configuration", expanded = True):
         streamlit.markdown("---")
-        col_create_btn, col_load_btn = streamlit.columns(2)
-        with col_create_btn:
-            if streamlit.button("New configuration", key = "create_new_config_action_btn", use_container_width = True):
-                config_logic.handle_new_config_action(ss)
-                streamlit.rerun()
+        # New Configuration button at top
+        if streamlit.button("New configuration", key = "create_new_config_action_btn", use_container_width = True):
+            config_logic.handle_new_config_action(ss)
+            streamlit.rerun()
         
-        with col_load_btn:
-            if streamlit.button("Load configuration", key = "load_config_action_btn", use_container_width = True):
-                config_logic.handle_load_config_action(ss)
-                streamlit.rerun()
+        streamlit.markdown(" ")  # Add some vertical space
+        
+        # Load Configuration button at bottom
+        if streamlit.button("Load configuration", key = "load_config_action_btn", use_container_width = True):
+            config_logic.handle_load_config_action(ss)
+            streamlit.rerun()
 
     # Option to edit if a configuration is in memory
     if ss.config_data is not None:
