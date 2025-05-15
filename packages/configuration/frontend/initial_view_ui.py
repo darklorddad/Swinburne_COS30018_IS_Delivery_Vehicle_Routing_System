@@ -31,6 +31,8 @@ def render_initial_view(ss):
                 streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)
             else:
                 streamlit.info("No delivery agents currently defined in the configuration.")
+
+            streamlit.markdown("---")
             
             config_status_message = (f"{ss.config_filename}")
             streamlit.info(config_status_message)
