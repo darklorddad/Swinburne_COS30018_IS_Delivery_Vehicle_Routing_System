@@ -12,17 +12,13 @@ def _render_script_management_section(ss):
 
         if ss.optimisation_script_loaded_successfully and ss.optimisation_script_filename:
             streamlit.success(f"{ss.optimisation_script_filename}")
-            col_edit_btn, col_clear_btn = streamlit.columns(2)
+            if streamlit.button("Edit script", key="edit_script_parameters_btn", use_container_width=True):
+                optimisation_logic.handle_edit_parameters_action(ss)
+                streamlit.rerun()
             
-            with col_edit_btn:
-                if streamlit.button("Edit script", key="edit_script_parameters_btn", use_container_width=True):
-                    optimisation_logic.handle_edit_parameters_action(ss)
-                    streamlit.rerun()
-            
-            with col_clear_btn:
-                if streamlit.button("Clear script", key="clear_optimisation_script_initial_view_btn", use_container_width=True):
-                    optimisation_logic.clear_optimisation_script(ss)
-                    streamlit.rerun()
+            if streamlit.button("Clear script", key="clear_optimisation_script_initial_view_btn", use_container_width=True):
+                optimisation_logic.clear_optimisation_script(ss)
+                streamlit.rerun()
             
             # "Load Another Optimisation Script" button moved here
             if streamlit.button("Load script", key="initiate_load_another_script_btn", use_container_width=True):
