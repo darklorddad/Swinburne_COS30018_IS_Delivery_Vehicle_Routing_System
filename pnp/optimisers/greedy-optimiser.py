@@ -34,7 +34,7 @@ def get_params_schema():
             },
             {
                 "name": "sort_parcels",
-                "label": "Sort Parcels By",
+                "label": "Sort Parcels By", 
                 "type": "selectbox",
                 "default": "none",
                 "options": ["none", "weight_asc", "weight_desc"],
