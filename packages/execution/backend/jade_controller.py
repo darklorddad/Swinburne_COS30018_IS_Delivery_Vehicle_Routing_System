@@ -60,11 +60,6 @@ def start_jade_platform():
             
     return success, message, process, gateway, log_stop_event
 
-    except FileNotFoundError:
-        return False, "Java command not found. Is Java installed and in PATH?", None, None, None
-    except Exception as e:
-        return False, f"Error starting JADE: {str(e)}", None, None, None
-
 def compile_java_agents():
     return java_compiler.compile_java_agents(
         JAVA_SOURCE_PATH,
