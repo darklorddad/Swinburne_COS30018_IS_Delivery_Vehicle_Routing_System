@@ -70,7 +70,7 @@ def start_jade_platform():
     # Arguments to the agent can be passed in parentheses, e.g., agentName(arg1 arg2):className
     # We don't need arguments for Py4jGatewayAgent at startup via command line.
     # Construct classpath for JADE runtime
-    runtime_classpath_list = [JADE_JAR_PATH, PY4J_JAR_PATH, compiled_classes_path, os.path.join("packages", "execution", "backend", "java", "scr")]
+    runtime_classpath_list = [JADE_JAR_PATH, PY4J_JAR_PATH, compiled_classes_path]
     if os.path.exists(JSON_JAR_PATH):
         runtime_classpath_list.append(JSON_JAR_PATH)
     else:
@@ -85,7 +85,7 @@ def start_jade_platform():
         "jade.Boot", 
         "-gui", 
         "-port", "1099",  # Default JADE port
-        "py4jgw:java.Py4jGatewayAgent" # Simplified package path after directory flattening
+        "py4jgw:Py4jGatewayAgent"  # Now using default package
     ]
     print(f"JADE startup command: {' '.join(cmd)}") # Log the command for debugging
 
