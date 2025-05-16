@@ -2,11 +2,34 @@
 import math
 
 def get_params_schema():
-    # Defines the parameters accepted by this script.
-    # This basic greedy optimiser does not require any configurable parameters.
-    # The schema can be expanded if parameters are needed in the future.
     return {
-        "parameters": [] # No parameters for this version
+        "parameters": [
+            {
+                "name": "sort_parcels",
+                "label": "Sort Parcels By",
+                "type": "selectbox",
+                "default": "none",
+                "options": ["none", "weight_asc", "weight_desc"],
+                "help": "Initial sorting of parcels before assignment"
+            },
+            {
+                "name": "return_to_warehouse",
+                "label": "Return to Warehouse",
+                "type": "boolean",
+                "default": True,
+                "help": "Whether vehicles must return to warehouse after deliveries"
+            },
+            {
+                "name": "distance_weight",
+                "label": "Distance Weight",
+                "type": "float",
+                "default": 1.0,
+                "min": 0.1,
+                "max": 5.0,
+                "step": 0.1,
+                "help": "Weight given to distance vs capacity utilization"
+            }
+        ]
     }
 
 def _calculate_distance(coord1, coord2):
@@ -14,16 +37,18 @@ def _calculate_distance(coord1, coord2):
     return math.sqrt((coord1[0] - coord2[0])**2 + (coord1[1] - coord2[1])**2)
 
 def run_optimisation(config_data, params):
-    # Main optimisation function.
-    # Implements a greedy nearest-neighbour approach to assign parcels to delivery agents
-    # based on proximity and capacity.
     warehouse_coords = config_data.get("warehouse_coordinates_x_y", [0,0])
-    # Create a mutable list of parcels, including their original data
     unassigned_parcels = [dict(p) for p in config_data.get("parcels", [])]
     delivery_agents = config_data.get("delivery_agents", [])
+    
+    # Apply sorting if specified in parameters
+    if params.get("sort_parcels", "none") != "none":
+        reverse_sort = params["sort_parcels"] == "weight_desc"
+        unassigned_parcels.sort(key=lambda x: x["weight"], reverse=reverse_sort)
 
     optimised_routes = []
     parcels_assigned_globally = set()
+    distance_weight = params.get("distance_weight", 1.0)
 
     for agent in delivery_agents:
         current_capacity = agent["capacity_weight"]
@@ -40,8 +65,15 @@ def run_optimisation(config_data, params):
             # Find the nearest, eligible, unassigned parcel
             for i, parcel_data in enumerate(unassigned_parcels):
                 if parcel_data["weight"] <= current_capacity:
-                    dist = _calculate_distance(current_location, parcel_data["coordinates_x_y"])
-                    if dist < min_dist_candidate:
+                    # Calculate weighted distance score
+                    raw_dist = _calculate_distance(current_location, parcel_data["coordinates_x_y"])
+                    dist_score = raw_dist * distance_weight
+                    
+                    # Add inverse capacity utilization to prefer vehicles with more remaining capacity
+                    capacity_utilization = (agent["capacity_weight"] - current_cap) / agent["capacity_weight"]
+                    score = dist_score * (1 + capacity_utilization)
+                    
+                    if score < min_dist_candidate:
                         min_dist_candidate = dist
                         best_parcel_candidate = parcel_data
                         best_parcel_idx = i
@@ -61,9 +93,10 @@ def run_optimisation(config_data, params):
                 # No more parcels can be assigned to this agent
                 break
         
-        # Return to warehouse
-        agent_route_stops_coords.append(list(warehouse_coords))
-        agent_route_stop_ids.append("Warehouse")
+        # Return to warehouse if enabled
+        if params.get("return_to_warehouse", True):
+            agent_route_stops_coords.append(list(warehouse_coords))
+            agent_route_stop_ids.append("Warehouse")
 
         # Calculate total distance for the agent's route
         total_distance = 0
