@@ -70,11 +70,11 @@ def run_optimisation(config_data, params):
                     dist_score = raw_dist * distance_weight
                     
                     # Add inverse capacity utilization to prefer vehicles with more remaining capacity
-                    capacity_utilization = (agent["capacity_weight"] - current_cap) / agent["capacity_weight"]
+                    capacity_utilization = (agent["capacity_weight"] - current_capacity) / agent["capacity_weight"]
                     score = dist_score * (1 + capacity_utilization)
                     
                     if score < min_dist_candidate:
-                        min_dist_candidate = dist
+                        min_dist_candidate = score
                         best_parcel_candidate = parcel_data
                         best_parcel_idx = i
             
