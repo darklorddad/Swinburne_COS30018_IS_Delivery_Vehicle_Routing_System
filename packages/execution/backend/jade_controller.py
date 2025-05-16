@@ -218,7 +218,7 @@ def create_mra_agent(gateway, agent_name, agent_class, config_data):
     return py4j_gateway.create_mra_agent(gateway, agent_name, agent_class, config_data)
 
 def create_da_agent(gateway, agent_name, agent_class, agent_config):
-    return py4j_gateway.create_da_agent(gateway, agent_name, agent_config)
+    return py4j_gateway.create_da_agent(gateway, agent_name, agent_class, agent_config)
 
 def send_optimisation_results_to_mra(gateway, mra_name, results):
     return py4j_gateway.send_optimisation_results(gateway, mra_name, results)
