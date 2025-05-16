@@ -139,7 +139,7 @@ def render_jade_operations_tab(ss):
                         for route in ss.optimisation_results["optimised_routes"]:
                             routes_to_display_data.append({
                                 "Agent ID": route.get("agent_id"),
-                                "Stop Sequence": " -> ".join(route.get("route_stop_ids", [])),
+                                "Stop Sequence": ", ".join(route.get("route_stop_ids", [])),
                                 "Total Weight": route.get("total_weight"),
                                 "Total Distance": route.get("total_distance")
                             })
