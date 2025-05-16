@@ -11,8 +11,6 @@ def _render_script_management_section(ss):
         streamlit.markdown("---")
 
         if ss.optimisation_script_loaded_successfully and ss.optimisation_script_filename:
-            streamlit.success(f"{ss.optimisation_script_filename}")
-            
             # Display current parameters in a table
             if ss.optimisation_script_param_schema and "parameters" in ss.optimisation_script_param_schema:
                 params_list = ss.optimisation_script_param_schema["parameters"]
@@ -39,6 +37,7 @@ def _render_script_management_section(ss):
                     streamlit.info("No configurable parameters defined in this script")
             
             streamlit.markdown("---")  # Divider before script management buttons
+            streamlit.success(f"{ss.optimisation_script_filename}")  # Moved script memory display here
             
             if streamlit.button("Edit script", key="edit_script_parameters_btn", use_container_width=True):
                 optimisation_logic.handle_edit_parameters_action(ss)
