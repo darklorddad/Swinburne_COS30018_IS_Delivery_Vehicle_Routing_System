@@ -115,10 +115,8 @@ def render_jade_operations_tab(ss):
                                 use_container_width=True,
                                 disabled=not config_loaded or ss.get("jade_agents_created", False)):
                 result = execution_logic.handle_create_agents(ss)
-                # ss.jade_agent_creation_status_message is set by the backend.
-                # It will be displayed by the logic below.
-                if result and result.get('type') == 'success':
-                    streamlit.rerun() # Rerun to update button state etc.
+                # Force rerun to immediately show status updates
+                streamlit.rerun()
 
             # Display agent creation status message (persistently)
             if ss.get("jade_agent_creation_status_message"):
