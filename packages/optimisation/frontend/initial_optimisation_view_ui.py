@@ -20,7 +20,7 @@ def _render_script_management_section(ss):
                         table_data.append({
                             "Parameter": param.get("label", param.get("name", "")),
                             "Type": param.get("type", ""),
-                            "Value": ss.optimisation_script_user_values.get(param["name"], ""),
+                            "Value": str(ss.optimisation_script_user_values.get(param["name"], "")),
                             "Description": param.get("help", "")
                         })
                     streamlit.dataframe(
