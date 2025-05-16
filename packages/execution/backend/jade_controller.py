@@ -18,7 +18,7 @@ JSON_JAR_PATH = os.path.join("dependencies", "java", "libs", "json-20250107.jar"
 
 
 # Default Py4J connection parameters
-PY4J_PORT = 1099  # Must match JADE container port
+PY4J_PORT = 25333  # Must match the port used by GatewayServer in Py4jGatewayAgent.java
 PY4J_ADDRESS = "127.0.0.1"
 
 # Helper function to read from a stream in a separate thread
