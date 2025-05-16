@@ -176,7 +176,7 @@ def compile_java_agents():
 
     output_classes_path = os.path.join("packages", "execution", "backend", "java", "classes")
     
-    # Ensure the output directory for classes exists
+    # Ensure the output directory for classes exists (without jadeagents subfolder)
     try:
         os.makedirs(output_classes_path, exist_ok=True)
     except Exception as e:
