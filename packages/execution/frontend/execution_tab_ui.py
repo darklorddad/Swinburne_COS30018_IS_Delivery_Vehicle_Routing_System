@@ -77,7 +77,7 @@ def render_jade_operations_tab(ss):
     
     # --- Agent Management (only if JADE is running) ---
     if ss.get("jade_platform_running"):
-        with streamlit.expander("Agent Management", expanded=True):
+        with streamlit.expander("Agents Management", expanded=True):
             streamlit.markdown("---")
             config_loaded = ss.config_data is not None
             
@@ -101,8 +101,11 @@ def render_jade_operations_tab(ss):
                             "Type": "Delivery Agent"
                         })
                 if agents_to_create_data:
-                    streamlit.caption("The following agents will be configured for creation:")
-                    streamlit.table(pd.DataFrame(agents_to_create_data)) # Use pandas for better table
+                    streamlit.dataframe(
+                        pd.DataFrame(agents_to_create_data),
+                        use_container_width=True,
+                        hide_index=True
+                    )
                 else:
                     streamlit.info("No delivery agents defined in the current configuration.")
 

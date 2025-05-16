@@ -84,7 +84,7 @@ def start_jade_platform():
         runtime_classpath, 
         "jade.Boot", 
         "-gui", 
-        "-port", "25334",
+        "-port", "1099",  # Default JADE port
         "py4jgw:java.Py4jGatewayAgent" # Simplified package path after directory flattening
     ]
     print(f"JADE startup command: {' '.join(cmd)}") # Log the command for debugging
@@ -164,7 +164,7 @@ def compile_java_agents():
     """
     print("Attempting to compile JADE agent Java source files...")
     
-    source_path = os.path.join("packages", "execution", "backend", "java", "src")
+    source_path = os.path.join("packages", "execution", "backend", "java", "jade-agents")
     
     # Create source directory if it doesn't exist
     try:
