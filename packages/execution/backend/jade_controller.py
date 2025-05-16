@@ -59,27 +59,8 @@ def start_jade_platform():
             message += f" | {gw_error}"
             
     return success, message, process, gateway, log_stop_event
-        else:
-            # Process terminated, JADE likely failed to start
-            stdout_output = process.stdout.read().strip() if process.stdout else ""
-            stderr_output = process.stderr.read().strip() if process.stderr else ""
-            exit_code = process.returncode
-            
-            error_details = []
-            if stdout_output:
-                # JADE often prints "JADE is closing down now." to stdout on port binding failure.
-                error_details.append(f"STDOUT: {stdout_output}")
-            if stderr_output:
-                error_details.append(f"STDERR: {stderr_output}")
-            
-            full_error_msg = f"JADE process terminated early (exit code {exit_code})"
-            if error_details:
-                full_error_msg += " Details: " + " | ".join(error_details)
-            else:
-                full_error_msg += " No output captured on stdout/stderr"
-            print(full_error_msg)
-            return False, full_error_msg, None, None, None
-    except FileNotFoundError:
+
+except FileNotFoundError:
         return False, "Java command not found. Is Java installed and in PATH?", None, None, None
     except Exception as e:
         return False, f"Error starting JADE: {str(e)}", None, None, None
