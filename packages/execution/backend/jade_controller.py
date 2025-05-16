@@ -217,6 +217,7 @@ def compile_java_agents():
         "javac",
         "-cp", compile_classpath,
         "-d", os.path.normpath(output_classes_path),
+        "-sourcepath", os.path.normpath(source_path),  # Explicitly specify source path
         os.path.normpath(source_files_pattern) # Path to all .java files in the source directory
     ]
 
