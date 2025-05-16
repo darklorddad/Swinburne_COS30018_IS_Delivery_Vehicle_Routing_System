@@ -43,7 +43,7 @@ def render_edit_view(ss):
             args = (ss,)
         )
 
-    with streamlit.expander("Parcels Management", expanded = True):
+    with streamlit.expander("Parcel Management", expanded = True):
         streamlit.markdown("---")
         col_p_id, col_p_x, col_p_y, col_p_weight = streamlit.columns([2, 1, 1, 1])
         new_parcel_id = col_p_id.text_input("Parcel ID", key = "new_parcel_id")
@@ -81,7 +81,7 @@ def render_edit_view(ss):
         else:
             streamlit.info("No parcels added yet")
 
-    with streamlit.expander("Delivery Agents Management", expanded = True):
+    with streamlit.expander("Delivery Agent Management", expanded = True):
         streamlit.markdown("---")
         col_a_id, col_a_cap_weight = streamlit.columns([2, 1])
         new_agent_id = col_a_id.text_input("Agent ID", key = "new_agent_id_simplified")

@@ -77,7 +77,7 @@ def render_jade_operations_tab(ss):
     
     # --- Agent Management (only if JADE is running) ---
     if ss.get("jade_platform_running"):
-        with streamlit.expander("Agents Management", expanded=True):
+        with streamlit.expander("Agent Management", expanded=True):
             streamlit.markdown("---")
             config_loaded = ss.config_data is not None
             

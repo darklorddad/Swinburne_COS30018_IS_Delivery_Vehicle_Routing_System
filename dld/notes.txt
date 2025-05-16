@@ -19,7 +19,7 @@ What if we use a JADE-based system (in Java) for agent communication and basic a
 /add packages\execution\*.py
 /add packages\execution\frontend\*.py
 /add packages\execution\backend\*.py
-/add packages\execution\java\src\*.java
+/add packages\execution\backend\java\scr\*.java
 /add packages\visualisation\*.py
 /add packages\visualisation\frontend\*.py
 /add pnp\configs\*.json
@@ -28,4 +28,6 @@ What if we use a JADE-based system (in Java) for agent communication and basic a
 /add dld\guidelines.txt
 /add *.py
 
-You can remove this message "Create agents in JADE to enable route management."
+Full optimisation results sent to MRA 'MRA'. JADE response: Full optimisation results forwarded to MRA 'MRA' successfully.
+Can you format this nicely? Be concise, no redundant stuff
+
