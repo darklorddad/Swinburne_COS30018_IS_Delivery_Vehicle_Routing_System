@@ -16,10 +16,10 @@ What if we use a JADE-based system (in Java) for agent communication and basic a
 /add packages\optimisation\*.py
 /add packages\optimisation\frontend\*.py 
 /add packages\optimisation\backend\*.py 
-/add packages\simulation\*.py
-/add packages\simulation\frontend\*.py
-/add packages\simulation\backend\*.py
-/add packages\simulation\java\src\jadeagents\*.java
+/add packages\execution\*.py
+/add packages\execution\frontend\*.py
+/add packages\execution\backend\*.py
+/add packages\execution\java\src\*.java
 /add packages\visualisation\*.py
 /add packages\visualisation\frontend\*.py
 /add pnp\configs\*.json
@@ -28,4 +28,4 @@ What if we use a JADE-based system (in Java) for agent communication and basic a
 /add dld\guidelines.txt
 /add *.py
 
-In my Configuration tab, there is Current Configuration Summary. Move the 2 tables in there to Manage Current Configuration above the current file in memory display
+You can remove this message "Create agents in JADE to enable route management."
