@@ -176,7 +176,9 @@ def render_initial_optimisation_view(ss):
                         not ("unassigned_parcels_details" in results and results["unassigned_parcels_details"])
                     )
                     if all_parcels_assigned:
-                        streamlit.info("All parcels were assigned") # Moved and text confirmed
+                        streamlit.info("All parcels were assigned")
+                    else:
+                        streamlit.warning("Not all parcels could be assigned") # New warning message
 
                     streamlit.markdown("---") # Divider between feedback message(s) and detailed results
 
