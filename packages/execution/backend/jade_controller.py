@@ -70,7 +70,7 @@ def start_jade_platform():
     # Arguments to the agent can be passed in parentheses, e.g., agentName(arg1 arg2):className
     # We don't need arguments for Py4jGatewayAgent at startup via command line.
     # Construct classpath for JADE runtime
-    runtime_classpath_list = [JADE_JAR_PATH, PY4J_JAR_PATH, compiled_classes_path, os.path.join("packages", "execution", "backend", "java", "src")]
+    runtime_classpath_list = [JADE_JAR_PATH, PY4J_JAR_PATH, compiled_classes_path, os.path.join("packages", "execution", "backend", "java", "scr")]
     if os.path.exists(JSON_JAR_PATH):
         runtime_classpath_list.append(JSON_JAR_PATH)
     else:
@@ -164,7 +164,7 @@ def compile_java_agents():
     """
     print("Attempting to compile JADE agent Java source files...")
     
-    source_path = os.path.join("packages", "execution", "backend", "java", "jade-agents")
+    source_path = os.path.join("packages", "execution", "backend", "java", "scr")
     
     # Create source directory if it doesn't exist
     try:
