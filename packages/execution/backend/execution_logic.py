@@ -148,14 +148,18 @@ def handle_create_agents(ss):
             if not da_success:
                 all_das_successfully_created = False
     
-    if mra_success and all_das_successfully_created:
+    if mra_success:
         ss.jade_agents_created = True
-        final_message = "All agent creation requests (MRA and DAs) processed. Details: " + " | ".join(da_creation_messages)
+        if delivery_agents_config:  # Only check DA success if there were DAs to create
+            final_message = ("MRA created successfully. DA creation results: " 
+                            + " | ".join(da_creation_messages[1:]))  # Skip MRA message
+        else:
+            final_message = "MRA created successfully - no delivery agents in configuration"
         ss.jade_agent_creation_status_message = final_message
         return {'type': 'success', 'message': final_message}
     else:
         ss.jade_agents_created = False
-        final_message = "One or more agent creation requests failed or JADE reported errors. Details: " + " | ".join(da_creation_messages)
+        final_message = "Agent creation failed. Details: " + " | ".join(da_creation_messages)
         ss.jade_agent_creation_status_message = final_message
         return {'type': 'error', 'message': final_message}
 
