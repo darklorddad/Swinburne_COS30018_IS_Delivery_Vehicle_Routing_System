@@ -32,17 +32,17 @@ def create_agent(gateway, agent_name, agent_class, agent_args):
     except Exception as e:
         return False, f"Error creating agent: {str(e)}"
 
-def create_mra_agent(gateway, agent_name, config_data):
+def create_mra_agent(gateway, agent_name, agent_class, config_data):
     try:
         agent_args = [json.dumps(config_data)]
-        return create_agent(gateway, agent_name, "MasterRoutingAgent", agent_args)
+        return create_agent(gateway, agent_name, agent_class, agent_args)
     except Exception as e:
         return False, f"Error serializing config data: {str(e)}"
 
-def create_da_agent(gateway, agent_name, agent_config):
+def create_da_agent(gateway, agent_name, agent_class, agent_config):
     try:
         agent_args = [json.dumps(agent_config)]
-        return create_agent(gateway, agent_name, "DeliveryAgent", agent_args)
+        return create_agent(gateway, agent_name, agent_class, agent_args)
     except Exception as e:
         return False, f"Error serializing agent config: {str(e)}"
 
