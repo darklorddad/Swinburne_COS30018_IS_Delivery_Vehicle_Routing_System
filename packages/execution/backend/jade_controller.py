@@ -1,4 +1,6 @@
 import os
+import subprocess
+import platform
 from . import jade_process_manager, java_compiler, py4j_gateway
 
 # Path configurations
