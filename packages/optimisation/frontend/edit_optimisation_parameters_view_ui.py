@@ -78,14 +78,14 @@ def render_edit_optimisation_parameters_view(ss):
                     label, value=val, help=help_text, key=widget_key
                 )
     
-    col_save, col_cancel = streamlit.columns(2) # Swapped columns
-    with col_save: # Save button now on the left
-        if streamlit.button("Save", key="save_edit_params_btn", use_container_width=True):
+    col_cancel, col_save = streamlit.columns(2)
+    with col_cancel: # Cancel button now on the left
+        if streamlit.button("Cancel", key="cancel_edit_params_btn", use_container_width=True):
             result = optimisation_logic.handle_save_parameters_action(ss)
             display_operation_result(result) # Show success message
             streamlit.rerun()
 
-    with col_cancel: # Cancel button now on the right
-        if streamlit.button("Cancel", key="cancel_edit_params_btn", use_container_width=True):
+    with col_save: # Save button now on the right
+        if streamlit.button("Save", key="save_edit_params_btn", use_container_width=True):
             optimisation_logic.handle_cancel_edit_parameters_action(ss)
             streamlit.rerun()
