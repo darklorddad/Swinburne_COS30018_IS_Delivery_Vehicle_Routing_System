@@ -32,19 +32,19 @@ def render_jade_operations_tab(ss):
     if not all_prerequisites_met:
         prereq_messages_list = []
         if not config_loaded:
-            prereq_messages_list.append("A configuration must be loaded (Configuration tab).")
+            prereq_messages_list.append("A configuration must be loaded")
         if not script_loaded:
-            prereq_messages_list.append("An optimisation script must be loaded (Optimisation tab).")
+            prereq_messages_list.append("An optimisation script must be loaded")
         if not optimisation_run or not optimisation_results_exist:
-            prereq_messages_list.append("Optimisation must be successfully run and produce results (Optimisation tab).")
+            prereq_messages_list.append("Route is optimised")
         
         if prereq_messages_list:
             streamlit.info(
-                "The JADE features are currently unavailable. Please ensure the following steps are completed:\n\n" + 
+                "Please ensure the following steps are completed:\n\n" + 
                 "\n".join([f"- {msg}" for msg in prereq_messages_list])
             )
         else: # Should not happen if all_prerequisites_met is False, but as a fallback
-            streamlit.warning("JADE features are unavailable due to unmet prerequisites.")
+            streamlit.warning("JADE features are unavailable due to unmet prerequisites")
         return # Stop rendering the rest of the JADE tab
 
     # Removed streamlit.header("JADE Agent Operations")
