@@ -485,7 +485,7 @@ def send_optimisation_results_to_mra(gateway_obj, mra_agent_name, optimisation_r
         print(f"Py4J: Sent full optimisation results to MRA '{mra_agent_name}'. JADE response: {response_message}")
         if "error" in response_message.lower() or "fail" in response_message.lower():
             return False, f"JADE reported an error forwarding results to MRA '{mra_agent_name}': {response_message}"
-        return True, f"Full optimisation results sent to MRA '{mra_agent_name}'. JADE response: {response_message}"
+        return True, f"Routes successfully dispatched to {mra_agent_name}"
     except Py4JNetworkError as e:
         return False, f"Py4J Network Error sending results to MRA '{mra_agent_name}': {str(e)}. Check JADE GatewayServer"
     except Exception as e:
