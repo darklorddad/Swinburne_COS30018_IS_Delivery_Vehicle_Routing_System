@@ -50,7 +50,7 @@ def render_jade_operations_tab(ss):
     # Removed streamlit.header("JADE Agent Operations")
 
     # --- JADE Platform Control ---
-    with streamlit.expander("Platform Management", expanded=True):
+    with streamlit.expander("JADE Platform Management", expanded=True):
         streamlit.markdown("---")
         
         # Display platform status message first

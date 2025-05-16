@@ -68,11 +68,11 @@ def _render_main_layout(ss):
         tabs_list = [
             "Configuration",
             "Optimisation", 
-            "JADE", 
+            "Execution", 
             "Visualisation",
             "Settings"
         ]
-        tab_config, tab_optimisation, tab_jade, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
+        tab_config, tab_optimisation, tab_execution, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
 
         with tab_config:
             render_config_tab(ss)
