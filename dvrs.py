@@ -80,7 +80,7 @@ def _render_main_layout(ss):
         with tab_optimisation:
             render_optimisation_tab(ss)
             
-        with tab_jade: 
+        with tab_execution: 
             render_jade_operations_tab(ss) 
 
         with tab_visualisation: # Changed from tab_results
