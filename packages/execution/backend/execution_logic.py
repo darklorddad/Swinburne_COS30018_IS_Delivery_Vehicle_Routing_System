@@ -161,7 +161,7 @@ def handle_create_agents(ss):
         if not delivery_agents_config:
             final_message = f"MRA '{DEFAULT_MRA_NAME}' created successfully. No delivery agents were configured."
         else:
-            final_message = "All agents created successfully. " + " | ".join(da_creation_messages)
+            final_message = f"✅ Agents created successfully\n\n- MRA '{DEFAULT_MRA_NAME}' operational\n" + "\n".join([f"- DA '{agent['id']}' ✅" for agent in delivery_agents_config])
         ss.jade_agent_creation_status_message = final_message
         return {'type': 'success', 'message': final_message}
     else:
