@@ -98,9 +98,6 @@ def handle_create_agents(ss):
         ss.jade_agent_creation_status_message = "Cannot create agents: JADE is not running"
         ss.jade_agents_created = False
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
-
-    # Compilation is now handled by handle_start_jade.
-    # We assume if the platform is running, compilation was successful.
     
     py4j_gateway = ss.get("py4j_gateway_object")
     if not py4j_gateway:

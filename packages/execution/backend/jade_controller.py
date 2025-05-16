@@ -44,10 +44,6 @@ def _stream_reader_thread(stream, stop_event, prefix=""):
         # print(f"Stream reader thread ({prefix}) finished.", flush=True)
 
 def start_jade_platform():
-    """
-    Attempts to start the JADE platform, connect via Py4J, and redirect its stdout/stderr.
-    Returns: (success_bool, message_str, process_obj_or_None, gateway_obj_or_None, log_stop_event_or_None)
-    """
     print(f"Attempting to start JADE. JADE JAR expected at: {JADE_JAR_PATH}")
     if not os.path.exists(JADE_JAR_PATH):
         return False, f"JADE JAR not found at {JADE_JAR_PATH}. Please check the path", None, None, None
@@ -159,10 +155,6 @@ def start_jade_platform():
         return False, f"Error starting JADE: {str(e)}", None, None, None
 
 def compile_java_agents():
-    """
-    Compiles the JADE agent Java source files.
-    Returns: (success_bool, message_str)
-    """
     print("Attempting to compile JADE agent Java source files...")
     
     source_path = os.path.join("packages", "execution", "backend", "java", "scr")
