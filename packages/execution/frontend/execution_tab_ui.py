@@ -50,7 +50,7 @@ def render_jade_operations_tab(ss):
     # Removed streamlit.header("JADE Agent Operations")
 
     # --- JADE Platform Control ---
-    with streamlit.expander("JADE Platform Management", expanded=True):
+    with streamlit.expander("JADE Management", expanded=True):
         streamlit.markdown("---")
         
         # Display platform status message first
@@ -88,17 +88,15 @@ def render_jade_operations_tab(ss):
                 agents_to_create_data = []
                 # MRA
                 agents_to_create_data.append({
-                    "Agent Name": execution_logic.DEFAULT_MRA_NAME,
-                    "Agent Class": execution_logic.DEFAULT_MRA_CLASS,
-                    "Type": "Master routing agent"
+                    "Agent ID": execution_logic.DEFAULT_MRA_NAME,
+                    "Agent Class": execution_logic.DEFAULT_MRA_CLASS
                 })
                 # DAs
                 if ss.config_data.get("delivery_agents"):
                     for da_config in ss.config_data["delivery_agents"]:
                         agents_to_create_data.append({
-                            "Agent Name": da_config.get("id", "N/A"),
-                            "Agent Class": execution_logic.DEFAULT_DA_CLASS,
-                            "Type": "Delivery agent"
+                            "Agent ID": da_config.get("id", "N/A"),
+                            "Agent Class": execution_logic.DEFAULT_DA_CLASS
                         })
                 if agents_to_create_data:
                     streamlit.dataframe(
@@ -144,8 +142,11 @@ def render_jade_operations_tab(ss):
                                 "Total Distance": route.get("total_distance")
                             })
                         if routes_to_display_data:
-                            streamlit.caption("The following optimised routes will be sent to the MRA:")
-                            streamlit.dataframe(pd.DataFrame(routes_to_display_data), use_container_width=True)
+                            streamlit.dataframe(
+                                pd.DataFrame(routes_to_display_data), 
+                                use_container_width=True,
+                                hide_index=True
+                            )
                         else:
                             streamlit.info("No optimised routes to display or send from results.")
                     else:
@@ -173,7 +174,7 @@ def render_jade_operations_tab(ss):
 
     # --- Logs (only if JADE is running) ---
     if ss.get("jade_platform_running"):
-        with streamlit.expander("Logs", expanded=False):
+        with streamlit.expander("Agent Communication Logs", expanded=False):
             streamlit.markdown("---")
             log_messages_to_display = []
             if ss.get("jade_platform_status_message"):
@@ -185,7 +186,7 @@ def render_jade_operations_tab(ss):
                 log_messages_to_display.append(("Route Dispatch Status", ss.jade_dispatch_status_message))
 
             if not log_messages_to_display:
-                streamlit.info("No JADE log messages to display yet.")
+                streamlit.info("No agent communication logs to display yet.")
             else:
                 for category, msg_str in reversed(log_messages_to_display): # Show most recent first
                     streamlit.caption(f"{category}:")
