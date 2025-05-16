@@ -165,6 +165,15 @@ def compile_java_agents():
     print("Attempting to compile JADE agent Java source files...")
     
     source_path = os.path.join("packages", "execution", "java", "src", "jadeagents")
+    
+    # Create source directory if it doesn't exist
+    try:
+        os.makedirs(source_path, exist_ok=True)
+    except Exception as e:
+        err_msg = f"Error creating source directory '{source_path}': {str(e)}"
+        print(err_msg)
+        return False, err_msg
+
     output_classes_path = os.path.join("packages", "execution", "java", "classes")
     
     # Ensure the output directory for classes exists
