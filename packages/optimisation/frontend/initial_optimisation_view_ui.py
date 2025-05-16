@@ -12,6 +12,34 @@ def _render_script_management_section(ss):
 
         if ss.optimisation_script_loaded_successfully and ss.optimisation_script_filename:
             streamlit.success(f"{ss.optimisation_script_filename}")
+            
+            # Display current parameters in a table
+            if ss.optimisation_script_param_schema and "parameters" in ss.optimisation_script_param_schema:
+                params_list = ss.optimisation_script_param_schema["parameters"]
+                if params_list:
+                    table_data = []
+                    for param in params_list:
+                        table_data.append({
+                            "Parameter": param.get("label", param.get("name", "")),
+                            "Type": param.get("type", ""),
+                            "Value": ss.optimisation_script_user_values.get(param["name"], ""),
+                            "Description": param.get("help", "")
+                        })
+                    streamlit.dataframe(
+                        table_data,
+                        use_container_width=True,
+                        column_config={
+                            "Parameter": "Parameter",
+                            "Type": "Type",
+                            "Value": "Current Value", 
+                            "Description": "Description"
+                        }
+                    )
+                else:
+                    streamlit.info("No configurable parameters defined in this script")
+            
+            streamlit.markdown("---")  # Divider before script management buttons
+            
             if streamlit.button("Edit script", key="edit_script_parameters_btn", use_container_width=True):
                 optimisation_logic.handle_edit_parameters_action(ss)
                 streamlit.rerun()
