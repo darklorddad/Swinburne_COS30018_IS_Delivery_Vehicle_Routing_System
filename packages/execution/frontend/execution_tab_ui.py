@@ -90,7 +90,7 @@ def render_jade_operations_tab(ss):
                 agents_to_create_data.append({
                     "Agent Name": execution_logic.DEFAULT_MRA_NAME,
                     "Agent Class": execution_logic.DEFAULT_MRA_CLASS,
-                    "Type": "Master Routing Agent"
+                    "Type": "Master routing agent"
                 })
                 # DAs
                 if ss.config_data.get("delivery_agents"):
@@ -98,7 +98,7 @@ def render_jade_operations_tab(ss):
                         agents_to_create_data.append({
                             "Agent Name": da_config.get("id", "N/A"),
                             "Agent Class": execution_logic.DEFAULT_DA_CLASS,
-                            "Type": "Delivery Agent"
+                            "Type": "Delivery agent"
                         })
                 if agents_to_create_data:
                     streamlit.dataframe(
