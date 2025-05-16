@@ -48,9 +48,9 @@ def start_jade_platform():
     Attempts to start the JADE platform, connect via Py4J, and redirect its stdout/stderr.
     Returns: (success_bool, message_str, process_obj_or_None, gateway_obj_or_None, log_stop_event_or_None)
     """
-    print(f"Attempting to start JADE platform. JADE JAR expected at: {JADE_JAR_PATH}")
+    print(f"Attempting to start JADE. JADE JAR expected at: {JADE_JAR_PATH}")
     if not os.path.exists(JADE_JAR_PATH):
-        return False, f"JADE JAR not found at {JADE_JAR_PATH}. Please check the path.", None, None, None
+        return False, f"JADE JAR not found at {JADE_JAR_PATH}. Please check the path", None, None, None
     
     # Starting JADE with -gui. For Py4J, a GatewayServer would need to be started by a JADE agent.
     # The -host and -port parameters for JADE main container might be relevant.
@@ -84,7 +84,7 @@ def start_jade_platform():
         runtime_classpath, 
         "jade.Boot", 
         "-gui", 
-        "-port", "30018",
+        "-port", "25334",
         "py4jgw:java.Py4jGatewayAgent" # Simplified package path after directory flattening
     ]
     print(f"JADE startup command: {' '.join(cmd)}") # Log the command for debugging
@@ -116,13 +116,13 @@ def start_jade_platform():
             print("JADE process is running. Attempting Py4J connection...")
             gateway = None
             try:
-                print("Waiting for JADE Py4J GatewayServer to initialize...")
+                print("Waiting for JADE Py4J GatewayServer to initialise...")
                 time.sleep(5) 
                 gateway = JavaGateway(
                     gateway_parameters=GatewayParameters(address=PY4J_ADDRESS, port=PY4J_PORT, auto_convert=True)
                 )
                 print(f"Successfully connected to Py4J GatewayServer on {PY4J_ADDRESS}:{PY4J_PORT}.")
-                return True, "JADE platform process is running and Py4J gateway connected.", process, gateway, log_stop_event
+                return True, "JADE process is running and Py4J gateway connected", process, gateway, log_stop_event
             except Py4JNetworkError as e:
                 err_msg = f"JADE process started, but Py4J connection failed: {str(e)}. Ensure a Py4J GatewayServer is running in JADE on port {PY4J_PORT}."
                 print(err_msg)
@@ -145,11 +145,11 @@ def start_jade_platform():
             if stderr_output:
                 error_details.append(f"STDERR: {stderr_output}")
             
-            full_error_msg = f"JADE process terminated early (exit code {exit_code})."
+            full_error_msg = f"JADE process terminated early (exit code {exit_code})"
             if error_details:
                 full_error_msg += " Details: " + " | ".join(error_details)
             else:
-                full_error_msg += " No output captured on stdout/stderr."
+                full_error_msg += " No output captured on stdout/stderr"
             print(full_error_msg)
             return False, full_error_msg, None, None, None
     except FileNotFoundError:
@@ -174,7 +174,7 @@ def compile_java_agents():
         print(err_msg)
         return False, err_msg
 
-    output_classes_path = os.path.join("packages", "execution", "java", "classes")
+    output_classes_path = os.path.join("packages", "execution", "backend", "java", "classes")
     
     # Ensure the output directory for classes exists
     try:
@@ -185,23 +185,23 @@ def compile_java_agents():
         return False, err_msg
 
     if not os.path.exists(JADE_JAR_PATH):
-        err_msg = f"JADE JAR not found at '{JADE_JAR_PATH}' for compilation."
+        err_msg = f"JADE JAR not found at '{JADE_JAR_PATH}' for compilation"
         print(err_msg)
         return False, err_msg
     if not os.path.exists(PY4J_JAR_PATH):
-        err_msg = f"Py4J JAR not found at '{PY4J_JAR_PATH}' for compilation."
+        err_msg = f"Py4J JAR not found at '{PY4J_JAR_PATH}' for compilation"
         print(err_msg)
         return False, err_msg
     
     if not os.path.exists(JSON_JAR_PATH):
-        err_msg = f"org.json.jar not found at '{JSON_JAR_PATH}'. This is required for compiling JADE agents. Please ensure the JAR is present at this location."
+        err_msg = f"org.json.jar not found at '{JSON_JAR_PATH}'. This is required for compiling JADE agents. Please ensure the JAR is present at this location"
         print(err_msg)
         return False, err_msg
 
     # Check if source files exist
     java_source_files = [f for f in os.listdir(source_path) if f.endswith(".java")]
     if not java_source_files:
-        err_msg = f"No Java source files found in '{source_path}'."
+        err_msg = f"No Java source files found in '{source_path}'"
         print(err_msg)
         return False, err_msg
     
@@ -227,8 +227,8 @@ def compile_java_agents():
         result = subprocess.run(javac_cmd, capture_output=True, text=True, check=False)
         
         if result.returncode == 0:
-            print("Java agents compiled successfully.")
-            return True, "JADE agents compiled successfully."
+            print("Java agents compiled successfully")
+            return True, "JADE agents compiled successfully"
         else:
             # Compilation failed, provide error details.
             error_output = result.stderr if result.stderr else result.stdout
@@ -265,20 +265,20 @@ def stop_jade_platform(process_info, gateway_obj, log_stop_event):
     if gateway_obj:
         try:
             gateway_obj.shutdown()
-            print("Py4J Gateway shut down successfully.")
+            print("Py4J Gateway shut down successfully")
             py4j_shutdown_msg = "Py4J Gateway shut down. "
         except Exception as e:
             print(f"Error shutting down Py4J Gateway: {str(e)}")
             py4j_shutdown_msg = f"Error shutting down Py4J Gateway: {str(e)}. "
 
     if not process_info or not hasattr(process_info, 'pid'):
-        return False, py4j_shutdown_msg + "No valid JADE process information available to stop."
+        return False, py4j_shutdown_msg + "No valid JADE process information available to stop"
 
     pid = process_info.pid # Get PID before poll, in case it terminates mid-check
     if process_info.poll() is not None:
-        return True, f"JADE platform process (PID: {pid}) was already terminated (exit code {process_info.returncode})."
+        return True, f"JADE process (PID: {pid}) was already terminated (exit code {process_info.returncode})"
 
-    print(f"Stopping JADE platform process (PID: {pid})...")
+    print(f"Stopping JADE process (PID: {pid})...")
 
     if platform.system() == "Windows":
         print(f"Attempting to stop JADE process (PID: {pid}) on Windows using taskkill /F /T...")
@@ -294,7 +294,7 @@ def stop_jade_platform(process_info, gateway_obj, log_stop_event):
             try:
                 process_info.wait(timeout=3) # Give it a few seconds
             except subprocess.TimeoutExpired:
-                print(f"JADE process (PID: {pid}) Popen status did not update within timeout after taskkill.")
+                print(f"JADE process (PID: {pid}) Popen status did not update within timeout after taskkill")
             except Exception as e_wait: # Catch other potential errors during wait
                 print(f"Error during Popen.wait() for PID {pid} after taskkill: {str(e_wait)}")
 
@@ -302,50 +302,50 @@ def stop_jade_platform(process_info, gateway_obj, log_stop_event):
 
             if kill_result.returncode == 0: # taskkill reported success
                 if final_poll_code is not None:
-                    print(f"taskkill successfully terminated PID {pid}. Process poll confirms termination (exit code {final_poll_code}).")
-                    return True, "JADE platform terminated via taskkill."
+                    print(f"taskkill successfully terminated PID {pid}. Process poll confirms termination (exit code {final_poll_code})")
+                    return True, "JADE terminated via taskkill"
                 else:
                     # taskkill succeeded, but Popen object still thinks the process is running.
                     # This might indicate the main PID is stubborn or Popen's state is slow to update.
-                    print(f"taskkill reported success for PID {pid}, but Popen object still reports process as running. Attempting Popen.kill().")
+                    print(f"taskkill reported success for PID {pid}, but Popen object still reports process as running. Attempting Popen.kill()")
                     try:
                         process_info.kill()
                         process_info.wait(timeout=2) # Wait for kill to take effect
                         if process_info.poll() is not None:
-                            print(f"JADE process (PID: {pid}) terminated via Popen.kill() after inconsistent taskkill report.")
-                            return True, "JADE platform terminated (taskkill success, Popen inconsistent, then Popen.kill() success)."
+                            print(f"JADE process (PID: {pid}) terminated via Popen.kill() after inconsistent taskkill report")
+                            return True, "JADE platform terminated (taskkill success, Popen inconsistent, then Popen.kill() success)"
                         else:
-                            print(f"JADE process (PID: {pid}) still running after Popen.kill().")
-                            return False, f"Failed to confirm JADE termination for PID {pid} (taskkill success, Popen inconsistent, Popen.kill() failed to confirm)."
+                            print(f"JADE process (PID: {pid}) still running after Popen.kill()")
+                            return False, f"Failed to confirm JADE termination for PID {pid} (taskkill success, Popen inconsistent, Popen.kill() failed to confirm)"
                     except Exception as e_kill:
                         print(f"Error during Popen.kill() for PID {pid}: {str(e_kill)}")
-                        return False, f"Error during Popen.kill() after inconsistent taskkill for PID {pid}."
+                        return False, f"Error during Popen.kill() after inconsistent taskkill for PID {pid}"
 
             elif kill_result.returncode == 128: # "Process not found" by taskkill
                 if final_poll_code is not None:
                     # taskkill couldn't find it, and Popen confirms it's terminated. Good.
-                    print(f"taskkill for PID {pid} reported process not found (RC: 128). Process poll confirms termination (exit code {final_poll_code}).")
-                    return True, "JADE platform terminated (taskkill confirmed process not running)."
+                    print(f"taskkill for PID {pid} reported process not found (RC: 128). Process poll confirms termination (exit code {final_poll_code})")
+                    return True, "JADE terminated (taskkill confirmed process not running)"
                 else:
                     # taskkill couldn't find it, but Popen thinks it's still running. This is a problematic inconsistency.
                     print(f"taskkill for PID {pid} reported process not found (RC: 128), but Popen object still reports process as running. This is unexpected. Taskkill stderr: {kill_result.stderr.strip()}")
-                    return False, f"Failed to confirm JADE termination for PID {pid} (taskkill: process not found, Popen poll inconsistent)."
+                    return False, f"Failed to confirm JADE termination for PID {pid} (taskkill: process not found, Popen poll inconsistent)"
             else: # taskkill failed for other reasons (e.g., access denied, other errors)
                 error_message = kill_result.stderr.strip() or kill_result.stdout.strip() or f"Unknown taskkill error (RC: {kill_result.returncode})"
                 print(f"taskkill failed for PID {pid}. Error: {error_message}. Process poll after taskkill: {final_poll_code}")
                 if final_poll_code is not None: # If it died despite taskkill error message
-                    return True, f"JADE platform terminated (found dead after taskkill error for PID {pid}: {error_message})"
+                    return True, f"JADE terminated (found dead after taskkill error for PID {pid}: {error_message})"
                 
                 # Fallback to Popen methods if taskkill failed and process is still alive according to Popen
-                print(f"taskkill failed for PID {pid}. Attempting Popen.terminate() then Popen.kill() as fallback.")
+                print(f"taskkill failed for PID {pid}. Attempting Popen.terminate() then Popen.kill() as fallback")
                 try:
                     process_info.terminate()
                     process_info.wait(timeout=2)
                     if process_info.poll() is not None:
-                        print(f"JADE process (PID: {pid}) terminated via Popen.terminate() after taskkill failure.")
-                        return True, "JADE platform terminated (taskkill failed, Popen.terminate() success)."
+                        print(f"JADE process (PID: {pid}) terminated via Popen.terminate() after taskkill failure")
+                        return True, "JADE terminated (taskkill failed, Popen.terminate() success)"
                 except subprocess.TimeoutExpired:
-                    print(f"Popen.terminate() timed out for PID {pid} after taskkill failure.")
+                    print(f"Popen.terminate() timed out for PID {pid} after taskkill failure")
                 except Exception as e_term:
                     print(f"Error during Popen.terminate() for PID {pid}: {str(e_term)}")
 
@@ -353,38 +353,38 @@ def stop_jade_platform(process_info, gateway_obj, log_stop_event):
                     process_info.kill()
                     process_info.wait(timeout=2)
                     if process_info.poll() is not None:
-                        print(f"JADE process (PID: {pid}) terminated via Popen.kill() after taskkill/terminate failure.")
-                        return True, "JADE platform terminated (taskkill failed, Popen.kill() success)."
+                        print(f"JADE process (PID: {pid}) terminated via Popen.kill() after taskkill/terminate failure")
+                        return True, "JADE terminated (taskkill failed, Popen.kill() success)"
                 except Exception as e_kill_fallback:
                     print(f"Error during Popen.kill() fallback for PID {pid}: {str(e_kill_fallback)}")
                 
-                return False, f"Failed to terminate JADE platform (PID: {pid}) using taskkill and Popen methods. Taskkill Error: {error_message}"
+                return False, f"Failed to terminate JADE (PID: {pid}) using taskkill and Popen methods. Taskkill Error: {error_message}"
         except Exception as e:
             # General exception during the Windows stop process
             print(f"General exception during Windows stop procedure for PID {pid}: {str(e)}")
             if process_info.poll() is not None: # Check if process died despite exception
-                return True, py4j_shutdown_msg + f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
+                return True, py4j_shutdown_msg + f"JADE (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
             return False, py4j_shutdown_msg + f"Error stopping JADE process (PID: {pid}) on Windows: {str(e)}"
     else: # For non-Windows OS
         try:
             process_info.terminate() # SIGTERM
             process_info.wait(timeout=5)
-            print(f"JADE process (PID: {pid}) terminated via Popen.terminate().")
-            return True, "JADE platform terminated."
+            print(f"JADE process (PID: {pid}) terminated via Popen.terminate()")
+            return True, "JADE terminated"
         except subprocess.TimeoutExpired:
-            print(f"JADE process (PID: {pid}) did not respond to terminate(). Using Popen.kill().")
+            print(f"JADE process (PID: {pid}) did not respond to terminate(). Using Popen.kill()")
             process_info.kill() # SIGKILL
             try:
                 process_info.wait(timeout=2) # Wait for kill to take effect
-                print(f"JADE process (PID: {pid}) terminated via Popen.kill().")
-                return True, "JADE platform forcefully killed."
+                print(f"JADE process (PID: {pid}) terminated via Popen.kill()")
+                return True, "JADE forcefully killed"
             except subprocess.TimeoutExpired:
-                print(f"JADE process (PID: {pid}) did not terminate even after Popen.kill(). This is unexpected.")
-                return False, f"Failed to confirm JADE platform (PID: {pid}) termination after kill."
+                print(f"JADE process (PID: {pid}) did not terminate even after Popen.kill(). This is unexpected")
+                return False, f"Failed to confirm JADE (PID: {pid}) termination after kill"
         except Exception as e:
             print(f"Exception during non-Windows stop procedure for PID {pid}: {str(e)}")
             if process_info.poll() is not None: # Check if process died despite exception
-                 return True, py4j_shutdown_msg + f"JADE platform (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
+                 return True, py4j_shutdown_msg + f"JADE (PID: {pid}) terminated (found dead after error during stop: {str(e)})"
             return False, py4j_shutdown_msg + f"Error stopping JADE process (PID: {pid}): {str(e)}"
     
     # Fallback, should ideally not be reached
@@ -398,7 +398,7 @@ def _create_agent_in_jade(gateway_obj, agent_name, agent_class, agent_args_list_
     Returns: (success_bool, message_str)
     """
     if not gateway_obj:
-        return False, "Py4J Gateway not available. Cannot create agent."
+        return False, "Py4J Gateway not available. Cannot create agent"
     
     try:
         # This assumes your JADE GatewayServer's entry point provides an object
@@ -431,7 +431,7 @@ def _create_agent_in_jade(gateway_obj, agent_name, agent_class, agent_args_list_
             return False, f"JADE reported an error for agent '{agent_name}': {result_message}"
         return True, f"Agent '{agent_name}' creation request processed by JADE. Response: {result_message}"
     except Py4JNetworkError as e:
-        return False, f"Py4J Network Error creating agent '{agent_name}': {str(e)}. Check JADE GatewayServer."
+        return False, f"Py4J Network Error creating agent '{agent_name}': {str(e)}. Check JADE GatewayServer"
     except Exception as e:
         # This can include errors if the Java method doesn't exist, wrong signature, or Java-side exceptions.
         return False, f"Error creating agent '{agent_name}' via Py4J: {str(e)}"
@@ -467,10 +467,10 @@ def send_optimisation_results_to_mra(gateway_obj, mra_agent_name, optimisation_r
     Returns: (success_bool, message_str)
     """
     if not gateway_obj:
-        return False, "Py4J Gateway not available. Cannot send results to MRA."
+        return False, "Py4J Gateway not available. Cannot send results to MRA"
         
     if not optimisation_results_py_dict:
-        return False, "Optimisation results are missing. Cannot send to MRA."
+        return False, "Optimisation results are missing. Cannot send to MRA"
 
     try:
         full_results_json_str = json.dumps(optimisation_results_py_dict)
@@ -486,6 +486,6 @@ def send_optimisation_results_to_mra(gateway_obj, mra_agent_name, optimisation_r
             return False, f"JADE reported an error forwarding results to MRA '{mra_agent_name}': {response_message}"
         return True, f"Full optimisation results sent to MRA '{mra_agent_name}'. JADE response: {response_message}"
     except Py4JNetworkError as e:
-        return False, f"Py4J Network Error sending results to MRA '{mra_agent_name}': {str(e)}. Check JADE GatewayServer."
+        return False, f"Py4J Network Error sending results to MRA '{mra_agent_name}': {str(e)}. Check JADE GatewayServer"
     except Exception as e:
         return False, f"Error sending results to MRA '{mra_agent_name}' via Py4J: {str(e)}"
