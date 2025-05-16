@@ -28,6 +28,7 @@ What if we use a JADE-based system (in Java) for agent communication and basic a
 /add dld\guidelines.txt
 /add *.py
 
-Full optimisation results sent to MRA 'MRA'. JADE response: Full optimisation results forwarded to MRA 'MRA' successfully.
+JADE process terminated early (exit code 0) Details: STDERR: May 16, 2025 1:32:10 PM jade.core.Runtime beginContainer INFO: ---------------------------------- This is JADE 4.6.0 - revision 6869 of 30-11-2022 14:47:03 downloaded in Open Source, under LGPL restrictions, at http://jade.tilab.com/
+May 16, 2025 1:32:10 PM jade.imtp.leap.CommandDispatcher addICP WARNING: Error adding ICP jade.imtp.leap.JICP.JICPPeer@555590[Cannot bind server socket to localhost port 1099]. May 16, 2025 1:32:10 PM jade.core.AgentContainerImpl joinPlatform SEVERE: Communication failure while joining agent platform: No ICP active jade.core.IMTPException: No ICP active at jade.imtp.leap.LEAPIMTPManager.initialize(LEAPIMTPManager.java:138) at jade.core.AgentContainerImpl.init(AgentContainerImpl.java:321) at jade.core.AgentContainerImpl.joinPlatform(AgentContainerImpl.java:500) at jade.core.Runtime.createMainContainer(Runtime.java:159) at jade.Boot.main(Boot.java:89) May 16, 2025 1:32:10 PM jade.core.Runtime$1 run INFO: JADE is closing down now.
 Can you format this nicely? Be concise, no redundant stuff
 
