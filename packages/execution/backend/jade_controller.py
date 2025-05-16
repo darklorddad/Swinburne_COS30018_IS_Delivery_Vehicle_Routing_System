@@ -12,7 +12,7 @@ JADE_JAR_PATH = os.path.join("dependencies", "java", "JADE-all-4.6.0", "jade", "
 # Path to the Py4J JAR, required for compiling agents that use Py4J (e.g., Py4jGatewayAgent)
 # and for JADE runtime to find Py4J classes.
 # Corrected path based on user-provided file location and new directory structure.
-PY4J_JAR_PATH = os.path.join("dependencies", "java", "py4j-0.10.9.9", "py4j-java", "py4j0.10.9.9.jar")
+PY4J_JAR_PATH = os.path.join("dependencies", "python", "py4j-0.10.9.9", "py4j-java", "py4j0.10.9.9.jar")
 # Path to the org.json JAR, required for JSON parsing in MasterRoutingAgent
 JSON_JAR_PATH = os.path.join("dependencies", "java", "libs", "json-20250107.jar") # Updated path and filename
 
@@ -60,7 +60,7 @@ def start_jade_platform():
     # On Windows, classpath separator is ';'. On Linux/macOS, it's ':'.
     classpath_separator = ";" if platform.system() == "Windows" else ":"
     # Updated path for compiled classes
-    compiled_classes_path = os.path.join("packages", "simulation", "java", "classes")
+    compiled_classes_path = os.path.join("packages", "execution", "java", "classes")
     
     # Ensure the 'classes' directory exists, or JADE might have issues, though javac creates it.
     # For robustness, one might check os.path.exists(compiled_classes_path) here.
@@ -164,8 +164,8 @@ def compile_java_agents():
     """
     print("Attempting to compile JADE agent Java source files...")
     
-    source_path = os.path.join("packages", "simulation", "java", "src", "jadeagents")
-    output_classes_path = os.path.join("packages", "simulation", "java", "classes")
+    source_path = os.path.join("packages", "execution", "java", "src", "jadeagents")
+    output_classes_path = os.path.join("packages", "execution", "java", "classes")
     
     # Ensure the output directory for classes exists
     try:

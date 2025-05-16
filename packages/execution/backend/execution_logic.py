@@ -6,14 +6,14 @@ DEFAULT_MRA_CLASS = "jadeagents.MasterRoutingAgent" # Updated package
 DEFAULT_DA_CLASS = "jadeagents.DeliveryAgent"     # Updated package
 
 def initialise_session_state(ss):
-    if "simulation_module_initialised_v1" not in ss: # Use a versioned key
-        ss.simulation_module_initialised_v1 = True
+    if "execution_module_initialised_v1" not in ss: # Use a versioned key
+        ss.execution_module_initialised_v1 = True
         
         ss.jade_platform_running = False
         ss.jade_platform_status_message = None
         ss.jade_agents_created = False
         ss.jade_agent_creation_status_message = None
-        ss.jade_dispatch_status_message = None # Renamed from jade_simulation_status_message
+        ss.jade_dispatch_status_message = None # Renamed from jade_execution_status_message
         
         # Store JADE process info (e.g., Popen object from subprocess or simulated dict)
         ss.jade_process_info = None 
@@ -85,7 +85,7 @@ def handle_stop_jade(ss):
         ss.jade_platform_status_message = message or "JADE platform stopped successfully."
     else:
         # If stop fails, the platform might still be considered running or in an indeterminate state.
-        # For simulation, we'll assume it failed to stop and remains "running" to reflect the error.
+        # For execution, we'll assume it failed to stop and remains "running" to reflect the error.
         ss.jade_platform_status_message = message or "Failed to stop JADE platform."
     
     # Reset downstream states

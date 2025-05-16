@@ -3,8 +3,8 @@ from packages.configuration.backend import config_logic
 from packages.configuration.frontend.config_tab_ui import render_config_tab
 from packages.optimisation.backend import optimisation_logic
 from packages.optimisation.frontend.optimisation_tab_ui import render_optimisation_tab
-from packages.simulation.backend import simulation_logic 
-from packages.simulation.frontend.simulation_tab_ui import render_jade_operations_tab 
+from packages.execution.backend import execution_logic 
+from packages.execution.frontend.execution_tab_ui import render_jade_operations_tab 
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab # New import
 
 # Applies custom CSS to the Streamlit app.
@@ -105,7 +105,7 @@ def main():
     ss = streamlit.session_state
     config_logic.initialise_session_state(ss)
     optimisation_logic.initialise_session_state(ss) # Initialise optimisation state
-    simulation_logic.initialise_session_state(ss) # Initialise simulation state
+    execution_logic.initialise_session_state(ss) # Initialise execution state
 
     _apply_custom_styling(ss)
     _render_main_layout(ss)

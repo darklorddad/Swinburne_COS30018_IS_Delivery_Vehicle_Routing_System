@@ -10,9 +10,7 @@ def render_initial_view(ss):
         if streamlit.button("New configuration", key = "create_new_config_action_btn", use_container_width = True):
             config_logic.handle_new_config_action(ss)
             streamlit.rerun()
-        
-        streamlit.markdown("<br>", unsafe_allow_html=True)  # Smaller vertical space
-        
+            
         # Load Configuration button at bottom
         if streamlit.button("Load configuration", key = "load_config_action_btn", use_container_width = True):
             config_logic.handle_load_config_action(ss)

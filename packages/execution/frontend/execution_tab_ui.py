@@ -1,6 +1,6 @@
 import streamlit
 import pandas as pd # For creating DataFrames for tables
-from ..backend import simulation_logic
+from ..backend import execution_logic
 from packages.configuration.frontend.ui_utils import display_operation_result
 
 # Helper to determine message type from a string for display_operation_result
@@ -65,14 +65,14 @@ def render_jade_operations_tab(ss):
                                 key="start_jade_platform_btn", 
                                 use_container_width=True,
                                 disabled=ss.get("jade_platform_running", False)):
-                simulation_logic.handle_start_jade(ss)
+                execution_logic.handle_start_jade(ss)
                 streamlit.rerun()
         with col_stop_jade:
             if streamlit.button("Stop", 
                                 key="stop_jade_platform_btn", 
                                 use_container_width=True,
                                 disabled=not ss.get("jade_platform_running", False)):
-                simulation_logic.handle_stop_jade(ss)
+                execution_logic.handle_stop_jade(ss)
                 streamlit.rerun()
     
     # --- Agent Management (only if JADE is running) ---
@@ -88,8 +88,8 @@ def render_jade_operations_tab(ss):
                 agents_to_create_data = []
                 # MRA
                 agents_to_create_data.append({
-                    "Agent Name": simulation_logic.DEFAULT_MRA_NAME,
-                    "Agent Class": simulation_logic.DEFAULT_MRA_CLASS,
+                    "Agent Name": execution_logic.DEFAULT_MRA_NAME,
+                    "Agent Class": execution_logic.DEFAULT_MRA_CLASS,
                     "Type": "Master Routing Agent"
                 })
                 # DAs
@@ -97,7 +97,7 @@ def render_jade_operations_tab(ss):
                     for da_config in ss.config_data["delivery_agents"]:
                         agents_to_create_data.append({
                             "Agent Name": da_config.get("id", "N/A"),
-                            "Agent Class": simulation_logic.DEFAULT_DA_CLASS,
+                            "Agent Class": execution_logic.DEFAULT_DA_CLASS,
                             "Type": "Delivery Agent"
                         })
                 if agents_to_create_data:
@@ -111,7 +111,7 @@ def render_jade_operations_tab(ss):
                                 key="create_jade_agents_btn", 
                                 use_container_width=True,
                                 disabled=not config_loaded or ss.get("jade_agents_created", False)):
-                result = simulation_logic.handle_create_agents(ss)
+                result = execution_logic.handle_create_agents(ss)
                 # ss.jade_agent_creation_status_message is set by the backend.
                 # It will be displayed by the logic below.
                 if result and result.get('type') == 'success':
@@ -155,7 +155,7 @@ def render_jade_operations_tab(ss):
                                     key="trigger_mra_dispatch_btn", 
                                     use_container_width=True,
                                     disabled=not optimisation_complete):
-                    result = simulation_logic.handle_trigger_mra_processing(ss)
+                    result = execution_logic.handle_trigger_mra_processing(ss)
                     # ss.jade_dispatch_status_message is set by the backend.
                     # It will be displayed by the logic below.
                     if result and result.get('type') == 'success':
