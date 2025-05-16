@@ -85,7 +85,8 @@ def start_jade_platform():
         "jade.Boot", 
         "-gui", 
         "-port", "1099",  # Default JADE port
-        "py4jgw:Py4jGatewayAgent"  # Using fully qualified package name
+        # Start Py4jGatewayAgent and the Sniffer agent to sniff all agents
+        "py4jgw:Py4jGatewayAgent;dvrSniffer:jade.tools.sniffer.Sniffer(*)"
     ]
     print(f"JADE startup command: {' '.join(cmd)}") # Log the command for debugging
 
