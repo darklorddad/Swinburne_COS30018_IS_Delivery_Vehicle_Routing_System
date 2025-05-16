@@ -89,16 +89,16 @@ def render_jade_operations_tab(ss):
                 # MRA
                 agents_to_create_data.append({
                     "Agent ID": execution_logic.DEFAULT_MRA_NAME,
-                    "Agent Class": execution_logic.DEFAULT_MRA_CLASS,
-                    "Capacity Weight": "N/A"  # MRA doesn't have weight capacity
+                    "Capacity Weight": "N/A",  # MRA doesn't have weight capacity
+                    "Agent Class": execution_logic.DEFAULT_MRA_CLASS
                 })
                 # DAs
                 if ss.config_data.get("delivery_agents"):
                     for da_config in ss.config_data["delivery_agents"]:
                         agents_to_create_data.append({
                             "Agent ID": da_config.get("id", "N/A"),
-                            "Agent Class": execution_logic.DEFAULT_DA_CLASS,
-                            "Capacity Weight": da_config.get("capacity_weight", "N/A")
+                            "Capacity Weight": da_config.get("capacity_weight", "N/A"),
+                            "Agent Class": execution_logic.DEFAULT_DA_CLASS
                         })
                 if agents_to_create_data:
                     streamlit.dataframe(
@@ -155,7 +155,7 @@ def render_jade_operations_tab(ss):
                         streamlit.info("Optimisation results exist, but no 'optimised_routes' found to display or send.")
 
 
-                if streamlit.button("Send results to MRA", 
+                if streamlit.button("Send to MRA", 
                                     key="trigger_mra_dispatch_btn", 
                                     use_container_width=True,
                                     disabled=not optimisation_complete):
