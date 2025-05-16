@@ -171,7 +171,6 @@ def render_jade_operations_tab(ss):
                     display_operation_result({'type': msg_type, 'message': msg_str})
                 
         elif ss.get("jade_platform_running"): # Platform running, but agents not created
-            streamlit.info("Create agents in JADE to enable route management.")
 
     # --- Logs (only if JADE is running) ---
     if ss.get("jade_platform_running"):
