@@ -1,9 +1,9 @@
 from . import jade_controller 
 
 # Default JADE agent names and classes
-DEFAULT_MRA_NAME = "MasterRouter"
-DEFAULT_MRA_CLASS = "jadeagents.MasterRoutingAgent" # Updated package
-DEFAULT_DA_CLASS = "jadeagents.DeliveryAgent"     # Updated package
+DEFAULT_MRA_NAME = "MRA"
+DEFAULT_MRA_CLASS = "MasterRoutingAgent" # Updated package
+DEFAULT_DA_CLASS = "DeliveryAgent"     # Updated package
 
 def initialise_session_state(ss):
     if "execution_module_initialised_v1" not in ss: # Use a versioned key
@@ -24,7 +24,7 @@ def initialise_session_state(ss):
 
 def handle_start_jade(ss):
     if ss.get("jade_platform_running", False):
-        ss.jade_platform_status_message = "JADE platform is already running."
+        ss.jade_platform_status_message = "JADE is already running"
         return
 
     # Attempt to compile Java agents first, before starting JADE.
@@ -60,7 +60,7 @@ def handle_start_jade(ss):
         ss.jade_process_info = None 
         ss.py4j_gateway_object = None
         ss.jade_log_stop_event = None # Clear stop event
-        ss.jade_platform_status_message = message or "Failed to start JADE platform."
+        ss.jade_platform_status_message = message or "Failed to start JADE"
     
     # Reset downstream states as platform state changed
     ss.jade_agents_created = False
@@ -69,7 +69,7 @@ def handle_start_jade(ss):
 
 def handle_stop_jade(ss):
     if not ss.get("jade_platform_running", False):
-        ss.jade_platform_status_message = "JADE platform is not running."
+        ss.jade_platform_status_message = "JADE is not running"
         return
 
     success, message = jade_controller.stop_jade_platform(
@@ -82,11 +82,11 @@ def handle_stop_jade(ss):
         ss.jade_process_info = None
         ss.py4j_gateway_object = None
         ss.jade_log_stop_event = None # Clear stop event
-        ss.jade_platform_status_message = message or "JADE platform stopped successfully."
+        ss.jade_platform_status_message = message or "JADE stopped successfully"
     else:
         # If stop fails, the platform might still be considered running or in an indeterminate state.
         # For execution, we'll assume it failed to stop and remains "running" to reflect the error.
-        ss.jade_platform_status_message = message or "Failed to stop JADE platform."
+        ss.jade_platform_status_message = message or "Failed to stop JADE"
     
     # Reset downstream states
     ss.jade_agents_created = False
@@ -95,7 +95,7 @@ def handle_stop_jade(ss):
 
 def handle_create_agents(ss):
     if not ss.get("jade_platform_running"):
-        ss.jade_agent_creation_status_message = "Cannot create agents: JADE platform is not running."
+        ss.jade_agent_creation_status_message = "Cannot create agents: JADE is not running"
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
 
     # Compilation is now handled by handle_start_jade.
@@ -103,11 +103,11 @@ def handle_create_agents(ss):
     
     py4j_gateway = ss.get("py4j_gateway_object")
     if not py4j_gateway:
-        ss.jade_agent_creation_status_message = "Cannot create agents: Py4J Gateway to JADE is not available. Ensure JADE started with Py4J support."
+        ss.jade_agent_creation_status_message = "Cannot create agents: Py4J Gateway to JADE is not available. Ensure JADE started with Py4J support"
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
 
     if not ss.config_data:
-        ss.jade_agent_creation_status_message = "Cannot create agents: Configuration data not loaded."
+        ss.jade_agent_creation_status_message = "Cannot create agents: Configuration data not loaded"
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
 
     # Create MRA
@@ -129,12 +129,12 @@ def handle_create_agents(ss):
     delivery_agents_config = ss.config_data.get("delivery_agents", [])
 
     if not delivery_agents_config:
-         da_creation_messages.append("No delivery agents found in configuration to create.")
+         da_creation_messages.append("No delivery agents found in configuration to create")
     else:
         for agent_config in delivery_agents_config:
             da_id = agent_config.get("id")
             if not da_id:
-                da_creation_messages.append("Skipping DA with no ID in configuration.")
+                da_creation_messages.append("Skipping DA with no ID in configuration")
                 all_das_successfully_created = False # Consider this a partial failure
                 continue
 
@@ -162,19 +162,19 @@ def handle_create_agents(ss):
 
 def handle_trigger_mra_processing(ss): # Renamed from handle_dispatch_routes
     if not ss.get("jade_platform_running"):
-        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: JADE platform is not running."
+        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: JADE is not running"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
     
     py4j_gateway = ss.get("py4j_gateway_object")
     if not py4j_gateway:
-        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Py4J Gateway to JADE is not available."
+        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Py4J Gateway to JADE is not available"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
         
     if not ss.get("jade_agents_created"):
-        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Agents have not been created in JADE."
+        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Agents have not been created in JADE"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
     if not ss.get("optimisation_run_complete") or not ss.get("optimisation_results"):
-        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Optimisation results not available. Please run optimisation in the 'Optimisation' tab first."
+        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Optimisation results not available. Please run optimisation in the 'Optimisation' tab first"
         return {'type': 'warning', 'message': ss.jade_dispatch_status_message}
 
     optimisation_results = ss.optimisation_results
@@ -187,8 +187,8 @@ def handle_trigger_mra_processing(ss): # Renamed from handle_dispatch_routes
     )
 
     if success:
-        ss.jade_dispatch_status_message = message or "Optimisation results sent to MRA for processing and dispatch."
+        ss.jade_dispatch_status_message = message or "Optimisation results sent to MRA for processing and dispatch"
         return {'type': 'success', 'message': ss.jade_dispatch_status_message}
     else:
-        ss.jade_dispatch_status_message = message or "Failed to send optimisation results to MRA."
+        ss.jade_dispatch_status_message = message or "Failed to send optimisation results to MRA"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
