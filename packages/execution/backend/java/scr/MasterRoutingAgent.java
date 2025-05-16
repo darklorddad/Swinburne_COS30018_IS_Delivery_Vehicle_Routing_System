@@ -58,6 +58,30 @@ public class MasterRoutingAgent extends Agent {
                 }
             }
         });
+
+        // Behaviour to listen for delivery confirmations from DAs
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
+                MessageTemplate mt = MessageTemplate.MatchOntology("DeliveryConfirmation");
+                ACLMessage msg = myAgent.receive(mt);
+                if (msg != null) {
+                    String daName = msg.getSender().getLocalName();
+                    String content = msg.getContent();
+                    System.out.println("MRA: Received Delivery Confirmation from " + daName + ". Content: " + content);
+
+                    // Relay this confirmation to Py4jGatewayAgent
+                    ACLMessage relayMsg = new ACLMessage(ACLMessage.INFORM);
+                    relayMsg.addReceiver(new AID("py4jgw", AID.ISLOCALNAME));
+                    relayMsg.setOntology("DeliveryRelay"); // New ontology for PGA
+                    relayMsg.setLanguage("STRING"); // Or JSON if more structure is needed
+                    relayMsg.setContent("MRA relayed: DA " + daName + " reported: " + content);
+                    myAgent.send(relayMsg);
+                    System.out.println("MRA: Relayed DA ("+ daName + ") confirmation to py4jgw.");
+                } else {
+                    block();
+                }
+            }
+        });
     }
 
     protected void takeDown() {

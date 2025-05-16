@@ -71,13 +71,13 @@ public class DeliveryAgent extends Agent {
                     public void action() {
                         System.out.println("DA " + myAgent.getLocalName() + ": Delivery route complete. Returning to idle state.");
                         
-                        // Send confirmation message to Py4jGatewayAgent
+                        // Send confirmation message to MasterRoutingAgent
                         ACLMessage confirmationMsg = new ACLMessage(ACLMessage.INFORM);
-                        confirmationMsg.addReceiver(new AID("py4jgw", AID.ISLOCALNAME)); // Assuming Py4jGatewayAgent is named "py4jgw"
+                        confirmationMsg.addReceiver(new AID("MRA", AID.ISLOCALNAME)); // Send to MasterRoutingAgent
                         confirmationMsg.setOntology("DeliveryConfirmation");
                         confirmationMsg.setContent("DA " + myAgent.getLocalName() + " completed route.");
                         myAgent.send(confirmationMsg);
-                        System.out.println("DA " + myAgent.getLocalName() + ": Sent delivery confirmation to py4jgw.");
+                        System.out.println("DA " + myAgent.getLocalName() + ": Sent delivery confirmation to MRA.");
                     }
                 });
 
