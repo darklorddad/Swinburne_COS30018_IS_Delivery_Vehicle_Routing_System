@@ -96,6 +96,7 @@ def handle_stop_jade(ss):
 def handle_create_agents(ss):
     if not ss.get("jade_platform_running"):
         ss.jade_agent_creation_status_message = "Cannot create agents: JADE is not running"
+        ss.jade_agents_created = False
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
 
     # Compilation is now handled by handle_start_jade.
@@ -104,11 +105,17 @@ def handle_create_agents(ss):
     py4j_gateway = ss.get("py4j_gateway_object")
     if not py4j_gateway:
         ss.jade_agent_creation_status_message = "Cannot create agents: Py4J Gateway to JADE is not available. Ensure JADE started with Py4J support"
+        ss.jade_agents_created = False
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
 
     if not ss.config_data:
         ss.jade_agent_creation_status_message = "Cannot create agents: Configuration data not loaded"
+        ss.jade_agents_created = False
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
+
+    # Reset previous status for this operation
+    ss.jade_agent_creation_status_message = None
+    ss.jade_agents_created = False
 
     # Create MRA
     mra_success, mra_msg = jade_controller.create_mra_agent(
@@ -123,19 +130,19 @@ def handle_create_agents(ss):
         ss.jade_agent_creation_status_message = f"Failed to create MRA: {mra_msg}"
         return {'type': 'error', 'message': ss.jade_agent_creation_status_message}
 
-    # Create DAs
+    # MRA creation was successful, now proceed with DAs
     da_creation_messages = [f"MRA '{DEFAULT_MRA_NAME}' creation: {mra_msg}"]
-    all_das_successfully_created = True
+    all_required_agents_successfully_created = True
     delivery_agents_config = ss.config_data.get("delivery_agents", [])
 
     if not delivery_agents_config:
-         da_creation_messages.append("No delivery agents found in configuration to create")
+        da_creation_messages.append("No delivery agents found in configuration to create.")
     else:
         for agent_config in delivery_agents_config:
             da_id = agent_config.get("id")
             if not da_id:
-                da_creation_messages.append("Skipping DA with no ID in configuration")
-                all_das_successfully_created = False # Consider this a partial failure
+                da_creation_messages.append(f"Skipping DA with no ID (config: {agent_config}).")
+                all_required_agents_successfully_created = False
                 continue
 
             da_success, da_msg = jade_controller.create_da_agent(
@@ -148,18 +155,17 @@ def handle_create_agents(ss):
             if not da_success:
                 all_das_successfully_created = False
     
-    if mra_success:
-        ss.jade_agents_created = True
-        if delivery_agents_config:  # Only check DA success if there were DAs to create
-            final_message = ("MRA created successfully. DA creation results: " 
-                            + " | ".join(da_creation_messages[1:]))  # Skip MRA message
+    ss.jade_agents_created = all_required_agents_successfully_created
+
+    if all_required_agents_successfully_created:
+        if not delivery_agents_config:
+            final_message = f"MRA '{DEFAULT_MRA_NAME}' created successfully. No delivery agents were configured."
         else:
-            final_message = "MRA created successfully - no delivery agents in configuration"
+            final_message = "All agents created successfully. " + " | ".join(da_creation_messages)
         ss.jade_agent_creation_status_message = final_message
         return {'type': 'success', 'message': final_message}
     else:
-        ss.jade_agents_created = False
-        final_message = "Agent creation failed. Details: " + " | ".join(da_creation_messages)
+        final_message = "Agent creation partially failed. MRA may be created, but errors occurred with Delivery Agents. Details: " + " | ".join(da_creation_messages)
         ss.jade_agent_creation_status_message = final_message
         return {'type': 'error', 'message': final_message}
 
