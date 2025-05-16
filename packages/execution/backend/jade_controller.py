@@ -60,7 +60,7 @@ def start_jade_platform():
     # On Windows, classpath separator is ';'. On Linux/macOS, it's ':'.
     classpath_separator = ";" if platform.system() == "Windows" else ":"
     # Updated path for compiled classes
-    compiled_classes_path = os.path.join("packages", "execution", "java", "classes")
+    compiled_classes_path = os.path.join("packages", "execution", "backend", "java", "classes")
     
     # Ensure the 'classes' directory exists, or JADE might have issues, though javac creates it.
     # For robustness, one might check os.path.exists(compiled_classes_path) here.
@@ -70,7 +70,7 @@ def start_jade_platform():
     # Arguments to the agent can be passed in parentheses, e.g., agentName(arg1 arg2):className
     # We don't need arguments for Py4jGatewayAgent at startup via command line.
     # Construct classpath for JADE runtime
-    runtime_classpath_list = [JADE_JAR_PATH, PY4J_JAR_PATH, compiled_classes_path]
+    runtime_classpath_list = [JADE_JAR_PATH, PY4J_JAR_PATH, compiled_classes_path, os.path.join("packages", "execution", "backend", "java", "jadeagents")]
     if os.path.exists(JSON_JAR_PATH):
         runtime_classpath_list.append(JSON_JAR_PATH)
     else:
@@ -85,7 +85,7 @@ def start_jade_platform():
         "jade.Boot", 
         "-gui", 
         "-port", "30018",
-        "py4jgw:jadeagents.Py4jGatewayAgent" # Updated package for gateway agent
+        "py4jgw:jadeagents.java.Py4jGatewayAgent" # Updated package path for gateway agent
     ]
     print(f"JADE startup command: {' '.join(cmd)}") # Log the command for debugging
 
@@ -164,7 +164,7 @@ def compile_java_agents():
     """
     print("Attempting to compile JADE agent Java source files...")
     
-    source_path = os.path.join("packages", "execution", "java", "src", "jadeagents")
+    source_path = os.path.join("packages", "execution", "backend", "java", "jadeagents")
     
     # Create source directory if it doesn't exist
     try:
