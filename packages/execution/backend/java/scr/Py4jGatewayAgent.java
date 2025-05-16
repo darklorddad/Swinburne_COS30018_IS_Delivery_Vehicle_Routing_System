@@ -27,14 +27,14 @@ public class Py4jGatewayAgent extends Agent {
             doDelete(); // Self-terminate if server fails
         }
 
-        // Add behaviour to listen for delivery confirmations from DAs
+        // Add behaviour to listen for relayed status updates from MRA
         addBehaviour(new CyclicBehaviour(this) { // 'this' refers to the Py4jGatewayAgent instance
             public void action() {
                 // Correctly import MessageTemplate
-                jade.lang.acl.MessageTemplate mt = jade.lang.acl.MessageTemplate.MatchOntology("DeliveryConfirmation");
+                jade.lang.acl.MessageTemplate mt = jade.lang.acl.MessageTemplate.MatchOntology("DeliveryRelay");
                 ACLMessage msg = receive(mt); // 'receive' is a method of Agent class, 'myAgent' is not needed here
                 if (msg != null) {
-                    System.out.println("Py4jGatewayAgent: Received Delivery Confirmation from " + msg.getSender().getName() + ". Content: " + msg.getContent());
+                    System.out.println("Py4jGatewayAgent: Received Relayed Delivery Status from " + msg.getSender().getName() + ". Content: " + msg.getContent());
                 } else {
                     block(); // block() is a method of Behaviour, so it's correctly called here on the CyclicBehaviour instance
                 }
