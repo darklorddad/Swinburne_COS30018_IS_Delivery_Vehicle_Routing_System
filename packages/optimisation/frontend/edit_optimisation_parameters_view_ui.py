@@ -43,33 +43,37 @@ def render_edit_optimisation_parameters_view(ss):
 
             if ptype == "integer":
                 val = current_value if isinstance(current_value, int) else param_info.get("default", 0)
-                ss.optimisation_script_user_values[name] = streamlit.number_input(
+                temp_val = streamlit.number_input(
                     label, value=int(val),
                     min_value=param_info.get("min"), max_value=param_info.get("max"),
                     step=param_info.get("step", 1), help=help_text, key=widget_key
                 )
+                ss.optimisation_script_user_values[name] = temp_val
             elif ptype == "float":
                 val = current_value if isinstance(current_value, (float, int)) else param_info.get("default", 0.0)
                 step = param_info.get("step", 0.01)
                 fmt = "%.5f" if step < 0.001 else ("%.3f" if step < 0.01 else "%.2f")
-                ss.optimisation_script_user_values[name] = streamlit.number_input(
+                temp_val = streamlit.number_input(
                     label, value=float(val),
                     min_value=param_info.get("min"), max_value=param_info.get("max"),
                     step=step, format=fmt, help=help_text, key=widget_key
                 )
+                ss.optimisation_script_user_values[name] = temp_val
             elif ptype == "boolean":
                 val = current_value if isinstance(current_value, bool) else param_info.get("default", False)
-                ss.optimisation_script_user_values[name] = streamlit.checkbox(
+                temp_val = streamlit.checkbox(
                     label, value=bool(val), help=help_text, key=widget_key
                 )
+                ss.optimisation_script_user_values[name] = temp_val
             elif ptype == "selectbox":
                 options = param_info.get("options", [])
                 val = current_value if current_value in options else (options[0] if options else None)
                 idx = options.index(val) if val in options else 0
                 if val is not None:
-                    ss.optimisation_script_user_values[name] = streamlit.selectbox(
+                    temp_val = streamlit.selectbox(
                         label, options=options, index=idx, help=help_text, key=widget_key
                     )
+                    ss.optimisation_script_user_values[name] = temp_val
                 else:
                     streamlit.warning(f"Parameter '{label}' (selectbox) has no options or valid default.")
             else: # Default to string/text input
@@ -81,11 +85,11 @@ def render_edit_optimisation_parameters_view(ss):
     col_cancel, col_save = streamlit.columns(2)
     with col_cancel: # Cancel button now on the left
         if streamlit.button("Cancel", key="cancel_edit_params_btn", use_container_width=True):
-            result = optimisation_logic.handle_save_parameters_action(ss)
-            display_operation_result(result) # Show success message
+            optimisation_logic.handle_cancel_edit_parameters_action(ss)
             streamlit.rerun()
 
     with col_save: # Save button now on the right
         if streamlit.button("Save", key="save_edit_params_btn", use_container_width=True):
-            optimisation_logic.handle_cancel_edit_parameters_action(ss)
+            result = optimisation_logic.handle_save_parameters_action(ss)
+            display_operation_result(result) # Show success message
             streamlit.rerun()
