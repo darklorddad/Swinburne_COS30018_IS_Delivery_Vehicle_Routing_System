@@ -1,8 +1,6 @@
 # DVRS Optimisation Script: Greedy Nearest Neighbour
 import math
 
-
-// I want you to give me example schema AI!
 def get_params_schema():
     # Defines the parameters accepted by this script.
     # This basic greedy optimiser does not require any configurable parameters.
@@ -10,7 +8,6 @@ def get_params_schema():
     return {
         "parameters": [] # No parameters for this version
     }
-
 
 def _calculate_distance(coord1, coord2):
     # Calculates Euclidean distance between two points.
