@@ -171,6 +171,7 @@ def render_jade_operations_tab(ss):
                     display_operation_result({'type': msg_type, 'message': msg_str})
                 
         elif ss.get("jade_platform_running"): # Platform running, but agents not created
+            pass  # Add empty block to fix indentation error
 
     # --- Logs (only if JADE is running) ---
     if ss.get("jade_platform_running"):
