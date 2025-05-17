@@ -61,7 +61,8 @@ def _apply_custom_styling(ss):
     /* Standardise alert box colours */
     div[data-testid="stAlert"] > div {{
         background-color: #f0f0f0 !important;
-        border-color: #cccccc !important;
+        border: 1px solid #000000 !important;
+        border-radius: 0.5rem !important;
         color: #000000 !important;
     }}
     </style>
