@@ -52,11 +52,11 @@ def _apply_custom_styling(ss):
             border-radius: 0.5rem; 
         }}
     /* Standardise alert box colours */
-    div[data-testid="stAlert"] > div {
+    div[data-testid="stAlert"] > div {{
         background-color: #f0f0f0 !important;
         border-color: #cccccc !important;
         color: #000000 !important;
-    }
+    }}
     </style>
     """
     streamlit.markdown(custom_css, unsafe_allow_html = True)
