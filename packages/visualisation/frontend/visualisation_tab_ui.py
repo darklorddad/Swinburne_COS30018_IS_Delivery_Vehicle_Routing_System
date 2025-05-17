@@ -13,7 +13,6 @@ def _get_stop_coordinates(stop_id, config_data):
 
 # Renders the Visualisation tab.
 def render_visualisation_tab(ss):
-    streamlit.header("Route Visualisation")
 
     if not ss.get("optimisation_run_complete") or not ss.get("optimisation_results"):
         streamlit.info("Optimisation results are not available. Please run an optimisation in the 'Optimisation' tab first to see the visualisation.")
