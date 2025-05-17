@@ -87,14 +87,14 @@ def _render_main_layout(ss):
             render_visualisation_tab(ss) # Call the new rendering function
 
         with tab_settings:
-            with streamlit.expander("UI Settings", expanded=True):
+            with streamlit.expander("User Interface", expanded=True):
+                streamlit.markdown("---")
                 streamlit.toggle(
-                "Show Streamlit Header",
+                "Show Streamlit header",
                 value = ss.show_header,
                 key = "show_header_toggle_widget",
                 on_change = config_logic.handle_show_header_toggle,
                 args = (ss,),
-                help = "Toggle the visibility of the default Streamlit header bar."
             )
 
 def main():
