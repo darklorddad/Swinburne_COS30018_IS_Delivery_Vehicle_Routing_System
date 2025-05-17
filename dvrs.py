@@ -41,6 +41,13 @@ def _apply_custom_styling(ss):
             visibility: hidden !important;
         }}
 
+        /* Style text inputs to match number inputs borders */
+        input[type="text"] {{
+            border: 1px solid #cccccc !important;
+            border-radius: 0.25rem !important;
+            padding: 0.375rem 0.75rem !important;
+        }}
+
         /* Style for key content containers (tab panels, expanders) */
         div[data-testid="stTabPanel"],
         div[data-testid="stExpander"] {{
