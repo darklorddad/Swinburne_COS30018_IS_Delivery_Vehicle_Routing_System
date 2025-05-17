@@ -87,8 +87,8 @@ def _render_main_layout(ss):
             render_visualisation_tab(ss) # Call the new rendering function
 
         with tab_settings:
-            streamlit.header("UI Settings")
-            streamlit.toggle(
+            with streamlit.expander("UI Settings", expanded=True):
+                streamlit.toggle(
                 "Show Streamlit Header",
                 value = ss.show_header,
                 key = "show_header_toggle_widget",
