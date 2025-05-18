@@ -39,17 +39,17 @@ def _render_script_management_section(ss):
             streamlit.markdown("---")  # Divider before script management buttons
             streamlit.success(f"{ss.optimisation_script_filename}")  # Moved script memory display here
             
+            # "Load Another Optimisation Script" button moved here
+            if streamlit.button("Load script", key="initiate_load_another_script_btn", use_container_width=True):
+                optimisation_logic.handle_initiate_load_script_action(ss)
+                streamlit.rerun()
+            
             if streamlit.button("Edit parameters", key="edit_script_parameters_btn", use_container_width=True):
                 optimisation_logic.handle_edit_parameters_action(ss)
                 streamlit.rerun()
             
             if streamlit.button("Clear script", key="clear_optimisation_script_initial_view_btn", use_container_width=True):
                 optimisation_logic.clear_optimisation_script(ss)
-                streamlit.rerun()
-            
-            # "Load Another Optimisation Script" button moved here
-            if streamlit.button("Load script", key="initiate_load_another_script_btn", use_container_width=True):
-                optimisation_logic.handle_initiate_load_script_action(ss)
                 streamlit.rerun()
 
         elif ss.optimisation_script_error_message and not ss.optimisation_script_loaded_successfully:
