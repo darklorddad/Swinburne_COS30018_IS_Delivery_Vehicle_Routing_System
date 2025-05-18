@@ -69,12 +69,6 @@ def _apply_custom_styling(ss):
             /* Add rounded corners for a softer look */
             border-radius: 0.5rem; 
         }}
-    /* Standardise alert box colours */
-    div[data-testid="stAlert"] > div {{
-        background-color: #000000 !important;
-        border-radius: 0.5rem !important;
-        color: #f0f0f0 !important;
-    }}
     </style>
     """
     streamlit.markdown(custom_css, unsafe_allow_html = True)
