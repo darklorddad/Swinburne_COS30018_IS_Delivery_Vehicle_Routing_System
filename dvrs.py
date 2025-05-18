@@ -50,12 +50,12 @@ def _apply_custom_styling(ss):
             border-color: #007BFF !important;
         }}
 
-        /* Style select dropdown wrapper and its child to match text/number input borders */
-        div[data-baseweb="select"], div[data-baseweb="select"] > div {{
+        /* Style select dropdown child wrapper to match text/number input borders */
+        div[data-baseweb="select"] > div {{
             border: 1px solid #000000 !important;
             border-radius: 0.5rem !important;
         }}
-        div[data-baseweb="select"]:focus-within, div[data-baseweb="select"] > div:focus-within {{
+        div[data-baseweb="select"]:focus-within > div {{
             border-color: #007BFF !important;
         }}
 
