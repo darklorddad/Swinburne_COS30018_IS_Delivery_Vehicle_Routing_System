@@ -97,7 +97,7 @@ def confirm_load_configuration(ss):
             ss.config_filename_snapshot = ss.config_filename
             # Marks this file_id as processed to prevent re-processing the same buffer instance.
             ss.processed_file_id_for_buffer = ss.processed_file_id 
-            return {'type': 'success', 'message': f"Configuration '{ss.config_filename}' loaded successfully"}
+            return {'type': 'info', 'message': f"Configuration '{ss.config_filename}' loaded successfully"}
         else:
             # Marks as processed even if loading failed.
             ss.processed_file_id_for_buffer = ss.uploaded_file_buffer.file_id 
