@@ -42,13 +42,12 @@ def _apply_custom_styling(ss):
         }}
 
         /* Ensure text inputs have a visible black border and change colour on focus */
-        input[type="text"] {{
-            border: 1px solid #000000 !important;
+        div[data-testid="stTextInputRootElement"] {{
+            border-color: #000000 !important;
             border-radius: 0.25rem !important;
-            padding: 0.375rem 0.75rem !important;
         }}
-        input[type="text"]:focus {{
-            border: 1px solid #007BFF !important;
+        div[data-testid="stTextInputRootElement"]:focus-within {{
+            border-color: #007BFF !important;
         }}
 
         /* Style for key content containers (tab panels, expanders) */
