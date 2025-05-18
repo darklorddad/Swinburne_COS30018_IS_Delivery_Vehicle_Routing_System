@@ -34,7 +34,7 @@ def render_initial_view(ss):
             streamlit.markdown("---")
             
             config_status_message = (f"{ss.config_filename}")
-            streamlit.info(config_status_message)
+            streamlit.success(config_status_message)
             if streamlit.button("Edit configuration", key = "edit_config_btn", use_container_width = True):
                 config_logic.enter_edit_mode(ss)
                 streamlit.rerun()
