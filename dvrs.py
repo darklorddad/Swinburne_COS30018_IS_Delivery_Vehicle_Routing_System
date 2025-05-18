@@ -43,9 +43,14 @@ def _apply_custom_styling(ss):
 
         /* Style text inputs to match number inputs borders */
         input[type="text"] {{
-            border: 1px solid #cccccc !important;
+            border: 1px solid #000000 !important;
             border-radius: 0.25rem !important;
             padding: 0.375rem 0.75rem !important;
+            outline: none !important;
+        }}
+        input[type="text"]:focus {{
+            border: 1px solid #007BFF !important;
+            outline: none !important;
         }}
 
         /* Style for key content containers (tab panels, expanders) */
