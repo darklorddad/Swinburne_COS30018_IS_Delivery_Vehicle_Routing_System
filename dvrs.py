@@ -50,16 +50,13 @@ def _apply_custom_styling(ss):
             border-color: #007BFF !important;
         }}
 
-        /* Style selectbox input to match text/number input borders */
-        input[role="combobox"] {{
+        /* Style select dropdown wrapper to match text/number input borders */
+        div[data-baseweb="select"] {{
             border: 1px solid #000000 !important;
             border-radius: 0.5rem !important;
-            padding: 0.375rem 0.75rem !important;
-            background-color: transparent !important;
         }}
-        input[role="combobox"]:focus {{
+        div[data-baseweb="select"]:focus-within {{
             border-color: #007BFF !important;
-            outline: none !important;
         }}
 
         /* Style for key content containers (tab panels, expanders) */
