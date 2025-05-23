@@ -3,27 +3,27 @@
   "parcels": [
     {
       "id": "001",
-      "coordinates_x_y": [10, 10],
+      "coordinates_x_y": [11, 9],
       "weight": 10
     },
     {
       "id": "002",
-      "coordinates_x_y": [20, 20],
+      "coordinates_x_y": [19, 21],
       "weight": 10
     },
     {
       "id": "003",
-      "coordinates_x_y": [30, 30],
+      "coordinates_x_y": [32, 28],
       "weight": 20
     },
     {
       "id": "004",
-      "coordinates_x_y": [40, 40],
+      "coordinates_x_y": [38, 42],
       "weight": 20
     },
     {
       "id": "005",
-      "coordinates_x_y": [50, 50],
+      "coordinates_x_y": [51, 49],
       "weight": 30
     }
   ],

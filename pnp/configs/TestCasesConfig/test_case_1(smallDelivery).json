@@ -3,17 +3,17 @@
   "parcels": [
     {
       "id": "001",
-      "coordinates_x_y": [2, 3],
+      "coordinates_x_y": [3, 2],
       "weight": 4
     },
     {
       "id": "002",
-      "coordinates_x_y": [15, 7],
+      "coordinates_x_y": [16, 8],
       "weight": 6
     },
     {
       "id": "003",
-      "coordinates_x_y": [8, 12],
+      "coordinates_x_y": [7, 13],
       "weight": 3
     }
   ],

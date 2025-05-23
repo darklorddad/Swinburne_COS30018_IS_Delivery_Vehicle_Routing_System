@@ -3,42 +3,42 @@
   "parcels": [
     {
       "id": "001",
-      "coordinates_x_y": [101, 101],
+      "coordinates_x_y": [101, 99],
       "weight": 5
     },
     {
       "id": "002",
-      "coordinates_x_y": [102, 102],
+      "coordinates_x_y": [99, 102],
       "weight": 5
     },
     {
       "id": "003",
-      "coordinates_x_y": [103, 103],
+      "coordinates_x_y": [103, 101],
       "weight": 5
     },
     {
       "id": "004",
-      "coordinates_x_y": [104, 104],
+      "coordinates_x_y": [102, 104],
       "weight": 5
     },
     {
       "id": "005",
-      "coordinates_x_y": [105, 105],
+      "coordinates_x_y": [105, 103],
       "weight": 5
     },
     {
       "id": "006",
-      "coordinates_x_y": [106, 106],
+      "coordinates_x_y": [104, 106],
       "weight": 5
     },
     {
       "id": "007",
-      "coordinates_x_y": [107, 107],
+      "coordinates_x_y": [107, 105],
       "weight": 5
     },
     {
       "id": "008",
-      "coordinates_x_y": [108, 108],
+      "coordinates_x_y": [106, 108],
       "weight": 5
     }
   ],
