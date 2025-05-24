@@ -1,7 +1,7 @@
 .aider*
 __pycache__/
 __pycache__
-# dld/
+dld/dld.md
 MTPs-Main-Container.txt
 APDescription.txt
 jadeagents/
