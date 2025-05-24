@@ -25,8 +25,8 @@ from delivery agents
 Receive parcel list directly        Parcels come via Python optimization Remove Python dependency, read parcels from
                                     results                              config arguments
 
-Produce routes internally           Delegates to external Python         Implement routing algorithm in MRA using
-                                    optimization                         collected constraints
+Produce routes internally           Delegates to external Python         Validate Python-generated routes against
+                                    optimization                         live DA capacity constraints
 
 Send individual routes              Routes come pre-generated from       Generate and dispatch routes within MRA based
                                     Python                               on actual capacities
@@ -34,9 +34,9 @@ Send individual routes              Routes come pre-generated from       Generat
 **Acceptance Criteria**
 - [ ] Implement FIPA request protocol for DA capacity collection
 - [ ] Read parcel list directly from configuration arguments
-- [ ] Develop internal routing algorithm in MRA
-- [ ] Generate and dispatch routes based on live DA capacities
-- [ ] Remove Python optimization dependency from routing
+- [ ] Add validation of Python-generated routes
+- [ ] Verify route feasibility against live capacities
+- [ ] Maintain Python optimization integration
 
 **Technical Specifications**
 ```mermaid
@@ -47,8 +47,8 @@ sequenceDiagram
     Python->>MRA: Raw parcel data (ACL)
     MRA->>DA: Capacity Request (CFP)
     DA->>MRA: Capacity Response
-    MRA->>MRA: Generate routes using constraints
-    MRA->>MRA: Validate route feasibility
+    Python->>MRA: Proposed routes 
+    MRA->>MRA: Validate routes against constraints
     MRA->>DA: Assign routes (Propose)
     DA->>MRA: Accept/Reject
     MRA->>Python: Final routing status
@@ -62,4 +62,5 @@ sequenceDiagram
 **Migration Risks**
 - Requires parallel run of old/new systems during transition
 - Needs updated integration tests
-- May break existing Python optimization UI
+- Requires Python optimization to include capacity metadata
+- Needs enhanced error handling for invalid routes
