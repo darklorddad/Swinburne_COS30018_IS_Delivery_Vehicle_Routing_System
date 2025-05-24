@@ -11,25 +11,25 @@ priority: "Highest"
 
 **Architectural Requirements**
 1. ✅ Send individual routes to delivery agents
-2. ❌ Collect capacity constraints from DAs (static config only)
+2. ❌ Collect capacity constraints from DAs (static config only) 
 3. ❌ Receive parcel list directly (indirect via Python)
-4. ❌ Produce routes internally (external Python dependency)
+4. ❌ Validate routes against constraints (no verification)
 
 **Implementation Gaps**
 
 | Component              | Current State               | Required State                |
 |------------------------|-----------------------------|-------------------------------|
-| Capacity Collection    | Static configuration values | Dynamic DA messaging protocol | 
-| Parcel Handling         | Indirect Python results     | Direct ACL message ingestion  |
-| Route Generation        | Python optimization         | Internal constraint solver    |
-| Constraint Validation   | None                        | Pre-routing verification      |
+| Capacity Collection    | Static configuration values | Dynamic DA capacity updates   |
+| Parcel Handling         | Indirect Python results     | Direct agent communication    | 
+| Route Validation        | None                        | Pre-dispatch verification     |
+| DA Status Tracking      | None                        | Real-time capacity monitoring |
 
 **Acceptance Criteria**
 - [ ] Implement FIPA Subscribe protocol for DA capacity updates
-- [ ] Add parcel ingestion via JADE Agent Communication
-- [ ] Develop internal routing algorithm with capacity constraints
-- [ ] Remove external Python optimization dependency
-- [ ] Add validation framework for route feasibility
+- [ ] Add parcel ingestion via JADE Agent Communication  
+- [ ] Add validation framework for Python-generated routes
+- [ ] Maintain real-time DA capacity status tracking
+- [ ] Implement route verification pre-dispatch checks
 
 **Technical Specifications**
 ```mermaid
@@ -40,7 +40,8 @@ sequenceDiagram
     Python->>MRA: Raw parcel data (ACL)
     MRA->>DA: Capacity Request (CFP)
     DA->>MRA: Capacity Response
-    MRA->>MRA: Optimize routes
+    MRA->>MRA: Validate constraints
+    Python->>MRA: Proposed routes 
     MRA->>DA: Assign routes (Propose)
     DA->>MRA: Accept/Reject
     MRA->>Python: Final routing status
