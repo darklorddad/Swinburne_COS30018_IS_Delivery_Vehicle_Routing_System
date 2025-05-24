@@ -17,18 +17,13 @@ priority: "Highest"
 
 **Implementation Gaps**
 
-CRITERIA                            CURRENT IMPLEMENTATION              REQUIRED CHANGES
-─────────────────────────────────── ─────────────────────────────────── ────────────────────────────────────────────────
-Collect capacity constraints        Static config via Python            Add live capacity updates from DAs while
-from delivery agents                                                    maintaining Python integration
-
-Receive parcel list                 Via Python optimization results     Add direct config loading as fallback
-
-Validate route feasibility          Basic static config validation      Add real-time capacity verification against
-                                                                        live DA status
-
-Route optimization core             Python-generated routes             Add MRA-side validation layer for Python
-                                                                        optimization output
+| Criteria                          | Current Implementation           | Required Changes                              |
+|-----------------------------------|-----------------------------------|------------------------------------------------|
+| Collect capacity constraints      | Static config via Python          | Add live capacity updates from DAs while maintaining Python integration |
+| from delivery agents              |                                   |                                                |
+| Receive parcel list               | Via Python optimization results   | Add direct config loading as fallback          |
+| Validate route feasibility        | Basic static config validation    | Add real-time capacity verification against live DA status |
+| Route optimization core           | Python-generated routes           | Add MRA-side validation layer for Python optimization output |
 
 **Acceptance Criteria**
 - [x] Maintain Python optimization integration
