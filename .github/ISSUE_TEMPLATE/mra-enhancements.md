@@ -11,32 +11,31 @@ priority: "Highest"
 
 **Architectural Requirements**
 1. ✅ Send individual routes to delivery agents
-2. ❌ Collect capacity constraints from DAs (static config only) 
-3. ❌ Receive parcel list directly (indirect via Python)
-4. ❌ Validate routes against constraints (no verification)
+2. ⚠️ Collect capacity constraints from DAs (static config only) 
+3. ⚠️ Receive parcel list (via Python optimization results)
+4. ⚠️ Validate routes against static config constraints
 
 **Implementation Gaps**
 
 CRITERIA                            CURRENT IMPLEMENTATION              REQUIRED CHANGES
 ─────────────────────────────────── ─────────────────────────────────── ────────────────────────────────────────────────
-Collect capacity constraints        No capacity collection mechanism    Add FIPA request protocol in MRA to query DAs
-from delivery agents
+Collect capacity constraints        Static config via Python            Add live capacity updates from DAs while
+from delivery agents                                                    maintaining Python integration
 
-Receive parcel list directly        Parcels come via Python optimization Remove Python dependency, read parcels from
-                                    results                              config arguments
+Receive parcel list                 Via Python optimization results     Add direct config loading as fallback
 
-Produce routes internally           Delegates to external Python         Validate Python-generated routes against
-                                    optimization                         live DA capacity constraints
+Validate route feasibility          Basic static config validation      Add real-time capacity verification against
+                                                                        live DA status
 
-Send individual routes              Routes come pre-generated from       Generate and dispatch routes within MRA based
-                                    Python                               on actual capacities
+Route optimization core             Python-generated routes             Add MRA-side validation layer for Python
+                                                                        optimization output
 
 **Acceptance Criteria**
-- [ ] Implement FIPA request protocol for DA capacity collection
-- [ ] Read parcel list directly from configuration arguments
-- [ ] Add validation of Python-generated routes
-- [ ] Verify route feasibility against live capacities
-- [ ] Maintain Python optimization integration
+- [x] Maintain Python optimization integration
+- [ ] Add DA capacity heartbeat updates
+- [ ] Implement hybrid validation (static config + live DA status)
+- [ ] Add fallback config parcel loading
+- [ ] Create validation report format for Python optimization
 
 **Technical Specifications**
 ```mermaid
@@ -44,14 +43,16 @@ sequenceDiagram
     participant Python
     participant MRA
     participant DA
-    Python->>MRA: Raw parcel data (ACL)
-    MRA->>DA: Capacity Request (CFP)
-    DA->>MRA: Capacity Response
-    Python->>MRA: Proposed routes 
-    MRA->>MRA: Validate routes against constraints
-    MRA->>DA: Assign routes (Propose)
-    DA->>MRA: Accept/Reject
-    MRA->>Python: Final routing status
+    Python->>MRA: Optimized routes + parcel data
+    MRA->>DA: Verify capacity (CFP)
+    DA->>MRA: Current capacity status
+    MRA->>MRA: Validate against Python routes
+    alt Validation passed
+        MRA->>DA: Assign validated routes
+    else Validation failed
+        MRA->>Python: Request re-optimization
+    end
+    MRA->>Python: Final validation report
 ```
 
 **Required File Modifications**
