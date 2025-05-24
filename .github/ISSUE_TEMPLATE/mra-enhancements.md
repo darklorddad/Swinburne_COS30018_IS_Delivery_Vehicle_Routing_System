@@ -17,19 +17,26 @@ priority: "Highest"
 
 **Implementation Gaps**
 
-| Component              | Current State               | Required State                |
-|------------------------|-----------------------------|-------------------------------|
-| Capacity Collection    | Static configuration values | Dynamic DA capacity updates   |
-| Parcel Handling         | Indirect Python results     | Direct agent communication    | 
-| Route Validation        | None                        | Pre-dispatch verification     |
-| DA Status Tracking      | None                        | Real-time capacity monitoring |
+CRITERIA                            CURRENT IMPLEMENTATION              REQUIRED CHANGES
+─────────────────────────────────── ─────────────────────────────────── ────────────────────────────────────────────────
+Collect capacity constraints        No capacity collection mechanism    Add FIPA request protocol in MRA to query DAs
+from delivery agents
+
+Receive parcel list directly        Parcels come via Python optimization Remove Python dependency, read parcels from
+                                    results                              config arguments
+
+Produce routes internally           Delegates to external Python         Implement routing algorithm in MRA using
+                                    optimization                         collected constraints
+
+Send individual routes              Routes come pre-generated from       Generate and dispatch routes within MRA based
+                                    Python                               on actual capacities
 
 **Acceptance Criteria**
-- [ ] Implement FIPA Subscribe protocol for DA capacity updates
-- [ ] Add parcel ingestion via JADE Agent Communication  
-- [ ] Add validation framework for Python-generated routes
-- [ ] Maintain real-time DA capacity status tracking
-- [ ] Implement route verification pre-dispatch checks
+- [ ] Implement FIPA request protocol for DA capacity collection
+- [ ] Read parcel list directly from configuration arguments
+- [ ] Develop internal routing algorithm in MRA
+- [ ] Generate and dispatch routes based on live DA capacities
+- [ ] Remove Python optimization dependency from routing
 
 **Technical Specifications**
 ```mermaid
@@ -40,8 +47,8 @@ sequenceDiagram
     Python->>MRA: Raw parcel data (ACL)
     MRA->>DA: Capacity Request (CFP)
     DA->>MRA: Capacity Response
-    MRA->>MRA: Validate constraints
-    Python->>MRA: Proposed routes 
+    MRA->>MRA: Generate routes using constraints
+    MRA->>MRA: Validate route feasibility
     MRA->>DA: Assign routes (Propose)
     DA->>MRA: Accept/Reject
     MRA->>Python: Final routing status
