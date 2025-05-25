@@ -21,7 +21,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 * [Key Components](#-key-components)
 * [Contributing](#-contributing)
 * [License](#-license)
-* [Author & Citation](#-author--citation)
+* [Author and Citation](#-author--citation)
 
 ---
 
