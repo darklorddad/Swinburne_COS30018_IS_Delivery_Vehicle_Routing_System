@@ -120,12 +120,12 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
     * `demo-config.json`: An example JSON configuration file defining a warehouse, parcels, and delivery agents.
     * `demo-optimiser.py`: An example Python optimisation script implementing a greedy nearest-neighbour algorithm.
 
-## 🤝ontributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or open issues.
 
 ## License
 
-(Specify your project's license here, e.g., MIT, Apache 2.0, etc. If none, you can state "All rights reserved" or omit this section.)
+GPLv3
 
 ```
