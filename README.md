@@ -70,6 +70,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 * Python 3.x (with `pip` for package management).
 * Java Development Kit (JDK) - Ensure `java` and `javac` are in your system's PATH.
 * Necessary Python packages (typically `streamlit`, `py4j`, `matplotlib`). You might want to create a `requirements.txt`:
+
     ```bash
     pip install streamlit py4j matplotlib
     ```
@@ -77,21 +78,24 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 #### Running the Application
 
 1.  **Clone the repository** (if you haven't already):
+   
     ```bash
     git clone [your-repository-url]
     cd [repository-name]
     ```
-2.  **Ensure Dependencies are in Place:**
+3.  **Ensure Dependencies are in Place:**
     * JADE library (`jade.jar`): `dependencies/java/JADE-all-4.6.0/jade/lib/jade.jar`
     * Py4J Java library (`py4jX.X.X.jar`): `dependencies/python/py4j-0.10.9.9/py4j-java/py4j0.10.9.9.jar`
     * `org.json.jar` library: `dependencies/java/libs/json-20250107.jar`
     * Custom JADE agent source files (`.java`): `packages/execution/backend/java/scr/` (compiled automatically).
-3.  **Install Python packages** (if you have a `requirements.txt`):
+   
+4.  **Install Python packages** (if you have a `requirements.txt`):
     ```bash
     pip install -r requirements.txt
     ```
-4.  **Navigate to the root directory** of the project.
-5.  **Run the Streamlit application:**
+5.  **Navigate to the root directory** of the project.
+6.  **Run the Streamlit application:**
+   
     ```bash
     streamlit run dvrs.py
     ```
@@ -109,7 +113,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
     * Java agents in `packages/execution/backend/java/scr/` are compiled.
     * JADE platform starts with `Py4jGatewayAgent` (includes Py4J GatewayServer).
 6.  **Agent Creation:** Python, via Py4J, instructs `Py4jGatewayAgent` to create MRA & DAs.
-7.  **➡Dispatching Routes:** Python sends optimised routes (JSON) to `Py4jGatewayAgent` → MRA (JADE ACL message "FullVRPResults"). MRA parses and sends individual routes to DAs (JADE ACL message "VRPAssignment").
+7.  **Dispatching Routes:** Python sends optimised routes (JSON) to `Py4jGatewayAgent` → MRA (JADE ACL message "FullVRPResults"). MRA parses and sends individual routes to DAs (JADE ACL message "VRPAssignment").
 8.  **Route Simulation:** DAs simulate deliveries and send confirmations to MRA ("DeliveryConfirmation").
 9.  **Feedback & Logging:** MRA relays DA confirmations (e.g., to `Py4jGatewayAgent` for UI logging). JADE STDOUT/STDERR are displayed.
 10. **Visualisation:** Results are plotted using Matplotlib in the "Visualisation" tab.
@@ -162,7 +166,7 @@ Copyright (C) 2024-2025 [darklorddad](https://github.com/darklorddad).
 
 ---
 
-### Author & Citation
+### Author and Citation
 
 This Delivery Vehicle Routing System (DVRS) was principally developed by:
 
