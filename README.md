@@ -10,7 +10,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 
 ---
 
-## Table of Contents
+### Table of Contents
 
 * [Features](#-features)
 * [Core Technologies](#️-core-technologies)
@@ -25,7 +25,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 
 ---
 
-## Features
+### Features
 
 * **Configuration Management:**
     * Create, load, edit, and save delivery configurations (warehouse location, parcels, delivery agents) in JSON format.
@@ -51,7 +51,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 
 ---
 
-## Core Technologies
+### Core Technologies
 
 * **Python:**
     * **Streamlit:** For the web application user interface.
@@ -63,9 +63,9 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 
 ---
 
-## Getting Started
+### Getting Started
 
-### Prerequisites
+#### Prerequisites
 
 * Python 3.x (with `pip` for package management).
 * Java Development Kit (JDK) - Ensure `java` and `javac` are in your system's PATH.
@@ -74,7 +74,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
     pip install streamlit py4j matplotlib
     ```
 
-### Running the Application
+#### Running the Application
 
 1.  **Clone the repository** (if you haven't already):
     ```bash
@@ -99,7 +99,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 
 ---
 
-## How it Works (High-Level Flow)
+### How it Works (High-Level Flow)
 
 1.  **Configuration:** Load/create a JSON configuration (warehouse, parcels, delivery agents).
 2.  **Optimisation Script:** Upload a Python script with `get_params_schema()` and `run_optimisation()`.
@@ -131,7 +131,7 @@ sequenceDiagram
 
 ---
 
-## Key Components
+### Key Components
 
 * **`dvrs.py`:** Main Streamlit application entry point.
 * **`packages/configuration/`**: Configuration management.
@@ -146,13 +146,13 @@ sequenceDiagram
 
 ---
 
-## Contributing
+### Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or open issues.
 
 ---
 
-## License
+### License
 
 This project is licensed under the **GNU Affero General Public License v3.0**.
 See the [LICENSE](LICENSE) file for full details.
@@ -162,7 +162,7 @@ Copyright (C) 2024-2025 [darklorddad](https://github.com/darklorddad).
 
 ---
 
-## Author & Citation
+### Author & Citation
 
 This Delivery Vehicle Routing System (DVRS) was principally developed by:
 
@@ -172,4 +172,4 @@ This Delivery Vehicle Routing System (DVRS) was principally developed by:
 * **[Basilagas21](https://github.com/Basilagas21)**
 * **[AlishaMR-123](https://github.com/AlishaMR-123)**
 
-If you use this software in your research, projects or work, we would appreciate it if you could cite it.
+If you use this software in your research, projects, or work, we would appreciate it if you could cite it.
