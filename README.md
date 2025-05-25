@@ -26,7 +26,7 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
     * Built with Streamlit, providing an interactive web interface.
     * Includes options to toggle UI elements like the Streamlit header.
 
-## 🛠Core Technologies
+## Core Technologies
 
 * **Python:**
     * **Streamlit:** For the web application user interface.
@@ -123,7 +123,3 @@ The Delivery Vehicle Routing System (DVRS) is a Streamlit-based application desi
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or open issues.
-
-## License
-
-GPLv3
