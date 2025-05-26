@@ -49,6 +49,10 @@ def _apply_custom_styling(ss):
         position: relative; /* Establish stacking context for content */
         z-index: 0; /* Ensure content is above overlay */
       }
+      /* Make app view container transparent */
+      div[data-testid="stAppViewContainer"] {
+        background: transparent !important;
+      }
     </style>
 
     <div id="bgVideoContainer">
