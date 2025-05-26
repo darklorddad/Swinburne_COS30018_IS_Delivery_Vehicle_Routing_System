@@ -7,97 +7,6 @@ from packages.execution.backend import execution_logic
 from packages.execution.frontend.execution_tab_ui import render_jade_operations_tab 
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab # New import
 
-# Video background setup HTML/CSS/JS
-VIDEO_BACKGROUND_SETUP_HTML = """
-<style>
-  /* These styles will be global as they are injected into the main document */
-  body {
-    margin: 0; /* Reset browser default margin */
-  }
-  #bgGlobalVideoContainer { /* Renamed for clarity */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: -2; /* Furthest back, behind Streamlit app */
-    overflow: hidden;
-  }
-  #bgGlobalVideo { /* Renamed for clarity */
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  #bgGlobalVideoOverlay { /* Renamed for clarity */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5); /* Darkening overlay */
-    z-index: -1; /* Between video and Streamlit app */
-  }
-</style>
-
-<script>
-  // Encapsulate in a function to avoid re-declaration if script runs multiple times
-  function initGlobalVideoBackground() {
-    // Check if already initialized
-    if (document.getElementById('bgGlobalVideoContainer')) {
-      console.log('Global video background already initialized.');
-      return;
-    }
-    console.log('Initializing global video background...');
-
-    // Create Video Container
-    const videoContainer = document.createElement('div');
-    videoContainer.id = 'bgGlobalVideoContainer';
-    
-    // Create Video Element
-    const video = document.createElement('video');
-    video.id = 'bgGlobalVideo';
-    video.autoplay = true;
-    video.muted = true;
-    video.loop = true;      // Using simple loop for now for debugging
-    video.playsInline = true; // For iOS
-    video.setAttribute('controls', ''); // Add controls for debugging visibility
-
-    const source = document.createElement('source');
-    source.src = "https://static.vecteezy.com/system/resources/previews/027/787/658/mp4/abstract-pattern-animation-background-free-video.mp4";
-    source.type = "video/mp4";
-    video.appendChild(source);
-    video.insertAdjacentText('beforeend', "Your browser does not support the video tag.");
-
-    videoContainer.appendChild(video);
-    // Prepend to body to ensure it's "behind" other body elements early
-    document.body.prepend(videoContainer);
-
-    // Create Overlay
-    const overlay = document.createElement('div');
-    overlay.id = 'bgGlobalVideoOverlay';
-    // Prepend overlay after video container. CSS z-index will handle layering.
-    document.body.prepend(overlay);
-
-    // Simplified Playback Logic for Debugging
-    const videoDebug = document.getElementById('bgGlobalVideo');
-    if (videoDebug) {
-      console.log("Debug: Global video element #bgGlobalVideo created and found.", videoDebug);
-      videoDebug.play().then(() => {
-        console.log("Debug: videoDebug.play() promise resolved (autoplay likely OK).");
-      }).catch(error => {
-        console.error("Debug: videoDebug.play() promise rejected (autoplay likely FAILED):", error);
-        console.log("Debug: Try manually playing video via controls.");
-      });
-    } else {
-      console.error("Debug: Global video element #bgGlobalVideo NOT found after creation attempt.");
-    }
-  }
-
-  // Run the setup function after a short delay
-  // This gives Streamlit more time to initialize before we modify the DOM.
-  setTimeout(initGlobalVideoBackground, 200); // Delay by 200 milliseconds
-</script>
-"""
 
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
@@ -106,59 +15,150 @@ def _apply_custom_styling(ss):
     if not ss.show_header:
         header_style_properties += " display: none !important; visibility: hidden !important;"
 
-    # Inject the global video setup
-    streamlit.markdown(VIDEO_BACKGROUND_SETUP_HTML, unsafe_allow_html=True)
-
-    custom_css = f"""
+    # This string will contain all CSS and the JavaScript for video logic
+    styling_and_video_logic_html = f"""
     <style>
-        /* Style for Streamlit's default header */
-        header[data-testid = "stHeader"] {{
-            {header_style_properties}
-        }}
+      /* Style for the video injected by embed_video() */
+      #bgGlobalVideo {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover; /* Cover the entire viewport */
+        z-index: -2;       /* Place it furthest back */
+      }}
 
-        /* NOTE: .stApp / div[data-testid="stApp"] background styling is now handled 
-           by VIDEO_BACKGROUND_SETUP_HTML. */
+      /* Style for the overlay (created by JavaScript) */
+      #bgGlobalVideoOverlay {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5); /* 50% darkening */
+        z-index: -1;       /* Place it on top of video, behind Streamlit app */
+      }}
 
-        /* Hide step buttons on number inputs */
-        button[data-testid="stNumberInputStepDown"],
-        button[data-testid="stNumberInputStepUp"] {{
-            display: none !important;
-            visibility: hidden !important;
-        }}
+      /* Make Streamlit containers transparent */
+      body {{ margin: 0; }} /* Ensure no body margin */
+      
+      div[data-testid="stApp"],
+      div[data-testid="stAppViewContainer"],
+      div[data-testid="stAppViewContainer"] section.main,
+      header[data-testid="stHeader"] {{ /* Header transparency */
+        background: transparent !important;
+      }}
 
-        /* Ensure text inputs have a visible black border and change colour on focus */
-        div[data-testid="stTextInputRootElement"] {{
-            border-color: #000000 !important;
-            border-radius: 0.5rem !important;
-        }}
-        div[data-testid="stTextInputRootElement"]:focus-within {{
-            border-color: #007BFF !important;
-        }}
-
-        /* Style select dropdown child wrapper to match text/number input borders */
-        div[data-baseweb="select"] > div {{
-            border: 1px solid #000000 !important;
-            border-radius: 0.5rem !important;
-        }}
-        div[data-baseweb="select"]:focus-within > div {{
-            border-color: #007BFF !important;
-        }}
-
-        /* Style for key content containers (tab panels, expanders) */
-        div[data-testid="stTabPanel"],
-        div[data-testid="stExpander"] > details {{
-            background-color: rgba(0, 0, 0, 0.10);
-            backdrop-filter: blur(16px);
-        }}
+      /* Your other existing UI tweaks can be consolidated here */
+      button[data-testid="stNumberInputStepDown"],
+      button[data-testid="stNumberInputStepUp"] {{
+          display: none !important;
+          visibility: hidden !important;
+      }}
+      div[data-testid="stTextInputRootElement"] {{
+          border-color: #000000 !important;
+          border-radius: 0.5rem !important;
+      }}
+      div[data-testid="stTextInputRootElement"]:focus-within {{
+          border-color: #007BFF !important;
+      }}
+      div[data-baseweb="select"] > div {{
+          border: 1px solid #000000 !important;
+          border-radius: 0.5rem !important;
+      }}
+      div[data-baseweb="select"]:focus-within > div {{
+          border-color: #007BFF !important;
+      }}
+      div[data-testid="stTabPanel"],
+      div[data-testid="stExpander"] > details {{
+          background-color: rgba(0, 0, 0, 0.10); /* Frosted glass */
+          backdrop-filter: blur(16px);
+          padding: 1rem; 
+          border-radius: 0.5rem; 
+      }}
+      
+      /* Ensure Streamlit header visibility is controlled */
+      header[data-testid="stHeader"] {{
+          {header_style_properties}
+      }}
     </style>
+
+    <script>
+      function initYoYoVideoPlayback() {{
+        const video = document.getElementById('bgGlobalVideo');
+        if (!video) {{
+          console.error("#bgGlobalVideo not found. Ensure embed_video() has run and uses this ID.");
+          return;
+        }}
+
+        // Ensure no default loop or controls interfere with JS logic
+        video.removeAttribute('loop');
+        video.removeAttribute('controls'); // Remove controls if they were added for debugging
+
+        let direction = 1; // 1 for forward, -1 for reverse
+
+        const attemptPlay = () => {{
+          video.play().catch(error => {{
+            console.warn("Video play attempt failed:", error);
+          }});
+        }};
+
+        video.addEventListener('loadedmetadata', function() {{
+          console.log('Video metadata loaded for yo-yo playback.');
+          video.playbackRate = 1;
+          attemptPlay();
+        }});
+        
+        video.addEventListener('ended', function() {{
+          // This event fires when video finishes playing FORWARDS
+          if (direction === 1) {{
+            console.log('YoYo: Video ended (forward). Switching to reverse.');
+            direction = -1;
+            video.playbackRate = -1;
+            attemptPlay();
+          }}
+        }});
+
+        video.addEventListener('timeupdate', function() {{
+          if (direction === -1 && video.playbackRate === -1) {{
+            if (video.currentTime <= 0.1) {{ 
+              console.log('YoYo: Video reached beginning (reverse). Switching to forward.');
+              direction = 1; 
+              video.playbackRate = 1;
+              video.currentTime = 0; 
+              attemptPlay();
+            }}
+          }}
+        }});
+
+        // Create and prepend overlay if it doesn't exist
+        if (!document.getElementById('bgGlobalVideoOverlay')) {{
+          const overlay = document.createElement('div');
+          overlay.id = 'bgGlobalVideoOverlay';
+          document.body.prepend(overlay); // Prepend to ensure correct layering with z-index
+          console.log('Video overlay created for yo-yo background.');
+        }}
+        
+        // Initial play if metadata already loaded and paused
+        if (video.paused && video.readyState >= 2) {{ // HAVE_CURRENT_DATA or more
+            console.log('YoYo: Video initially paused with metadata, attempting play.');
+            video.playbackRate = 1;
+            attemptPlay();
+        }}
+      }}
+
+      // Run the video logic setup after a short delay
+      setTimeout(initYoYoVideoPlayback, 300); // Delay to ensure video tag is in DOM
+    </script>
     """
-    streamlit.markdown(custom_css, unsafe_allow_html = True)
+    streamlit.markdown(styling_and_video_logic_html, unsafe_allow_html=True)
 
 def embed_video():
     video_link = "https://static.vecteezy.com/system/resources/previews/027/787/658/mp4/abstract-pattern-animation-background-free-video.mp4"
     streamlit.markdown(f"""
-        <video autoplay muted loop id="myVideo">
-            <source src="{video_link}">
+        <video autoplay muted playsinline id="bgGlobalVideo">
+            <source src="{video_link}" type="video/mp4">
             Your browser does not support HTML5 video.
         </video>
     """, unsafe_allow_html=True)
