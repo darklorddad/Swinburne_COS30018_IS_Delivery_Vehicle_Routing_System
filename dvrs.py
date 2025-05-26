@@ -86,10 +86,7 @@ def _apply_custom_styling(ss):
       }}
     </style>
 
-    {/* Directly inject the HTML for the overlay div */}
     <div id="bgGlobalVideoOverlay"></div>
-
-    {/* All <script> tags related to video playback are removed */}
     """
     streamlit.markdown(styling_and_overlay_html, unsafe_allow_html=True)
 
