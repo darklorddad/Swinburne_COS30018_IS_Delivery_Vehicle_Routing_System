@@ -7,6 +7,114 @@ from packages.execution.backend import execution_logic
 from packages.execution.frontend.execution_tab_ui import render_jade_operations_tab 
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab # New import
 
+# Video background setup HTML/CSS/JS
+VIDEO_BACKGROUND_SETUP_HTML = """
+<style>
+  /* These styles will be global as they are injected into the main document */
+  body {
+    margin: 0; /* Reset browser default margin */
+  }
+  #bgGlobalVideoContainer { /* Renamed for clarity */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2; /* Furthest back, behind Streamlit app */
+    overflow: hidden;
+  }
+  #bgGlobalVideo { /* Renamed for clarity */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  #bgGlobalVideoOverlay { /* Renamed for clarity */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5); /* Darkening overlay */
+    z-index: -1; /* Between video and Streamlit app */
+  }
+
+  /* Make Streamlit containers transparent so video shows through */
+  div[data-testid="stApp"] {
+    background: transparent !important;
+  }
+  div[data-testid="stAppViewContainer"] {
+    background: transparent !important;
+  }
+  div[data-testid="stAppViewContainer"] section.main {
+    background: transparent !important;
+  }
+</style>
+
+<script>
+  // Encapsulate in a function to avoid re-declaration if script runs multiple times
+  function initGlobalVideoBackground() {
+    // Check if already initialized
+    if (document.getElementById('bgGlobalVideoContainer')) {
+      console.log('Global video background already initialized.');
+      return;
+    }
+    console.log('Initializing global video background...');
+
+    // Create Video Container
+    const videoContainer = document.createElement('div');
+    videoContainer.id = 'bgGlobalVideoContainer';
+    
+    // Create Video Element
+    const video = document.createElement('video');
+    video.id = 'bgGlobalVideo';
+    video.autoplay = true;
+    video.muted = true;
+    video.loop = true;      // Using simple loop for now for debugging
+    video.playsInline = true; // For iOS
+    video.setAttribute('controls', ''); // Add controls for debugging visibility
+
+    const source = document.createElement('source');
+    source.src = "https://static.vecteezy.com/system/resources/previews/027/787/658/mp4/abstract-pattern-animation-background-free-video.mp4";
+    source.type = "video/mp4";
+    video.appendChild(source);
+    video.insertAdjacentText('beforeend', "Your browser does not support the video tag.");
+
+    videoContainer.appendChild(video);
+    // Prepend to body to ensure it's "behind" other body elements early
+    document.body.prepend(videoContainer);
+
+    // Create Overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'bgGlobalVideoOverlay';
+    // Prepend overlay after video container. CSS z-index will handle layering.
+    document.body.prepend(overlay);
+
+    // Simplified Playback Logic for Debugging
+    const videoDebug = document.getElementById('bgGlobalVideo');
+    if (videoDebug) {
+      console.log("Debug: Global video element #bgGlobalVideo created and found.", videoDebug);
+      videoDebug.play().then(() => {
+        console.log("Debug: videoDebug.play() promise resolved (autoplay likely OK).");
+      }).catch(error => {
+        console.error("Debug: videoDebug.play() promise rejected (autoplay likely FAILED):", error);
+        console.log("Debug: Try manually playing video via controls.");
+      });
+    } else {
+      console.error("Debug: Global video element #bgGlobalVideo NOT found after creation attempt.");
+    }
+  }
+
+  // Run the setup function
+  // Ensuring DOM is ready can be helpful, though st.markdown usually injects late enough.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGlobalVideoBackground);
+  } else {
+    // DOMContentLoaded has already fired
+    initGlobalVideoBackground();
+  }
+</script>
+"""
+
 # Applies custom CSS to the Streamlit app.
 def _apply_custom_styling(ss):
     header_style_properties = "background-color: transparent !important;" 
@@ -14,106 +122,8 @@ def _apply_custom_styling(ss):
     if not ss.show_header:
         header_style_properties += " display: none !important; visibility: hidden !important;"
 
-    # Video background HTML/CSS/JS
-    video_background_html = """
-    <style>
-      body {
-        margin: 0; /* Ensure no default body margin */
-      }
-      #bgVideoContainer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw; /* Viewport width */
-        height: 100vh; /* Viewport height */
-        z-index: -2; /* Furthest back */
-        overflow: hidden; /* Hide anything that might spill out */
-      }
-      #bgVideo {
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* Cover the entire area, cropping if necessary */
-      }
-      #bgVideoOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5); /* 50% darkening overlay */
-        z-index: -1; /* Between video and Streamlit content */
-      }
-      /* Make Streamlit app background transparent to see the video */
-      div[data-testid="stApp"] {
-        background: transparent !important;
-        position: relative; /* Establish stacking context for content */
-        z-index: 0; /* Ensure content is above overlay */
-      }
-      /* Make app view container transparent */
-      div[data-testid="stAppViewContainer"] {
-        background: transparent !important;
-      }
-    </style>
-
-    <div id="bgVideoContainer">
-      <video id="bgVideo" autoplay muted playsinline>
-        <source src="https://static.vecteezy.com/system/resources/previews/027/787/658/mp4/abstract-pattern-animation-background-free-video.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-    <div id="bgVideoOverlay"></div>
-
-    <script>
-      const video = document.getElementById('bgVideo');
-      if (video) {
-        let direction = 1; // 1 for forward, -1 for reverse
-
-        // Function to attempt playing the video, handling potential errors
-        const attemptPlay = () => {
-          video.play().catch(error => {
-            console.warn("Video play attempt failed:", error);
-            // Autoplay can be restricted by browsers. 
-          });
-        };
-
-        video.addEventListener('loadedmetadata', function() {
-          // Ensure playbackRate is set once metadata is loaded, before first play
-          video.playbackRate = 1;
-          attemptPlay(); // Start initial playback
-        });
-        
-        video.addEventListener('ended', function() {
-          // This event fires when video finishes playing in the FORWARD direction
-          if (direction === 1) {
-            console.log('Video ended (forward). Switching to reverse.');
-            direction = -1;
-            video.playbackRate = -1; // Set to play in reverse
-            attemptPlay();
-          }
-        });
-
-        video.addEventListener('timeupdate', function() {
-          // When playing in reverse and reaching (or going past) the beginning
-          if (direction === -1 && video.playbackRate === -1 && video.currentTime <= 0.1) { // 0.1s threshold
-            console.log('Video reached beginning (reverse). Switching to forward.');
-            direction = 1;
-            video.playbackRate = 1;
-            video.currentTime = 0; // Ensure it starts precisely from the beginning
-            attemptPlay();
-          }
-        });
-
-        // Fallback if autoplay is initially prevented
-        if (video.paused) {
-             attemptPlay();
-        }
-
-      } else {
-        console.error("Video element #bgVideo not found.");
-      }
-    </script>
-    """
-    streamlit.components.v1.html(video_background_html, height=0, width=0)
+    # Inject the global video setup
+    streamlit.markdown(VIDEO_BACKGROUND_SETUP_HTML, unsafe_allow_html=True)
 
     custom_css = f"""
     <style>
@@ -122,22 +132,8 @@ def _apply_custom_styling(ss):
             {header_style_properties}
         }}
 
-        /*
-        NOTE: .stApp background styling is now handled by the HTML component
-              injected above for the video background.
-        
-        .stApp {{
-            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-            url(https://www.transparenttextures.com/patterns/otis-redding.png), 
-            radial-gradient(at 55% 17%, hsla(43, 71%, 37%, 1) 0px, transparent 50%), 
-            radial-gradient(at 27% 78%, hsla(187, 71%, 37%, 1) 0px, transparent 50%), 
-            radial-gradient(at 94% 10%, hsla(24, 71%, 37%, 1) 0px, transparent 50%), 
-            radial-gradient(at 21% 1%, hsla(332, 71%, 37%, 1) 0px, transparent 50%), 
-            radial-gradient(at 7% 96%, hsla(183, 71%, 37%, 1) 0px, transparent 50%), 
-            radial-gradient(at 95% 32%, hsla(263, 71%, 37%, 1) 0px, transparent 50%), 
-            radial-gradient(at 53% 81%, hsla(33, 71%, 37%, 1) 0px, transparent 50%);
-        }}
-        */
+        /* NOTE: .stApp / div[data-testid="stApp"] background styling is now handled 
+           by VIDEO_BACKGROUND_SETUP_HTML. */
 
         /* Hide step buttons on number inputs */
         button[data-testid="stNumberInputStepDown"],
