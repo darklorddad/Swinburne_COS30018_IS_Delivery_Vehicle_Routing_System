@@ -147,51 +147,7 @@ def render_initial_optimisation_view(ss):
         # The info message about no configurable parameters has been removed as per request.
         # If parameters exist, they are edited in the "Edit Script Parameters" view.
         # No need to display them here in read-only mode.
-
-        with streamlit.expander("Route Optimisation", expanded=True): # Renamed expander
-            streamlit.markdown("---") # Divider above "Run optimisation" button
-            # Action button: Run Optimisation
-            run_disabled = not (ss.optimisation_script_loaded_successfully and ss.config_data)
-            if streamlit.button("Run optimisation", key = "run_optimisation_script_button", disabled = run_disabled, use_container_width = True): # Renamed button
-                if not ss.config_data: 
-                     streamlit.error("Cannot run: Main configuration data is missing.")
-                else:
-                    optimisation_logic.execute_optimisation_script(ss)
-                    streamlit.rerun() 
-            
-            # Removed divider between button and feedback message
-
-            # Display execution results or errors
-            if ss.optimisation_run_error:
-                streamlit.error(f"Execution Error: {ss.optimisation_run_error}")
-            
-            if ss.optimisation_run_complete:
-                if ss.optimisation_results is not None:
-                    streamlit.success("Route optimised") # Renamed success message
-                    results = ss.optimisation_results # Ensure results is defined for the check below
-
-                    # Display "All parcels assigned" message if applicable
-                    all_parcels_assigned = (
-                        "optimised_routes" in results and results["optimised_routes"] and
-                        not ("unassigned_parcels_details" in results and results["unassigned_parcels_details"])
-                    )
-                    if all_parcels_assigned:
-                        streamlit.info("All parcels were assigned")
-                    else:
-                        streamlit.warning("Not all parcels could be assigned") # New warning message
-
-                    streamlit.markdown("---") # Divider between feedback message(s) and detailed results
-
-                    # Delegate results display to the local helper function
-                    _render_optimisation_results_display(results)
-                        
-                else: 
-                     streamlit.warning("Optimisation script completed but returned no results (None).")
         
-        # Expander to view the raw script content - REMOVED
-        
-        # Expander to view the raw optimisation output
-        if ss.optimisation_run_complete and ss.optimisation_results:
-            with streamlit.expander("Raw Output", expanded=False): # Renamed expander
-                streamlit.markdown("---") # Added divider
-                streamlit.json(ss.optimisation_results)
+        # The "Route Optimisation" expander and "Raw Output" expander have been removed from this view.
+        # Their functionalities are moved to the Execution tab.
+        pass
