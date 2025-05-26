@@ -186,9 +186,9 @@ def _apply_custom_styling(ss):
     streamlit.markdown(styling_and_video_logic_html, unsafe_allow_html=True)
 
 def embed_video():
-    video_link = "https://static.vecteezy.com/system/resources/previews/027/787/658/mp4/abstract-pattern-animation-background-free-video.mp4"
+    video_link = "https://static.vecteezy.com/system/resources/previews/023/481/750/mp4/4k-damascus-steel-shine-background-free-video.mp4"
     streamlit.markdown(f"""
-        <video autoplay muted playsinline id="bgGlobalVideo">
+        <video autoplay muted playsinline loop id="bgGlobalVideo">
             <source src="{video_link}" type="video/mp4">
             Your browser does not support HTML5 video.
         </video>
