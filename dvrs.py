@@ -64,10 +64,6 @@ def _apply_custom_styling(ss):
         div[data-testid="stExpander"] > details {{
             background-color: rgba(0, 0, 0, 0.10);
             backdrop-filter: blur(16px);
-            /* Add some padding to make content look better inside these containers */
-            padding: 1rem; 
-            /* Add rounded corners for a softer look */
-            border-radius: 0.5rem; 
         }}
     </style>
     """
