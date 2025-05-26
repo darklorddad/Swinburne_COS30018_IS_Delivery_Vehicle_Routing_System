@@ -105,5 +105,47 @@ public class Py4jGatewayAgent extends Agent {
         }
     }
 
+    /**
+     * Called by Python to get compiled optimization data from the MasterRoutingAgent.
+     * This method will send a request to the MRA and wait for its response.
+     * @param mraName The local name of the MasterRoutingAgent (e.g., "MRA").
+     * @return A JSON string containing the compiled data from MRA, 
+     * or a JSON string with an error field if something goes wrong.
+     */
+    public String getCompiledOptimizationDataFromMRA(String mraName) {
+        System.out.println("Py4jGatewayAgent: Received request from Python to get compiled data from MRA: " + mraName);
+        try {
+            ACLMessage requestToMRA = new ACLMessage(ACLMessage.REQUEST);
+            requestToMRA.addReceiver(new AID(mraName, AID.ISLOCALNAME));
+            requestToMRA.setOntology("RequestCompiledData"); // MRA listens for this
+            requestToMRA.setLanguage("JSON"); // Though content is empty for this request type
+            String conversationId = "get-data-" + System.currentTimeMillis();
+            requestToMRA.setConversationId(conversationId);
+            requestToMRA.setReplyWith(conversationId + "-reply"); // Helps MRA to set inReplyTo
+            
+            send(requestToMRA);
+            System.out.println("Py4jGatewayAgent: Sent 'RequestCompiledData' to MRA '" + mraName + "'. Waiting for reply...");
+
+            // Wait for the MRA's reply
+            // Match based on ontology and conversation ID for robustness
+            MessageTemplate mtReply = MessageTemplate.and(
+                MessageTemplate.MatchOntology("CompiledDataResponse"), // MRA replies with this ontology
+                MessageTemplate.MatchConversationId(conversationId)
+            );
+            ACLMessage replyFromMRA = blockingReceive(mtReply, 10000); // Wait for 10 seconds (adjust timeout as needed)
+
+            if (replyFromMRA != null) {
+                System.out.println("Py4jGatewayAgent: Received compiled data reply from MRA: " + replyFromMRA.getContent());
+                return replyFromMRA.getContent(); // This is the JSON string from MRA
+            } else {
+                System.err.println("Py4jGatewayAgent: No reply from MRA '" + mraName + "' for compiled data request within timeout.");
+                return "{\"error\": \"Timeout: MRA did not reply to data request\"}";
+            }
+        } catch (Exception e) {
+            System.err.println("Py4jGatewayAgent: Error requesting/receiving compiled data from MRA '" + mraName + "': " + e.getMessage());
+            e.printStackTrace();
+            return "{\"error\": \"Exception in Py4jGatewayAgent: " + e.getMessage() + "\"}";
+        }
+    }
     // dispatchIndividualRoute method is removed. MRA now handles individual dispatch.
 }
