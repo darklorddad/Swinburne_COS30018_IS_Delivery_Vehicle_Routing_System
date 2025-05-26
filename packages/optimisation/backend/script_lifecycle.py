@@ -125,6 +125,12 @@ def run_script(ss, mra_compiled_data_json_str, user_params):
             "delivery_agents" not in optimisation_input_data):
             optimisation_input_data["delivery_agents"] = optimisation_input_data.pop("delivery_agent_statuses")
             
+        # Transform agent's 'agent_id' key to 'id' for compatibility
+        if "delivery_agents" in optimisation_input_data and isinstance(optimisation_input_data["delivery_agents"], list):
+            for agent_info in optimisation_input_data["delivery_agents"]:
+                if isinstance(agent_info, dict) and "agent_id" in agent_info and "id" not in agent_info:
+                    agent_info["id"] = agent_info.pop("agent_id")
+            
     except Exception as e:
         ss.optimisation_run_error = f"Error parsing MRA compiled data JSON: {str(e)}"
         return
