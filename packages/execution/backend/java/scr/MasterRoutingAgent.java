@@ -76,6 +76,45 @@ public class MasterRoutingAgent extends Agent {
                             queryToDA.setOntology("QueryDAStatus");
                             String convId = "status-query-" + daName + "-" + System.currentTimeMillis();
                             queryToDA.setConversationId(convId);
+                            queryToDA.setReplyWith(convId + "-reply");
+                            myAgent.send(queryToDA);
+                            System.out.println("MRA: Sent QueryDAStatus to " + daName);
+
+                            MessageTemplate mtReplyFromDA = MessageTemplate.and(
+                                MessageTemplate.MatchOntology("DAStatusReport"),
+                                MessageTemplate.MatchInReplyTo(queryToDA.getReplyWith())
+                            );
+                            ACLMessage daReply = myAgent.blockingReceive(mtReplyFromDA, 3000);
+
+                            if (daReply != null) {
+                                try {
+                                    JSONObject daStatusJson = new JSONObject(daReply.getContent());
+                                    liveDAStatuses.put(daStatusJson);
+                                    deliveryAgentStatuses.put(daReply.getSender(), daStatusJson);
+                                    System.out.println("MRA: Received status from " + daName + ": " + daStatusJson.toString());
+                                } catch (Exception e_parse) {
+                                    System.err.println("MRA: Error parsing DAStatusReport JSON from " + daName + ": " + e_parse.getMessage());
+                                }
+                            } else {
+                                System.err.println("MRA: No status reply from DA " + daName + " within timeout.");
+                            }
+                        }
+                    }
+                    compiledData.put("delivery_agent_statuses", liveDAStatuses);
+
+                    JSONArray deliveryAgentsFromConfig = initialConfigData.optJSONArray("delivery_agents");
+                    if (deliveryAgentsFromConfig != null) {
+                        System.out.println("MRA: Querying " + deliveryAgentsFromConfig.length() + " DAs for status...");
+                        for (int i = 0; i < deliveryAgentsFromConfig.length(); i++) {
+                            JSONObject daConfig = deliveryAgentsFromConfig.getJSONObject(i);
+                            String daName = daConfig.getString("id");
+                            AID daAID = new AID(daName, AID.ISLOCALNAME);
+
+                            ACLMessage queryToDA = new ACLMessage(ACLMessage.REQUEST);
+                            queryToDA.addReceiver(daAID);
+                            queryToDA.setOntology("QueryDAStatus");
+                            String convId = "status-query-" + daName + "-" + System.currentTimeMillis();
+                            queryToDA.setConversationId(convId);
                             queryToDA.setReplyWith(convId + "-reply"); // Helps DA to set inReplyTo
                             myAgent.send(queryToDA);
                             System.out.println("MRA: Sent QueryDAStatus to " + daName);

@@ -48,6 +48,33 @@ public class DeliveryAgent extends Agent {
             });
         }
 
+        // Behaviour to listen for status queries from MRA
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
+                MessageTemplate mtQuery = MessageTemplate.and(
+                    MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                    MessageTemplate.MatchOntology("QueryDAStatus")
+                );
+                ACLMessage queryMsg = myAgent.receive(mtQuery);
+                if (queryMsg != null) {
+                    System.out.println("DA " + getLocalName() + ": Received status query from " + queryMsg.getSender().getName());
+                    ACLMessage reply = queryMsg.createReply();
+                    reply.setPerformative(ACLMessage.INFORM);
+                    reply.setOntology("DAStatusReport");
+
+                    JSONObject statusPayload = new JSONObject();
+                    statusPayload.put("agent_id", getLocalName());
+                    statusPayload.put("capacity_weight", new JSONObject(configJsonString).optInt("capacity_weight", 0));
+                    statusPayload.put("operational_status", "available");
+                    reply.setContent(statusPayload.toString());
+                    myAgent.send(reply);
+                    System.out.println("DA " + getLocalName() + ": Sent status report to " + queryMsg.getSender().getName());
+                } else {
+                    block();
+                }
+            }
+        });
+
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 MessageTemplate mt = MessageTemplate.MatchOntology("VRPAssignment");

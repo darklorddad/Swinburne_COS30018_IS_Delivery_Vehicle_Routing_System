@@ -102,7 +102,7 @@ def load_and_process_script(ss, uploaded_file):
 
 # Executes the loaded optimisation script with the current configuration and parameters.
 # Updates session state (ss) with results or errors.
-def run_script(ss, mra_compiled_data_json_str):
+def run_script(ss, mra_compiled_data_json_str, user_params):
     if not ss.get("optimisation_script_loaded_successfully"): 
         ss.optimisation_run_error = "Optimisation script not loaded successfully. Please upload a valid script."
         ss.optimisation_run_complete = False
@@ -136,7 +136,7 @@ def run_script(ss, mra_compiled_data_json_str):
 
         if hasattr(exec_module, "run_optimisation") and callable(exec_module.run_optimisation):
             # Pass copies or immutable versions if necessary, though current script expects mutable.
-            results = exec_module.run_optimisation(ss.config_data, ss.optimisation_script_user_values)
+            results = exec_module.run_optimisation(optimisation_input_data, user_params)
             ss.optimisation_results = results
             ss.optimisation_run_complete = True
         else:
