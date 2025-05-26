@@ -90,8 +90,8 @@ def execute_optimisation_script(ss):
 
     # Pass the fetched data to script_lifecycle.run_script
     script_lifecycle.run_script(ss, data_json_str, ss.optimisation_script_user_values)
-        ss.optimisation_run_error = f"Failed to get compiled data from MRA '{mra_name}': {error_msg}"
-        return
+    ss.optimisation_run_error = f"Failed to get compiled data from MRA '{mra_name}': {error_msg}"
+    return
     if not data_json_str:
         ss.optimisation_run_error = f"MRA '{mra_name}' returned no data."
         return
