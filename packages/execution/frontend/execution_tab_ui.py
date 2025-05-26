@@ -3,6 +3,7 @@ import pandas as pd # For creating DataFrames for tables
 import json
 from ..backend import execution_logic
 from packages.optimisation.backend import optimisation_logic
+from packages.optimisation.frontend.optimisation_ui_utils import render_optimisation_results_display
 from packages.configuration.frontend.ui_utils import display_operation_result
 
 # Helper to determine message type from a string for display_operation_result
