@@ -6,6 +6,8 @@
 from . import script_utils # Retained if any direct utility use, but likely not needed
 from . import parameter_logic
 from . import script_lifecycle # Import the new script lifecycle module
+from packages.execution.backend import execution_logic
+from packages.execution.backend import py4j_gateway
 
 # Initialises session state variables specific to the optimisation module.
 def initialise_session_state(ss):
