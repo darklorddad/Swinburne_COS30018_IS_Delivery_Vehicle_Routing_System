@@ -11,13 +11,14 @@ import org.json.JSONArray;
 
 public class DeliveryAgent extends Agent {
     private static final long TRAVEL_TIME_PER_STOP_MS = 2000; // Simulate 2 seconds travel/stop time
+    private String agentInitialConfigJsonString; // Field to store config
 
     protected void setup() {
         System.out.println("DeliveryAgent " + getAID().getName() + " is ready and waiting for routes.");
         Object[] args = getArguments();
         if (args != null && args.length > 0 && args[0] instanceof String) {
-            String configJsonString = (String) args[0];
-            System.out.println("DA " + getLocalName() + " initialised with Configuration (JSON): " + configJsonString);
+            this.agentInitialConfigJsonString = (String) args[0]; // Initialize the field
+            System.out.println("DA " + getLocalName() + " initialised with Configuration (JSON): " + this.agentInitialConfigJsonString);
 
             // Behaviour to listen for status queries from MRA
             addBehaviour(new CyclicBehaviour(this) {
@@ -36,7 +37,7 @@ public class DeliveryAgent extends Agent {
                         JSONObject statusPayload = new JSONObject();
                         statusPayload.put("agent_id", getLocalName());
                         // Capacity is from its initial config
-                        statusPayload.put("capacity_weight", new JSONObject(configJsonString).optInt("capacity_weight", 0));
+                        statusPayload.put("capacity_weight", new JSONObject(agentInitialConfigJsonString).optInt("capacity_weight", 0));
                         statusPayload.put("operational_status", "available"); // Could be dynamic based on current DA state
                         reply.setContent(statusPayload.toString());
                         myAgent.send(reply);
@@ -48,32 +49,7 @@ public class DeliveryAgent extends Agent {
             });
         }
 
-        // Behaviour to listen for status queries from MRA
-        addBehaviour(new CyclicBehaviour(this) {
-            public void action() {
-                MessageTemplate mtQuery = MessageTemplate.and(
-                    MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
-                    MessageTemplate.MatchOntology("QueryDAStatus")
-                );
-                ACLMessage queryMsg = myAgent.receive(mtQuery);
-                if (queryMsg != null) {
-                    System.out.println("DA " + getLocalName() + ": Received status query from " + queryMsg.getSender().getName());
-                    ACLMessage reply = queryMsg.createReply();
-                    reply.setPerformative(ACLMessage.INFORM);
-                    reply.setOntology("DAStatusReport");
-
-                    JSONObject statusPayload = new JSONObject();
-                    statusPayload.put("agent_id", getLocalName());
-                    statusPayload.put("capacity_weight", new JSONObject(configJsonString).optInt("capacity_weight", 0));
-                    statusPayload.put("operational_status", "available");
-                    reply.setContent(statusPayload.toString());
-                    myAgent.send(reply);
-                    System.out.println("DA " + getLocalName() + ": Sent status report to " + queryMsg.getSender().getName());
-                } else {
-                    block();
-                }
-            }
-        });
+        // The second identical CyclicBehaviour for QueryDAStatus has been removed.
 
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
