@@ -44,7 +44,7 @@ def _apply_custom_styling(ss):
         z-index: -1; /* Between video and Streamlit content */
       }
       /* Make Streamlit app background transparent to see the video */
-      .stApp {
+      div[data-testid="stApp"] {
         background: transparent !important;
         position: relative; /* Establish stacking context for content */
         z-index: 0; /* Ensure content is above overlay */
