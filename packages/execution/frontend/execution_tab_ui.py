@@ -119,14 +119,17 @@ def render_jade_operations_tab(ss):
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
 
-        # --- Optimisation Execution ---
-        with streamlit.expander("Optimisation Execution", expanded=True):
+    # --- Master Routing Agent Operations ---
+    if ss.get("jade_platform_running"): # This section only active if JADE is running
+        with streamlit.expander("Master Routing Agent Operations", expanded=True):
             streamlit.markdown("---")
-        
-            # Fetch data section
-            if streamlit.button("Fetch Data for Optimisation", 
-                              key="fetch_optimisation_data_btn",
-                              use_container_width=True):
+
+            # --- Fetch Data Section ---
+            if streamlit.button("Fetch Data for Optimisation & DA Status",
+                                key="fetch_optimisation_data_btn",
+                                use_container_width=True,
+                                disabled=not ss.get("jade_agents_created", False)
+                                ):
                 result = optimisation_logic.fetch_data_for_optimisation(ss)
                 display_operation_result(result)
                 streamlit.rerun()
@@ -136,106 +139,104 @@ def render_jade_operations_tab(ss):
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
 
-            # Run optimisation section
+            # --- Display DA Capacity Status ---
+            if ss.get("optimisation_input_data_json_str") and ss.get("optimisation_input_data_ready"):
+                try:
+                    full_data = json.loads(ss.optimisation_input_data_json_str)
+                    da_statuses = full_data.get("delivery_agent_statuses", [])
+                    if da_statuses:
+                        streamlit.markdown("##### Delivery Agent Statuses")
+                        status_df_data = []
+                        for da_status in da_statuses:
+                            status_df_data.append({
+                                "Agent ID": da_status.get("agent_id", "N/A"),
+                                "Capacity Weight": da_status.get("capacity_weight", "N/A"),
+                                "Operational Status": da_status.get("operational_status", "N/A")
+                            })
+                        streamlit.dataframe(pd.DataFrame(status_df_data), use_container_width=True, hide_index=True)
+                    else:
+                        streamlit.info("No Delivery Agent statuses reported by MRA in the fetched data.")
+                except json.JSONDecodeError:
+                    streamlit.warning("Could not parse DA statuses from fetched data (invalid JSON).")
+                except Exception as e:
+                    streamlit.warning(f"Could not display DA statuses: {str(e)}")
+                streamlit.markdown("---")
+
+            # --- Display Data for Optimiser ---
+            if ss.get("optimisation_input_data_json_str") and ss.get("optimisation_input_data_ready"):
+                streamlit.markdown("##### Input Data for Optimisation Script")
+                streamlit.json(ss.optimisation_input_data_json_str, expanded=False)
+                streamlit.markdown("---")
+
+            # --- Run Optimisation Section ---
             run_disabled = not (ss.optimisation_script_loaded_successfully and ss.optimisation_input_data_ready)
-            if streamlit.button("Run Optimisation", 
-                              key="run_optimisation_script_button", 
-                              use_container_width=True,
-                              disabled=run_disabled):
+            if streamlit.button("Run Optimisation Script",
+                                key="run_optimisation_script_button",
+                                use_container_width=True,
+                                disabled=run_disabled):
                 result = optimisation_logic.run_optimisation_script_with_prepared_data(ss)
                 display_operation_result(result)
-                streamlit.rerun()
+                if result and result.get('type') == 'success':
+                    streamlit.rerun()
 
-            # Display execution results or errors
-            if ss.optimisation_run_error:
-                streamlit.error(f"Execution Error: {ss.optimisation_run_error}")
-        
+            if ss.optimisation_execution_tab_run_status_message:
+                 msg_str = ss.optimisation_execution_tab_run_status_message
+                 msg_type = _determine_message_type_from_string(msg_str)
+                 display_operation_result({'type': msg_type, 'message': msg_str})
+
             if ss.optimisation_run_complete:
                 if ss.optimisation_results is not None:
-                    streamlit.success("Optimisation completed successfully")
                     results = ss.optimisation_results
-
-                    # Display "All parcels assigned" message if applicable
                     all_parcels_assigned = (
                         "optimised_routes" in results and results["optimised_routes"] and
                         not ("unassigned_parcels_details" in results and results["unassigned_parcels_details"])
                     )
                     if all_parcels_assigned:
-                        streamlit.info("All parcels were assigned")
+                        streamlit.info("All parcels were assigned by the optimisation script.")
                     else:
-                        streamlit.warning("Not all parcels could be assigned")
-
-                    streamlit.markdown("---") # Divider between feedback and results
-
-        # --- Route Management (only if JADE is running and agents are created) ---
-        if ss.get("jade_agents_created"):
-            with streamlit.expander("Route Dispatch", expanded=True):
-                streamlit.markdown("---")
-                optimisation_complete = ss.get("optimisation_run_complete", False) and ss.get("optimisation_results") is not None
-
-                if not optimisation_complete:
-                    streamlit.warning("Optimisation results are not available. Please run an optimisation first.")
-                else:
-                    # Display routes to be sent
-                    if ss.optimisation_results.get("optimised_routes"):
-                        routes_to_display_data = []
-                        for route in ss.optimisation_results["optimised_routes"]:
-                            routes_to_display_data.append({
-                                "Agent ID": route.get("agent_id"),
-                                "Stop Sequence": ", ".join(route.get("route_stop_ids", [])),
-                                "Total Weight": route.get("total_weight"),
-                                "Total Distance": route.get("total_distance")
-                            })
-                        if routes_to_display_data:
-                            streamlit.dataframe(
-                                pd.DataFrame(routes_to_display_data), 
-                                use_container_width=True,
-                                hide_index=True
-                            )
-                        else:
-                            streamlit.info("No optimised routes to display or send from results.")
-                    else:
-                        streamlit.info("Optimisation results exist, but no 'optimised_routes' found to display or send.")
-
-                if streamlit.button("Send to MRA", 
-                                  key="trigger_mra_dispatch_btn", 
-                                  use_container_width=True,
-                                  disabled=not optimisation_complete):
-                    result = execution_logic.handle_trigger_mra_processing(ss)
-                    if result and result.get('type') == 'success':
-                        streamlit.rerun()
-
-                # Display route dispatch status message (persistently)
-                if ss.get("jade_dispatch_status_message"):
-                    msg_str = ss.jade_dispatch_status_message
-                    msg_type = _determine_message_type_from_string(msg_str)
-                    display_operation_result({'type': msg_type, 'message': msg_str})
-                
-        elif ss.get("jade_platform_running"): # Platform running, but agents not created
-            pass  # Add empty block to fix indentation error
-
-    # --- Logs (only if JADE is running) ---
-    if ss.get("jade_platform_running"):
-        with streamlit.expander("Agent Communication Logs", expanded=False):
+                        streamlit.warning("Not all parcels could be assigned by the optimisation script.")
+            elif ss.optimisation_run_error:
+                 streamlit.error(f"Optimisation Script Execution Error: {ss.optimisation_run_error}")
             streamlit.markdown("---")
-            log_messages_to_display = []
-            if ss.get("jade_platform_status_message"):
-                log_messages_to_display.append(("Platform Status", ss.jade_platform_status_message))
-            if ss.get("jade_agent_creation_status_message"):
-                log_messages_to_display.append(("Agent Creation Status", ss.jade_agent_creation_status_message))
-            # Assuming 'jade_dispatch_status_message' is the correct key for route dispatch status
-            if ss.get("jade_dispatch_status_message"): 
-                log_messages_to_display.append(("Route Dispatch Status", ss.jade_dispatch_status_message))
 
-            if not log_messages_to_display:
-                streamlit.info("No agent communication logs to display yet.")
+            # --- Route Dispatch to MRA Section ---
+            optimisation_complete_with_results = ss.get("optimisation_run_complete", False) and ss.get("optimisation_results") is not None
+
+            if not optimisation_complete_with_results:
+                streamlit.warning("Optimisation results are not available to be sent. Please run optimisation first.")
             else:
-                for category, msg_str in reversed(log_messages_to_display): # Show most recent first
-                    streamlit.caption(f"{category}:")
-                    msg_type = _determine_message_type_from_string(msg_str)
-                    
-                    if msg_type == 'success': streamlit.success(msg_str)
-                    elif msg_type == 'error': streamlit.error(msg_str)
-                    elif msg_type == 'warning': streamlit.warning(msg_str)
-                    else: streamlit.info(msg_str)
-                    # streamlit.markdown("---") # Optional: Separator between log entries
+                if ss.optimisation_results.get("optimised_routes"):
+                    streamlit.markdown("##### Optimised Routes to be Sent to MRA")
+                    routes_to_display_data = []
+                    for route in ss.optimisation_results["optimised_routes"]:
+                        routes_to_display_data.append({
+                            "Agent ID": route.get("agent_id"),
+                            "Stop Sequence": ", ".join(route.get("route_stop_ids", [])),
+                            "Total Weight": route.get("total_weight"),
+                            "Total Distance": route.get("total_distance")
+                        })
+                    if routes_to_display_data:
+                        streamlit.dataframe(
+                            pd.DataFrame(routes_to_display_data),
+                            use_container_width=True,
+                            hide_index=True
+                        )
+                    else:
+                        streamlit.info("No optimised routes to display or send from results.")
+                else:
+                    streamlit.info("Optimisation results exist, but no 'optimised_routes' found to display or send.")
+
+            if streamlit.button("Send Optimised Routes to MRA",
+                                key="trigger_mra_dispatch_btn",
+                                use_container_width=True,
+                                disabled=not optimisation_complete_with_results or not ss.get("jade_agents_created", False)
+                                ):
+                result = execution_logic.handle_trigger_mra_processing(ss)
+                display_operation_result(result)
+                if result and result.get('type') == 'success':
+                    streamlit.rerun()
+
+            if ss.get("jade_dispatch_status_message"):
+                msg_str = ss.jade_dispatch_status_message
+                msg_type = _determine_message_type_from_string(msg_str)
+                display_operation_result({'type': msg_type, 'message': msg_str})
