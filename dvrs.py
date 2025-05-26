@@ -61,7 +61,7 @@ def _apply_custom_styling(ss):
 
         /* Style for key content containers (tab panels, expanders) */
         div[data-testid="stTabPanel"],
-        div[data-testid="stExpander"] {{
+        div[data-testid="stExpander"] > details {{
             background-color: rgba(0, 0, 0, 0.10);
             backdrop-filter: blur(16px);
             /* Add some padding to make content look better inside these containers */
