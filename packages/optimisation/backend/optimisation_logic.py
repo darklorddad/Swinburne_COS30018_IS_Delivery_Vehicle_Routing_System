@@ -3,24 +3,23 @@
 # orchestrates calls to script_lifecycle.py for script operations
 # and parameter_logic.py for parameter editing state.
 
-from . import script_utils # Retained if any direct utility use, but likely not needed
+from . import script_utils
 from . import parameter_logic
-from . import script_lifecycle # Import the new script lifecycle module
+from . import script_lifecycle
 from packages.execution.backend import execution_logic
 from packages.execution.backend import py4j_gateway
 
 # Initialises session state variables specific to the optimisation module.
 def initialise_session_state(ss):
-    # Use a new key to ensure this initialisation logic runs if old state exists.
     if "optimisation_module_initialised_v2" not in ss:
         ss.optimisation_module_initialised_v2 = True
         
         # State for uploaded optimisation script
         ss.optimisation_script_content = None
         ss.optimisation_script_filename = None
-        ss.optimisation_script_param_schema = None # Schema extracted from the script
-        ss.optimisation_script_user_values = {} # User-defined values for the script's parameters
-        ss.optimisation_script_user_values_snapshot = {} # Snapshot for cancelling parameter edits
+        ss.optimisation_script_param_schema = None
+        ss.optimisation_script_user_values = {}
+        ss.optimisation_script_user_values_snapshot = {}
         ss.optimisation_script_loaded_successfully = False
         ss.optimisation_script_error_message = None
         
@@ -29,14 +28,20 @@ def initialise_session_state(ss):
         ss.optimisation_run_complete = False
         ss.optimisation_run_error = None
 
-        # Store temp dir and module name for cleanup of the schema-loaded module
+        # Data for optimisation
+        ss.optimisation_input_data_json_str = None
+        ss.optimisation_input_data_ready = False
+        ss.optimisation_data_compilation_status_message = None
+        ss.optimisation_execution_tab_run_status_message = None
+
+        # Store temp dir and module name for cleanup
         ss.optimisation_script_temp_dir_schema = None
         ss.optimisation_script_module_name_schema = None
 
-        # UI view state for optimisation tab
-        ss.optimisation_action_selected = None # None for initial view, "load_script" for loading view
+        # UI view state
+        ss.optimisation_action_selected = None
 
-        # Clean up old state variables from any previous version of this module.
+        # Clean up old state variables
         old_keys = [
             "optimisation_module_initialised", "selected_optimisation_technique_id",
             "available_optimisation_techniques", "optimisation_params", 
@@ -65,41 +70,99 @@ def handle_optimisation_file_upload(ss):
 
 # Executes the loaded optimisation script.
 # Delegates to script_lifecycle.run_script.
-def execute_optimisation_script(ss):
-    # Reset previous run state
-    ss.optimisation_results = None
-    ss.optimisation_run_complete = False
-    ss.optimisation_run_error = None
+def fetch_data_for_optimisation(ss):
+    ss.optimisation_input_data_json_str = None
+    ss.optimisation_input_data_ready = False
+    ss.optimisation_data_compilation_status_message = None
 
     if not ss.get("optimisation_script_loaded_successfully"):
-        ss.optimisation_run_error = "Optimisation script not loaded. Please load a script first."
-        return
+        msg = "Optimisation script not loaded. Please load a script first."
+        ss.optimisation_data_compilation_status_message = msg
+        return {'type': 'error', 'message': msg}
 
     if not ss.get("py4j_gateway_object"):
-        ss.optimisation_run_error = "JADE Gateway not available. Cannot fetch data from MRA. Please start JADE."
-        return
+        msg = "JADE Gateway not available. Cannot fetch data from MRA. Please ensure JADE is running and agents are created."
+        ss.optimisation_data_compilation_status_message = msg
+        return {'type': 'error', 'message': msg}
+    
+    if not ss.get("jade_agents_created"):
+        msg = "JADE agents (including MRA) not created. Please create agents first."
+        ss.optimisation_data_compilation_status_message = msg
+        return {'type': 'error', 'message': msg}
 
-    # Fetch compiled data from MRA
     mra_name = execution_logic.DEFAULT_MRA_NAME
-    data_json_str, error_msg = py4j_gateway.get_compiled_optimization_data_from_mra(ss.py4j_gateway_object, mra_name)
+    
+    try:
+        data_json_str, error_msg = py4j_gateway.get_compiled_optimization_data_from_mra(ss.py4j_gateway_object, mra_name)
 
-    if error_msg:
-        ss.optimisation_run_error = f"Failed to get compiled data from MRA '{mra_name}': {error_msg}"
-        return
-    if not data_json_str:
-        ss.optimisation_run_error = f"MRA '{mra_name}' returned no data (empty JSON string)."
-        return
+        if error_msg:
+            msg = f"Failed to get compiled data from MRA '{mra_name}': {error_msg}"
+            ss.optimisation_data_compilation_status_message = msg
+            return {'type': 'error', 'message': msg}
+        if not data_json_str:
+            msg = f"MRA '{mra_name}' returned no data (empty or null JSON string)."
+            ss.optimisation_data_compilation_status_message = msg
+            if data_json_str == "{}" or data_json_str.lower() == "null":
+                 ss.optimisation_input_data_ready = False
+                 return {'type': 'warning', 'message': msg + " This might indicate no parcels or DAs available."}
+            return {'type': 'error', 'message': msg}
+        
+        import json
+        try:
+            json.loads(data_json_str)
+        except json.JSONDecodeError as json_e:
+            msg = f"MRA '{mra_name}' returned invalid JSON data: {str(json_e)}. Data: {data_json_str[:200]}"
+            ss.optimisation_data_compilation_status_message = msg
+            return {'type': 'error', 'message': msg}
 
-    # Pass the fetched data to script_lifecycle.run_script
-    script_lifecycle.run_script(ss, data_json_str, ss.optimisation_script_user_values)
-    ss.optimisation_run_error = f"Failed to get compiled data from MRA '{mra_name}': {error_msg}"
-    return
-    if not data_json_str:
-        ss.optimisation_run_error = f"MRA '{mra_name}' returned no data."
-        return
+        ss.optimisation_input_data_json_str = data_json_str
+        ss.optimisation_input_data_ready = True
+        msg = f"Data for optimisation successfully fetched from MRA '{mra_name}'."
+        ss.optimisation_data_compilation_status_message = msg
+        return {'type': 'success', 'message': msg}
 
-    # Pass the fetched data to script_lifecycle.run_script
-    script_lifecycle.run_script(ss, data_json_str)
+    except Exception as e:
+        msg = f"An unexpected error occurred while fetching data from MRA: {str(e)}"
+        ss.optimisation_data_compilation_status_message = msg
+        return {'type': 'error', 'message': msg}
+
+def run_optimisation_script_with_prepared_data(ss):
+    ss.optimisation_results = None
+    ss.optimisation_run_complete = False
+    ss.optimisation_execution_tab_run_status_message = None
+
+    if not ss.get("optimisation_script_loaded_successfully"):
+        msg = "Optimisation script not loaded. Please load a script in the 'Optimisation' tab."
+        ss.optimisation_execution_tab_run_status_message = msg
+        return {'type': 'error', 'message': msg}
+
+    if not ss.get("optimisation_input_data_ready") or not ss.get("optimisation_input_data_json_str"):
+        msg = "Data for optimisation has not been successfully fetched from MRA. Please fetch data first."
+        ss.optimisation_execution_tab_run_status_message = msg
+        return {'type': 'error', 'message': msg}
+
+    script_lifecycle.run_script(
+        ss, 
+        ss.optimisation_input_data_json_str, 
+        ss.optimisation_script_user_values
+    )
+
+    if ss.get("optimisation_run_error"):
+        msg = f"Optimisation script execution failed: {ss.optimisation_run_error}"
+        ss.optimisation_execution_tab_run_status_message = msg
+        return {'type': 'error', 'message': msg}
+    elif ss.get("optimisation_run_complete"):
+        msg = "Optimisation script executed successfully."
+        if ss.optimisation_results is None:
+             msg += " However, the script returned no results (None)."
+             ss.optimisation_execution_tab_run_status_message = msg
+             return {'type': 'warning', 'message': msg}
+        ss.optimisation_execution_tab_run_status_message = msg
+        return {'type': 'success', 'message': msg}
+    else:
+        msg = "Optimisation script execution did not complete as expected."
+        ss.optimisation_execution_tab_run_status_message = msg
+        return {'type': 'error', 'message': msg}
 
 # Clears all state related to the currently loaded optimisation script.
 # Delegates data clearing to script_lifecycle.clear_script_data and resets UI view.
