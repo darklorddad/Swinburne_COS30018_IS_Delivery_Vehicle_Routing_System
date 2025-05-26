@@ -102,15 +102,22 @@ def load_and_process_script(ss, uploaded_file):
 
 # Executes the loaded optimisation script with the current configuration and parameters.
 # Updates session state (ss) with results or errors.
-def run_script(ss):
+def run_script(ss, mra_compiled_data_json_str):
     if not ss.get("optimisation_script_loaded_successfully"): 
         ss.optimisation_run_error = "Optimisation script not loaded successfully. Please upload a valid script."
         ss.optimisation_run_complete = False
         return
     
-    if not ss.get("config_data"):
-        ss.optimisation_run_error = "Configuration data not loaded. Please load a configuration in the 'Configuration' tab first."
+    if not mra_compiled_data_json_str:
+        ss.optimisation_run_error = "No compiled data received from MRA for optimisation."
         ss.optimisation_run_complete = False
+        return
+
+    try:
+        import json
+        optimisation_input_data = json.loads(mra_compiled_data_json_str)
+    except Exception as e:
+        ss.optimisation_run_error = f"Error parsing MRA compiled data JSON: {str(e)}"
         return
 
     ss.optimisation_results = None

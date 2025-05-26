@@ -64,9 +64,32 @@ def handle_optimisation_file_upload(ss):
 # Executes the loaded optimisation script.
 # Delegates to script_lifecycle.run_script.
 def execute_optimisation_script(ss):
-    # Pre-checks are handled within script_lifecycle.run_script
-    script_lifecycle.run_script(ss)
-    # No direct UI navigation change; results/errors are displayed in the current view.
+    # Reset previous run state
+    ss.optimisation_results = None
+    ss.optimisation_run_complete = False
+    ss.optimisation_run_error = None
+
+    if not ss.get("optimisation_script_loaded_successfully"):
+        ss.optimisation_run_error = "Optimisation script not loaded. Please load a script first."
+        return
+
+    if not ss.get("py4j_gateway_object"):
+        ss.optimisation_run_error = "JADE Gateway not available. Cannot fetch data from MRA. Please start JADE."
+        return
+
+    # Fetch compiled data from MRA
+    mra_name = execution_logic.DEFAULT_MRA_NAME
+    data_json_str, error_msg = py4j_gateway.get_compiled_optimization_data_from_mra(ss.py4j_gateway_object, mra_name)
+
+    if error_msg:
+        ss.optimisation_run_error = f"Failed to get compiled data from MRA '{mra_name}': {error_msg}"
+        return
+    if not data_json_str:
+        ss.optimisation_run_error = f"MRA '{mra_name}' returned no data."
+        return
+
+    # Pass the fetched data to script_lifecycle.run_script
+    script_lifecycle.run_script(ss, data_json_str)
 
 # Clears all state related to the currently loaded optimisation script.
 # Delegates data clearing to script_lifecycle.clear_script_data and resets UI view.
