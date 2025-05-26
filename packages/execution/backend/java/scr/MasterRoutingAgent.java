@@ -39,31 +39,7 @@ public class MasterRoutingAgent extends Agent {
             // Consider doDelete() or error handling
         }
 
-        // Add behaviour to listen for DA status reports
-        addBehaviour(new CyclicBehaviour(this) {
-            public void action() {
-                MessageTemplate mt = MessageTemplate.and(
-                    MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                    MessageTemplate.MatchOntology("DAStatusReport")
-                );
-                ACLMessage msg = myAgent.receive(mt);
-                if (msg != null) {
-                    System.out.println("MRA " + mraName + ": Received DAStatusReport from " + msg.getSender().getName());
-                    String statusJson = msg.getContent();
-                    try {
-                        JSONObject daStatus = new JSONObject(statusJson);
-                        deliveryAgentStatuses.put(msg.getSender(), daStatus);
-                        System.out.println("MRA: Updated status for DA " + msg.getSender().getLocalName() + ". New status: " + statusJson);
-                    } catch (Exception e) {
-                        System.err.println("MRA: Error parsing DAStatusReport JSON from " + msg.getSender().getLocalName() + ": " + e.getMessage());
-                    }
-                } else {
-                    block();
-                }
-            }
-        });
-
-        // Add behaviour to handle data requests
+        // Behaviour to handle data requests from Py4jGatewayAgent
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 MessageTemplate mt = MessageTemplate.and(
@@ -75,21 +51,61 @@ public class MasterRoutingAgent extends Agent {
                     System.out.println("MRA " + mraName + ": Received data request from " + msg.getSender().getName());
                     ACLMessage reply = msg.createReply();
                     reply.setPerformative(ACLMessage.INFORM);
-                    reply.setOntology("CompiledDataResponse");
-                    
+                    reply.setOntology("CompiledDataResponse"); // Py4jGatewayAgent expects this ontology for the reply
+
                     JSONObject compiledData = new JSONObject();
                     if (initialConfigData != null) {
                         compiledData.put("parcels", initialConfigData.optJSONArray("parcels"));
                         compiledData.put("warehouse_coordinates_x_y", initialConfigData.optJSONArray("warehouse_coordinates_x_y"));
                     }
-                    JSONArray daStatusesArray = new JSONArray();
-                    for (JSONObject status : deliveryAgentStatuses.values()) {
-                        daStatusesArray.put(status);
+
+                    // Actively query DAs for their current status
+                    JSONArray liveDAStatuses = new JSONArray();
+                    deliveryAgentStatuses.clear(); // Clear old statuses before querying
+
+                    JSONArray deliveryAgentsFromConfig = initialConfigData.optJSONArray("delivery_agents");
+                    if (deliveryAgentsFromConfig != null) {
+                        System.out.println("MRA: Querying " + deliveryAgentsFromConfig.length() + " DAs for status...");
+                        for (int i = 0; i < deliveryAgentsFromConfig.length(); i++) {
+                            JSONObject daConfig = deliveryAgentsFromConfig.getJSONObject(i);
+                            String daName = daConfig.getString("id");
+                            AID daAID = new AID(daName, AID.ISLOCALNAME);
+
+                            ACLMessage queryToDA = new ACLMessage(ACLMessage.REQUEST);
+                            queryToDA.addReceiver(daAID);
+                            queryToDA.setOntology("QueryDAStatus");
+                            String convId = "status-query-" + daName + "-" + System.currentTimeMillis();
+                            queryToDA.setConversationId(convId);
+                            queryToDA.setReplyWith(convId + "-reply"); // Helps DA to set inReplyTo
+                            myAgent.send(queryToDA);
+                            System.out.println("MRA: Sent QueryDAStatus to " + daName);
+
+                            MessageTemplate mtReplyFromDA = MessageTemplate.and(
+                                MessageTemplate.MatchOntology("DAStatusReport"),
+                                MessageTemplate.MatchInReplyTo(queryToDA.getReplyWith())
+                            );
+                            ACLMessage daReply = myAgent.blockingReceive(mtReplyFromDA, 3000); // 3 second timeout per DA
+
+                            if (daReply != null) {
+                                try {
+                                    JSONObject daStatusJson = new JSONObject(daReply.getContent());
+                                    liveDAStatuses.put(daStatusJson);
+                                    deliveryAgentStatuses.put(daReply.getSender(), daStatusJson); // Update internal map
+                                    System.out.println("MRA: Received status from " + daName + ": " + daStatusJson.toString());
+                                } catch (Exception e_parse) {
+                                    System.err.println("MRA: Error parsing DAStatusReport JSON from " + daName + ": " + e_parse.getMessage());
+                                }
+                            } else {
+                                System.err.println("MRA: No status reply from DA " + daName + " within timeout.");
+                                // Optionally, put a default/error status for this DA
+                            }
+                        }
                     }
-                    compiledData.put("delivery_agent_statuses", daStatusesArray);
+                    compiledData.put("delivery_agent_statuses", liveDAStatuses);
+
                     reply.setContent(compiledData.toString());
                     myAgent.send(reply);
-                    System.out.println("MRA: Sent compiled data to " + msg.getSender().getName() + ". Data: " + compiledData.toString());
+                    System.out.println("MRA: Sent compiled data (with fresh DA statuses) to " + msg.getSender().getName());
                 } else {
                     block();
                 }

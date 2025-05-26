@@ -17,25 +17,33 @@ public class DeliveryAgent extends Agent {
         Object[] args = getArguments();
         if (args != null && args.length > 0 && args[0] instanceof String) {
             String configJsonString = (String) args[0];
-            System.out.println("DA " + getLocalName() + " Configuration (JSON): " + configJsonString);
-            
-            // Add a OneShotBehaviour to send initial status and capacity to MRA
-            addBehaviour(new OneShotBehaviour(this) {
+            System.out.println("DA " + getLocalName() + " initialised with Configuration (JSON): " + configJsonString);
+
+            // Behaviour to listen for status queries from MRA
+            addBehaviour(new CyclicBehaviour(this) {
                 public void action() {
-                    ACLMessage statusMsg = new ACLMessage(ACLMessage.INFORM);
-                    statusMsg.addReceiver(new AID("MRA", AID.ISLOCALNAME)); // Assuming MRA is named "MRA"
-                    statusMsg.setOntology("DAStatusReport"); // MRA will listen for this ontology
-                    statusMsg.setLanguage("JSON");
-                    
-                    JSONObject statusPayload = new JSONObject();
-                    statusPayload.put("agent_id", getLocalName()); // DA's own ID
-                    statusPayload.put("capacity_weight", new JSONObject(configJsonString).optInt("capacity_weight", 0)); // Get from its config
-                    statusPayload.put("status", "available"); // Example initial status
-                    // You can add more details from agentConfigData if needed
-                    
-                    statusMsg.setContent(statusPayload.toString());
-                    myAgent.send(statusMsg);
-                    System.out.println("DA " + getLocalName() + ": Sent initial status report to MRA. Payload: " + statusPayload.toString());
+                    MessageTemplate mtQuery = MessageTemplate.and(
+                        MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                        MessageTemplate.MatchOntology("QueryDAStatus")
+                    );
+                    ACLMessage queryMsg = myAgent.receive(mtQuery);
+                    if (queryMsg != null) {
+                        System.out.println("DA " + getLocalName() + ": Received status query from " + queryMsg.getSender().getName());
+                        ACLMessage reply = queryMsg.createReply();
+                        reply.setPerformative(ACLMessage.INFORM);
+                        reply.setOntology("DAStatusReport"); // Reply with this ontology
+
+                        JSONObject statusPayload = new JSONObject();
+                        statusPayload.put("agent_id", getLocalName());
+                        // Capacity is from its initial config
+                        statusPayload.put("capacity_weight", new JSONObject(configJsonString).optInt("capacity_weight", 0));
+                        statusPayload.put("operational_status", "available"); // Could be dynamic based on current DA state
+                        reply.setContent(statusPayload.toString());
+                        myAgent.send(reply);
+                        System.out.println("DA " + getLocalName() + ": Sent status report to " + queryMsg.getSender().getName());
+                    } else {
+                        block();
+                    }
                 }
             });
         }
