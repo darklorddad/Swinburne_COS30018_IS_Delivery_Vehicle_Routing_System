@@ -37,17 +37,6 @@ VIDEO_BACKGROUND_SETUP_HTML = """
     background-color: rgba(0, 0, 0, 0.5); /* Darkening overlay */
     z-index: -1; /* Between video and Streamlit app */
   }
-
-  /* Make Streamlit containers transparent so video shows through */
-  div[data-testid="stApp"] {
-    background: transparent !important;
-  }
-  div[data-testid="stAppViewContainer"] {
-    background: transparent !important;
-  }
-  div[data-testid="stAppViewContainer"] section.main {
-    background: transparent !important;
-  }
 </style>
 
 <script>
@@ -165,6 +154,15 @@ def _apply_custom_styling(ss):
     """
     streamlit.markdown(custom_css, unsafe_allow_html = True)
 
+def embed_video():
+    video_link = "https://static.vecteezy.com/system/resources/previews/027/787/658/mp4/abstract-pattern-animation-background-free-video.mp4"
+    streamlit.markdown(f"""
+        <video autoplay muted loop id="myVideo">
+            <source src="{video_link}">
+            Your browser does not support HTML5 video.
+        </video>
+    """, unsafe_allow_html=True)
+
 # Renders the main layout and tabs for the application.
 def _render_main_layout(ss):
     # Create columns to centre the main content.
@@ -209,6 +207,8 @@ def _render_main_layout(ss):
 
 def main():
     streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
+
+    embed_video()
 
     # Initialise session state variables using the function from config_logic
     # Use an alias for streamlit.session_state for brevity
