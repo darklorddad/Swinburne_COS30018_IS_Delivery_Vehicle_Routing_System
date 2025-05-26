@@ -26,7 +26,7 @@ def _apply_custom_styling(ss):
         height: 100vh;
         object-fit: cover; /* Cover the entire viewport */
         z-index: -2;       /* Place it furthest back */
-        filter: blur(4px); /* Added blur effect - adjust px as needed */
+        filter: blur(16px); /* Added blur effect - adjust px as needed */
       }}
 
       /* Style for the overlay div */
@@ -36,7 +36,7 @@ def _apply_custom_styling(ss):
         left: 0;
         width: 100vw;
         height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5); /* 50% darkening */
+        background-color: rgba(0, 0, 0, 0); /* 50% darkening */
         z-index: -1;       /* On top of video, behind Streamlit app */
       }}
 
@@ -75,8 +75,7 @@ def _apply_custom_styling(ss):
       div[data-testid="stTabPanel"],
       div[data-testid="stExpander"] > details {{
           background-color: rgba(0, 0, 0, 0.10); /* Frosted glass */
-          backdrop-filter: blur(16px);
-          padding: 1rem; 
+          backdrop-filter: blur(64px);
           border-radius: 0.5rem; 
       }}
       
@@ -91,7 +90,7 @@ def _apply_custom_styling(ss):
     streamlit.markdown(styling_and_overlay_html, unsafe_allow_html=True)
 
 def embed_video():
-    video_link = "https://static.vecteezy.com/system/resources/previews/027/787/658/mp4/abstract-pattern-animation-background-free-video.mp4"
+    video_link = "https://static.vecteezy.com/system/resources/previews/026/592/030/mp4/minimalist-dark-motion-background-with-a-gently-flowing-green-blue-digital-fractal-light-wave-this-abstract-technology-concept-background-is-full-hd-and-a-seamless-loop-free-video.mp4"
     streamlit.markdown(f"""
         <video autoplay muted loop playsinline id="bgGlobalVideo">
             <source src="{video_link}" type="video/mp4">
