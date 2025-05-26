@@ -39,6 +39,63 @@ public class MasterRoutingAgent extends Agent {
             // Consider doDelete() or error handling
         }
 
+        // Add behaviour to listen for DA status reports
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
+                MessageTemplate mt = MessageTemplate.and(
+                    MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                    MessageTemplate.MatchOntology("DAStatusReport")
+                );
+                ACLMessage msg = myAgent.receive(mt);
+                if (msg != null) {
+                    System.out.println("MRA " + mraName + ": Received DAStatusReport from " + msg.getSender().getName());
+                    String statusJson = msg.getContent();
+                    try {
+                        JSONObject daStatus = new JSONObject(statusJson);
+                        deliveryAgentStatuses.put(msg.getSender(), daStatus);
+                        System.out.println("MRA: Updated status for DA " + msg.getSender().getLocalName() + ". New status: " + statusJson);
+                    } catch (Exception e) {
+                        System.err.println("MRA: Error parsing DAStatusReport JSON from " + msg.getSender().getLocalName() + ": " + e.getMessage());
+                    }
+                } else {
+                    block();
+                }
+            }
+        });
+
+        // Add behaviour to handle data requests
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
+                MessageTemplate mt = MessageTemplate.and(
+                    MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                    MessageTemplate.MatchOntology("RequestCompiledData")
+                );
+                ACLMessage msg = myAgent.receive(mt);
+                if (msg != null) {
+                    System.out.println("MRA " + mraName + ": Received data request from " + msg.getSender().getName());
+                    ACLMessage reply = msg.createReply();
+                    reply.setPerformative(ACLMessage.INFORM);
+                    reply.setOntology("CompiledDataResponse");
+                    
+                    JSONObject compiledData = new JSONObject();
+                    if (initialConfigData != null) {
+                        compiledData.put("parcels", initialConfigData.optJSONArray("parcels"));
+                        compiledData.put("warehouse_coordinates_x_y", initialConfigData.optJSONArray("warehouse_coordinates_x_y"));
+                    }
+                    JSONArray daStatusesArray = new JSONArray();
+                    for (JSONObject status : deliveryAgentStatuses.values()) {
+                        daStatusesArray.put(status);
+                    }
+                    compiledData.put("delivery_agent_statuses", daStatusesArray);
+                    reply.setContent(compiledData.toString());
+                    myAgent.send(reply);
+                    System.out.println("MRA: Sent compiled data to " + msg.getSender().getName() + ". Data: " + compiledData.toString());
+                } else {
+                    block();
+                }
+            }
+        });
+
         // Behaviour to listen for full optimisation results from Py4jGatewayAgent
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
