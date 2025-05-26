@@ -91,60 +91,91 @@ def _apply_custom_styling(ss):
           console.error("#bgGlobalVideo not found. Ensure embed_video() has run and uses this ID.");
           return;
         }}
+        console.log('YoYo: initYoYoVideoPlayback called. Video element:', video);
 
-        // Ensure no default loop or controls interfere with JS logic
         video.removeAttribute('loop');
-        video.removeAttribute('controls'); // Remove controls if they were added for debugging
+        video.removeAttribute('controls');
 
         let direction = 1; // 1 for forward, -1 for reverse
+        let internalStateChange = false; // Flag to prevent event re-entry during state changes
 
         const attemptPlay = () => {{
-          video.play().catch(error => {{
-            console.warn("Video play attempt failed:", error);
-          }});
+          if (video.paused) {{
+            console.log(`YoYo: Attempting to play. Current time: ${{video.currentTime.toFixed(2)}}, Rate: ${{video.playbackRate}}, Direction: ${{direction}}`);
+            video.play().then(() => {{
+              console.log(`YoYo: Play promise resolved. Video should be playing. Current time: ${{video.currentTime.toFixed(2)}}`);
+            }}).catch(error => {{
+              console.warn(`YoYo: Play attempt failed. Current time: ${{video.currentTime.toFixed(2)}}, Rate: ${{video.playbackRate}}. Error:`, error);
+            }});
+          }} else {{
+            console.log(`YoYo: Play attempt skipped (video not paused). Current time: ${{video.currentTime.toFixed(2)}}, Rate: ${{video.playbackRate}}`);
+          }}
         }};
 
         video.addEventListener('loadedmetadata', function() {{
-          console.log('Video metadata loaded for yo-yo playback.');
+          console.log(`YoYo: Event 'loadedmetadata'. Duration: ${{video.duration.toFixed(2)}}. Setting rate to 1 and playing.`);
+          internalStateChange = true;
           video.playbackRate = 1;
+          direction = 1;
           attemptPlay();
+          setTimeout(() => {{ internalStateChange = false; }}, 50);
         }});
         
         video.addEventListener('ended', function() {{
-          // This event fires when video finishes playing FORWARDS
-          if (direction === 1) {{
-            console.log('YoYo: Video ended (forward). Switching to reverse.');
+          if (internalStateChange) return;
+
+          console.log(`YoYo: Event 'ended'. Current time: ${{video.currentTime.toFixed(2)}}, Duration: ${{video.duration.toFixed(2)}}, Direction: ${{direction}}, Rate: ${{video.playbackRate}}`);
+          
+          if (direction === 1 && video.playbackRate === 1) {{
+            internalStateChange = true;
+            console.log('YoYo: Video ended (forward). Attempting to switch to reverse.');
+            
             direction = -1;
             video.playbackRate = -1;
+            
             attemptPlay();
+            
+            setTimeout(() => {{ internalStateChange = false; }}, 50);
+          }} else {{
+            console.warn("YoYo: 'ended' event fired but not in expected forward play state. Current state may be unusual.");
           }}
         }});
 
         video.addEventListener('timeupdate', function() {{
+          if (internalStateChange) return;
+
           if (direction === -1 && video.playbackRate === -1) {{
-            if (video.currentTime <= 0.1) {{ 
-              console.log('YoYo: Video reached beginning (reverse). Switching to forward.');
+            if (video.currentTime <= 0.2 && !video.paused) {{
+              internalStateChange = true;
+              console.log('YoYo: Video reached beginning (reverse). Attempting to switch to forward.');
+              
+              video.pause();
               direction = 1; 
               video.playbackRate = 1;
-              video.currentTime = 0; 
+              video.currentTime = 0;
               attemptPlay();
+              
+              setTimeout(() => {{ internalStateChange = false; }}, 50);
             }}
           }}
         }});
 
-        // Create and prepend overlay if it doesn't exist
         if (!document.getElementById('bgGlobalVideoOverlay')) {{
           const overlay = document.createElement('div');
           overlay.id = 'bgGlobalVideoOverlay';
-          document.body.prepend(overlay); // Prepend to ensure correct layering with z-index
-          console.log('Video overlay created for yo-yo background.');
+          document.body.prepend(overlay);
+          console.log('YoYo: Video overlay created.');
         }}
         
-        // Initial play if metadata already loaded and paused
-        if (video.paused && video.readyState >= 2) {{ // HAVE_CURRENT_DATA or more
-            console.log('YoYo: Video initially paused with metadata, attempting play.');
+        if (video.paused && video.readyState >= 1) {{
+            console.log(`YoYo: Video initially paused (readyState: ${{video.readyState}}), attempting initial play.`);
+            internalStateChange = true;
             video.playbackRate = 1;
+            direction = 1;
             attemptPlay();
+            setTimeout(() => {{ internalStateChange = false; }}, 50);
+        }} else if (video.paused) {{
+            console.log('YoYo: Video initially paused, waiting for metadata via event listener.');
         }}
       }}
 
