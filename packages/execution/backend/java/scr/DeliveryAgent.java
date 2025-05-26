@@ -16,7 +16,28 @@ public class DeliveryAgent extends Agent {
         System.out.println("DeliveryAgent " + getAID().getName() + " is ready and waiting for routes.");
         Object[] args = getArguments();
         if (args != null && args.length > 0 && args[0] instanceof String) {
-            System.out.println("DA " + getLocalName() + " Configuration (JSON): " + args[0]);
+            String configJsonString = (String) args[0];
+            System.out.println("DA " + getLocalName() + " Configuration (JSON): " + configJsonString);
+            
+            // Add a OneShotBehaviour to send initial status and capacity to MRA
+            addBehaviour(new OneShotBehaviour(this) {
+                public void action() {
+                    ACLMessage statusMsg = new ACLMessage(ACLMessage.INFORM);
+                    statusMsg.addReceiver(new AID("MRA", AID.ISLOCALNAME)); // Assuming MRA is named "MRA"
+                    statusMsg.setOntology("DAStatusReport"); // MRA will listen for this ontology
+                    statusMsg.setLanguage("JSON");
+                    
+                    JSONObject statusPayload = new JSONObject();
+                    statusPayload.put("agent_id", getLocalName()); // DA's own ID
+                    statusPayload.put("capacity_weight", new JSONObject(configJsonString).optInt("capacity_weight", 0)); // Get from its config
+                    statusPayload.put("status", "available"); // Example initial status
+                    // You can add more details from agentConfigData if needed
+                    
+                    statusMsg.setContent(statusPayload.toString());
+                    myAgent.send(statusMsg);
+                    System.out.println("DA " + getLocalName() + ": Sent initial status report to MRA. Payload: " + statusPayload.toString());
+                }
+            });
         }
 
         addBehaviour(new CyclicBehaviour(this) {
