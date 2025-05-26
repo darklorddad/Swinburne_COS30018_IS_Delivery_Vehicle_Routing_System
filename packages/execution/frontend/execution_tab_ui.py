@@ -1,5 +1,6 @@
 import streamlit
 import pandas as pd # For creating DataFrames for tables
+import json
 from ..backend import execution_logic
 from packages.optimisation.backend import optimisation_logic
 from packages.configuration.frontend.ui_utils import display_operation_result

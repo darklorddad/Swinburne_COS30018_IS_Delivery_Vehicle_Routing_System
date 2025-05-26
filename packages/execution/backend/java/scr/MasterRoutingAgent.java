@@ -105,6 +105,7 @@ public class MasterRoutingAgent extends Agent {
                     // has been removed from here to fix the re-declaration error.
                     // The liveDAStatuses are correctly populated by the preceding block.
 
+                    compiledData.put("delivery_agent_statuses", liveDAStatuses); // Add DA statuses to the response
                     reply.setContent(compiledData.toString());
                     myAgent.send(reply);
                     System.out.println("MRA: Sent compiled data (with fresh DA statuses) to " + msg.getSender().getName());
