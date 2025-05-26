@@ -227,8 +227,14 @@ def render_jade_operations_tab(ss):
                         streamlit.info("All parcels were assigned by the optimisation script.")
                     else:
                         streamlit.warning("Not all parcels could be assigned by the optimisation script.")
+                    
+                    # Display the detailed optimisation results
+                    render_optimisation_results_display(results)
+
             elif ss.optimisation_run_error:
                  streamlit.error(f"Optimisation Script Execution Error: {ss.optimisation_run_error}")
+            elif ss.optimisation_run_complete and not ss.optimisation_results and not ss.optimisation_run_error:
+                streamlit.warning("Optimisation completed, but no results were returned by the script.")
             streamlit.markdown("---")
 
             # --- Route Dispatch to MRA Section ---
@@ -237,26 +243,8 @@ def render_jade_operations_tab(ss):
             if not optimisation_complete_with_results:
                 streamlit.warning("Optimisation results are not available to be sent. Please run optimisation first.")
             else:
-                if ss.optimisation_results.get("optimised_routes"):
-                    streamlit.markdown("##### Optimised Routes to be Sent to MRA")
-                    routes_to_display_data = []
-                    for route in ss.optimisation_results["optimised_routes"]:
-                        routes_to_display_data.append({
-                            "Agent ID": route.get("agent_id"),
-                            "Stop Sequence": ", ".join(route.get("route_stop_ids", [])),
-                            "Total Weight": route.get("total_weight"),
-                            "Total Distance": route.get("total_distance")
-                        })
-                    if routes_to_display_data:
-                        streamlit.dataframe(
-                            pd.DataFrame(routes_to_display_data),
-                            use_container_width=True,
-                            hide_index=True
-                        )
-                    else:
-                        streamlit.info("No optimised routes to display or send from results.")
-                else:
-                    streamlit.info("Optimisation results exist, but no 'optimised_routes' found to display or send.")
+                if not ss.optimisation_results.get("optimised_routes"):
+                    streamlit.info("Optimisation results do not contain any routes to send to MRA.")
 
             if streamlit.button("Send Optimised Routes to MRA",
                                 key="trigger_mra_dispatch_btn",
