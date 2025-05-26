@@ -2,6 +2,7 @@
 # loading, schema extraction, execution, and data clearing.
 # It updates session state (ss) directly with script-related data and errors.
 
+import copy
 from . import script_utils
 
 # Helper to clean up resources from a previously loaded script (schema module).
@@ -135,8 +136,12 @@ def run_script(ss, mra_compiled_data_json_str, user_params):
         )
 
         if hasattr(exec_module, "run_optimisation") and callable(exec_module.run_optimisation):
-            # Pass copies or immutable versions if necessary, though current script expects mutable.
-            results = exec_module.run_optimisation(optimisation_input_data, user_params)
+            # Pass deepcopies of the data and parameters to the user script.
+            # This ensures the script gets a clean, isolated copy and prevents
+            # accidental modification of shared data structures.
+            cloned_input_data = copy.deepcopy(optimisation_input_data)
+            cloned_user_params = copy.deepcopy(user_params)
+            results = exec_module.run_optimisation(cloned_input_data, cloned_user_params)
             ss.optimisation_results = results
             ss.optimisation_run_complete = True
         else:
