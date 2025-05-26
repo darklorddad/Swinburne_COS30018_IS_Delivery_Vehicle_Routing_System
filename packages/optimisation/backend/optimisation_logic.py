@@ -28,10 +28,9 @@ def initialise_session_state(ss):
         ss.optimisation_run_complete = False
         ss.optimisation_run_error = None
 
-        # Data for optimisation
-        ss.optimisation_input_data_json_str = None
-        ss.optimisation_input_data_ready = False
-        ss.optimisation_data_compilation_status_message = None
+        # Fetched DA statuses
+        ss.fetched_delivery_agent_statuses = None # Will store the list of DA status dicts
+        ss.da_status_fetch_message = None # Status message for DA fetch operation
         ss.optimisation_execution_tab_run_status_message = None
 
         # Store temp dir and module name for cleanup
@@ -70,63 +69,64 @@ def handle_optimisation_file_upload(ss):
 
 # Executes the loaded optimisation script.
 # Delegates to script_lifecycle.run_script.
-def fetch_data_for_optimisation(ss):
-    ss.optimisation_input_data_json_str = None
-    ss.optimisation_input_data_ready = False
-    ss.optimisation_data_compilation_status_message = None
-
-    if not ss.get("optimisation_script_loaded_successfully"):
-        msg = "Optimisation script not loaded. Please load a script first."
-        ss.optimisation_data_compilation_status_message = msg
-        return {'type': 'error', 'message': msg}
+def fetch_delivery_agent_statuses(ss):
+    ss.fetched_delivery_agent_statuses = None
+    ss.da_status_fetch_message = None
 
     if not ss.get("py4j_gateway_object"):
-        msg = "JADE Gateway not available. Cannot fetch data from MRA. Please ensure JADE is running and agents are created."
-        ss.optimisation_data_compilation_status_message = msg
+        msg = "JADE Gateway not available. Cannot fetch DA statuses. Ensure JADE is running."
+        ss.da_status_fetch_message = msg
         return {'type': 'error', 'message': msg}
     
     if not ss.get("jade_agents_created"):
-        msg = "JADE agents (including MRA) not created. Please create agents first."
-        ss.optimisation_data_compilation_status_message = msg
+        msg = "JADE MRA not created. Please create agents first to fetch DA statuses."
+        ss.da_status_fetch_message = msg
         return {'type': 'error', 'message': msg}
 
     mra_name = execution_logic.DEFAULT_MRA_NAME
     
     try:
-        data_json_str, error_msg = py4j_gateway.get_compiled_optimization_data_from_mra(ss.py4j_gateway_object, mra_name)
+        # This function now returns a JSON string like {"delivery_agent_statuses": [...]}
+        da_statuses_json_str, error_msg = py4j_gateway.get_compiled_optimization_data_from_mra(ss.py4j_gateway_object, mra_name)
 
         if error_msg:
-            msg = f"Failed to get compiled data from MRA '{mra_name}': {error_msg}"
-            ss.optimisation_data_compilation_status_message = msg
+            msg = f"Failed to get DA statuses from MRA '{mra_name}': {error_msg}"
+            ss.da_status_fetch_message = msg
             return {'type': 'error', 'message': msg}
-        if not data_json_str:
-            msg = f"MRA '{mra_name}' returned no data (empty or null JSON string)."
-            ss.optimisation_data_compilation_status_message = msg
-            if data_json_str == "{}" or data_json_str.lower() == "null":
-                 ss.optimisation_input_data_ready = False
-                 return {'type': 'warning', 'message': msg + " This might indicate no parcels or DAs available."}
-            return {'type': 'error', 'message': msg}
+        if not da_statuses_json_str:
+            msg = f"MRA '{mra_name}' returned no data for DA statuses."
+            ss.da_status_fetch_message = msg
+            return {'type': 'warning', 'message': msg}
         
         import json
         try:
-            json.loads(data_json_str)
+            parsed_json = json.loads(da_statuses_json_str)
+            if isinstance(parsed_json, dict) and "delivery_agent_statuses" in parsed_json:
+                ss.fetched_delivery_agent_statuses = parsed_json["delivery_agent_statuses"]
+                if not isinstance(ss.fetched_delivery_agent_statuses, list):
+                    msg = f"MRA '{mra_name}' returned 'delivery_agent_statuses' but it's not a list. Data: {da_statuses_json_str[:200]}"
+                    ss.da_status_fetch_message = msg
+                    ss.fetched_delivery_agent_statuses = None # Clear if invalid format
+                    return {'type': 'error', 'message': msg}
+            else:
+                msg = f"MRA '{mra_name}' returned JSON but without 'delivery_agent_statuses' key. Data: {da_statuses_json_str[:200]}"
+                ss.da_status_fetch_message = msg
+                return {'type': 'error', 'message': msg}
         except json.JSONDecodeError as json_e:
-            msg = f"MRA '{mra_name}' returned invalid JSON data: {str(json_e)}. Data: {data_json_str[:200]}"
-            ss.optimisation_data_compilation_status_message = msg
+            msg = f"MRA '{mra_name}' returned invalid JSON for DA statuses: {str(json_e)}. Data: {da_statuses_json_str[:200]}"
+            ss.da_status_fetch_message = msg
             return {'type': 'error', 'message': msg}
 
-        ss.optimisation_input_data_json_str = data_json_str
-        ss.optimisation_input_data_ready = True
-        msg = f"Data for optimisation successfully fetched from MRA '{mra_name}'."
-        ss.optimisation_data_compilation_status_message = msg
+        msg = f"Delivery Agent statuses successfully fetched from MRA '{mra_name}'."
+        ss.da_status_fetch_message = msg
         return {'type': 'success', 'message': msg}
 
     except Exception as e:
-        msg = f"An unexpected error occurred while fetching data from MRA: {str(e)}"
-        ss.optimisation_data_compilation_status_message = msg
+        msg = f"An unexpected error occurred while fetching DA statuses from MRA: {str(e)}"
+        ss.da_status_fetch_message = msg
         return {'type': 'error', 'message': msg}
 
-def run_optimisation_script_with_prepared_data(ss):
+def run_optimisation_script(ss):
     ss.optimisation_results = None
     ss.optimisation_run_complete = False
     ss.optimisation_execution_tab_run_status_message = None
@@ -136,14 +136,29 @@ def run_optimisation_script_with_prepared_data(ss):
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
 
-    if not ss.get("optimisation_input_data_ready") or not ss.get("optimisation_input_data_json_str"):
-        msg = "Data for optimisation has not been successfully fetched from MRA. Please fetch data first."
+    if not ss.get("config_data"):
+        msg = "Configuration data (parcels, warehouse) not loaded. Please load a configuration."
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
 
+    if ss.get("fetched_delivery_agent_statuses") is None: # Check if it's None, empty list is valid
+        msg = "Delivery Agent statuses have not been fetched. Please fetch DA statuses first."
+        ss.optimisation_execution_tab_run_status_message = msg
+        return {'type': 'error', 'message': msg}
+
+    # Construct the input data for the script
+    optimisation_input_data = {
+        "parcels": ss.config_data.get("parcels", []),
+        "warehouse_coordinates_x_y": ss.config_data.get("warehouse_coordinates_x_y", [0,0]),
+        "delivery_agent_statuses": ss.fetched_delivery_agent_statuses
+    }
+
+    import json
+    current_input_data_json_str = json.dumps(optimisation_input_data)
+
     script_lifecycle.run_script(
         ss, 
-        ss.optimisation_input_data_json_str, 
+        current_input_data_json_str, # Pass the newly constructed JSON string
         ss.optimisation_script_user_values
     )
 

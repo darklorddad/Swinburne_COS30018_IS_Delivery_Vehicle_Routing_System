@@ -54,10 +54,6 @@ public class MasterRoutingAgent extends Agent {
                     reply.setOntology("CompiledDataResponse"); // Py4jGatewayAgent expects this ontology for the reply
 
                     JSONObject compiledData = new JSONObject();
-                    if (initialConfigData != null) {
-                        compiledData.put("parcels", initialConfigData.optJSONArray("parcels"));
-                        compiledData.put("warehouse_coordinates_x_y", initialConfigData.optJSONArray("warehouse_coordinates_x_y"));
-                    }
 
                     // Actively query DAs for their current status
                     JSONArray liveDAStatuses = new JSONArray();
@@ -108,7 +104,7 @@ public class MasterRoutingAgent extends Agent {
                     compiledData.put("delivery_agent_statuses", liveDAStatuses); // Add DA statuses to the response
                     reply.setContent(compiledData.toString());
                     myAgent.send(reply);
-                    System.out.println("MRA: Sent compiled data (with fresh DA statuses) to " + msg.getSender().getName());
+                    System.out.println("MRA: Sent delivery agent statuses to " + msg.getSender().getName());
                 } else {
                     block();
                 }

@@ -103,20 +103,20 @@ def load_and_process_script(ss, uploaded_file):
 
 # Executes the loaded optimisation script with the current configuration and parameters.
 # Updates session state (ss) with results or errors.
-def run_script(ss, mra_compiled_data_json_str, user_params):
+def run_script(ss, input_data_json_str, user_params):
     if not ss.get("optimisation_script_loaded_successfully"): 
         ss.optimisation_run_error = "Optimisation script not loaded successfully. Please upload a valid script."
         ss.optimisation_run_complete = False
         return
     
-    if not mra_compiled_data_json_str:
-        ss.optimisation_run_error = "No compiled data received from MRA for optimisation."
+    if not input_data_json_str:
+        ss.optimisation_run_error = "No input data provided for optimisation script."
         ss.optimisation_run_complete = False
         return
 
     try:
         import json
-        optimisation_input_data = json.loads(mra_compiled_data_json_str)
+        optimisation_input_data = json.loads(input_data_json_str)
         
         # Transform data key for compatibility:
         # If "delivery_agent_statuses" exists and "delivery_agents" does not,
@@ -132,7 +132,7 @@ def run_script(ss, mra_compiled_data_json_str, user_params):
                     agent_info["id"] = agent_info.pop("agent_id")
             
     except Exception as e:
-        ss.optimisation_run_error = f"Error parsing MRA compiled data JSON: {str(e)}"
+        ss.optimisation_run_error = f"Error parsing input data JSON for script: {str(e)}"
         return
 
     ss.optimisation_results = None

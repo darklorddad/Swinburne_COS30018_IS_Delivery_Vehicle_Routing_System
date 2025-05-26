@@ -125,88 +125,50 @@ def render_jade_operations_tab(ss):
         with streamlit.expander("Master Routing Agent Operations", expanded=True):
             streamlit.markdown("---")
 
-            # --- Fetch Data Section ---
-            if streamlit.button("Fetch Data for Optimisation & DA Status",
+            # --- Fetch Delivery Agent Statuses Section ---
+            if streamlit.button("Fetch Delivery Agent Statuses",
                                 key="fetch_optimisation_data_btn",
                                 use_container_width=True,
                                 disabled=not ss.get("jade_agents_created", False)
                                 ):
-                result = optimisation_logic.fetch_data_for_optimisation(ss)
+                result = optimisation_logic.fetch_delivery_agent_statuses(ss)
                 display_operation_result(result)
                 streamlit.rerun()
 
-            if ss.optimisation_data_compilation_status_message:
-                msg_str = ss.optimisation_data_compilation_status_message
+            if ss.get("da_status_fetch_message"):
+                msg_str = ss.da_status_fetch_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
 
             # --- Display DA Capacity Status ---
-            if ss.get("optimisation_input_data_json_str") and ss.get("optimisation_input_data_ready"):
-                try:
-                    full_data = json.loads(ss.optimisation_input_data_json_str)
-                    da_statuses = full_data.get("delivery_agent_statuses", [])
-                    if da_statuses:
-                        streamlit.markdown("##### Delivery Agent Statuses")
-                        status_df_data = []
-                        for da_status in da_statuses:
-                            status_df_data.append({
-                                "Agent ID": da_status.get("agent_id", "N/A"),
-                                "Capacity Weight": da_status.get("capacity_weight", "N/A"),
-                                "Operational Status": da_status.get("operational_status", "N/A")
-                            })
-                        streamlit.dataframe(pd.DataFrame(status_df_data), use_container_width=True, hide_index=True)
-                    else:
-                        streamlit.info("No Delivery Agent statuses reported by MRA in the fetched data.")
-                except json.JSONDecodeError:
-                    streamlit.warning("Could not parse DA statuses from fetched data (invalid JSON).")
-                except Exception as e:
-                    streamlit.warning(f"Could not display DA statuses: {str(e)}")
-                streamlit.markdown("---")
-
-            # --- Display Data for Optimiser ---
-            if ss.get("optimisation_input_data_json_str") and ss.get("optimisation_input_data_ready"):
-                streamlit.markdown("##### Input Data for Optimisation Script")
-                try:
-                    parsed_input_data = json.loads(ss.optimisation_input_data_json_str)
-
-                    # Display Warehouse Coordinates
-                    wh_coords = parsed_input_data.get("warehouse_coordinates_x_y")
-                    if wh_coords is not None: # Check if the key exists and has a value
-                        streamlit.markdown(f"**Warehouse Coordinates (X, Y):** `{wh_coords}`")
-                    else:
-                        streamlit.info("Warehouse coordinates not found in the input data.")
-
-                    # Display Parcels Table
-                    parcels_input_data = parsed_input_data.get("parcels", [])
-                    if parcels_input_data:
-                        streamlit.markdown("###### Parcels")
-                        streamlit.dataframe(pd.DataFrame(parcels_input_data), use_container_width=True, hide_index=True)
-                    else:
-                        streamlit.info("No parcel data found in the input for the optimisation script.")
-
-                    # Display Delivery Agent Statuses Table (as input to the script)
-                    # This will be similar to the "Delivery Agent Statuses" table displayed above,
-                    # but explicitly shows what the script receives.
-                    da_statuses_input_data = parsed_input_data.get("delivery_agent_statuses", [])
-                    if da_statuses_input_data:
-                        streamlit.markdown("###### Delivery Agent Statuses")
-                        streamlit.dataframe(pd.DataFrame(da_statuses_input_data), use_container_width=True, hide_index=True)
-                    else:
-                        streamlit.info("No delivery agent status data found in the input for the optimisation script.")
-
-                except json.JSONDecodeError:
-                    streamlit.error("Error: Could not parse the input data JSON string for tabular display.")
-                except Exception as e:
-                    streamlit.error(f"An unexpected error occurred while preparing input data for display: {str(e)}")
+            if ss.get("fetched_delivery_agent_statuses") is not None: # Check if fetch attempt was made
+                da_statuses = ss.fetched_delivery_agent_statuses
+                if da_statuses: # Check if list is not empty
+                    streamlit.markdown("##### Delivery Agent Statuses (Fetched from MRA)")
+                    status_df_data = []
+                    for da_status in da_statuses: # Already a list of dicts
+                        status_df_data.append({
+                            "Agent ID": da_status.get("agent_id", da_status.get("id", "N/A")), # Handle both potential keys
+                            "Capacity Weight": da_status.get("capacity_weight", "N/A"),
+                            "Operational Status": da_status.get("operational_status", "N/A")
+                        })
+                    streamlit.dataframe(pd.DataFrame(status_df_data), use_container_width=True, hide_index=True)
+                elif isinstance(da_statuses, list) and not da_statuses: # Empty list means fetch was successful but no DAs reported
+                    streamlit.info("No Delivery Agent statuses were reported by the MRA.")
+                # If ss.fetched_delivery_agent_statuses is None, the message from da_status_fetch_message already covers it.
                 streamlit.markdown("---")
 
             # --- Run Optimisation Section ---
-            run_disabled = not (ss.optimisation_script_loaded_successfully and ss.optimisation_input_data_ready)
+            run_disabled = not (
+                ss.get("optimisation_script_loaded_successfully", False) and
+                ss.get("config_data") is not None and
+                ss.get("fetched_delivery_agent_statuses") is not None # Check for actual fetched data
+            )
             if streamlit.button("Run Optimisation Script",
                                 key="run_optimisation_script_button",
                                 use_container_width=True,
                                 disabled=run_disabled):
-                result = optimisation_logic.run_optimisation_script_with_prepared_data(ss)
+                result = optimisation_logic.run_optimisation_script(ss) # Changed function call
                 display_operation_result(result)
                 if result and result.get('type') == 'success':
                     streamlit.rerun()
