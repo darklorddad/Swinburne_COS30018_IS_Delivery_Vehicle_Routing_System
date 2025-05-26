@@ -4,21 +4,39 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 // Simple JSON parsing - for robust parsing, consider libraries like Gson or Jackson
+import java.util.HashMap;
+import java.util.Map;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
 public class MasterRoutingAgent extends Agent {
 
+    private JSONObject initialConfigData; // Will store parcels, warehouse_coordinates_x_y
+    private Map<AID, JSONObject> deliveryAgentStatuses = new HashMap<>(); // Stores status from DAs
+    private String mraName;
+
     protected void setup() {
-        System.out.println("MasterRoutingAgent " + getAID().getName() + " is ready.");
+        mraName = getAID().getName(); // Useful for logging
+        System.out.println("MasterRoutingAgent " + mraName + " is ready.");
         
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
             if (args[0] instanceof String) {
-                System.out.println("MRA Configuration (JSON): " + args[0]);
+                String configJsonString = (String) args[0];
+                System.out.println("MRA Configuration (JSON): " + configJsonString);
+                try {
+                    initialConfigData = new JSONObject(configJsonString);
+                    // You can optionally parse and log parts of the config here, e.g.:
+                    // JSONArray parcels = initialConfigData.optJSONArray("parcels");
+                    // if (parcels != null) System.out.println("MRA: Parsed " + parcels.length() + " parcels.");
+                } catch (Exception e) {
+                    System.err.println("MRA: Error parsing initial configuration JSON: " + e.getMessage());
+                    // Consider doDelete() or other error handling if config is crucial
+                }
             }
         } else {
             System.out.println("MRA: No arguments provided for initial setup.");
+            // Consider doDelete() or error handling
         }
 
         // Behaviour to listen for full optimisation results from Py4jGatewayAgent
