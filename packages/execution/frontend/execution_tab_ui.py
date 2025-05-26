@@ -165,7 +165,38 @@ def render_jade_operations_tab(ss):
             # --- Display Data for Optimiser ---
             if ss.get("optimisation_input_data_json_str") and ss.get("optimisation_input_data_ready"):
                 streamlit.markdown("##### Input Data for Optimisation Script")
-                streamlit.json(ss.optimisation_input_data_json_str, expanded=False)
+                try:
+                    parsed_input_data = json.loads(ss.optimisation_input_data_json_str)
+
+                    # Display Warehouse Coordinates
+                    wh_coords = parsed_input_data.get("warehouse_coordinates_x_y")
+                    if wh_coords is not None: # Check if the key exists and has a value
+                        streamlit.markdown(f"**Warehouse Coordinates (X, Y):** `{wh_coords}`")
+                    else:
+                        streamlit.info("Warehouse coordinates not found in the input data.")
+
+                    # Display Parcels Table
+                    parcels_input_data = parsed_input_data.get("parcels", [])
+                    if parcels_input_data:
+                        streamlit.markdown("###### Parcels")
+                        streamlit.dataframe(pd.DataFrame(parcels_input_data), use_container_width=True, hide_index=True)
+                    else:
+                        streamlit.info("No parcel data found in the input for the optimisation script.")
+
+                    # Display Delivery Agent Statuses Table (as input to the script)
+                    # This will be similar to the "Delivery Agent Statuses" table displayed above,
+                    # but explicitly shows what the script receives.
+                    da_statuses_input_data = parsed_input_data.get("delivery_agent_statuses", [])
+                    if da_statuses_input_data:
+                        streamlit.markdown("###### Delivery Agent Statuses")
+                        streamlit.dataframe(pd.DataFrame(da_statuses_input_data), use_container_width=True, hide_index=True)
+                    else:
+                        streamlit.info("No delivery agent status data found in the input for the optimisation script.")
+
+                except json.JSONDecodeError:
+                    streamlit.error("Error: Could not parse the input data JSON string for tabular display.")
+                except Exception as e:
+                    streamlit.error(f"An unexpected error occurred while preparing input data for display: {str(e)}")
                 streamlit.markdown("---")
 
             # --- Run Optimisation Section ---
