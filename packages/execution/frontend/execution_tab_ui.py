@@ -1,6 +1,7 @@
 import streamlit
 import pandas as pd # For creating DataFrames for tables
 from ..backend import execution_logic
+from packages.optimisation.backend import optimisation_logic
 from packages.configuration.frontend.ui_utils import display_operation_result
 
 # Helper to determine message type from a string for display_operation_result
@@ -24,19 +25,13 @@ def render_jade_operations_tab(ss):
     # Check prerequisites for JADE tab functionality
     config_loaded = ss.config_data is not None
     script_loaded = ss.get("optimisation_script_loaded_successfully", False)
-    optimisation_run = ss.get("optimisation_run_complete", False)
-    optimisation_results_exist = ss.get("optimisation_results") is not None
     
-    all_prerequisites_met = config_loaded and script_loaded and optimisation_run and optimisation_results_exist
-
-    if not all_prerequisites_met:
+    if not config_loaded or not script_loaded:
         prereq_messages_list = []
         if not config_loaded:
             prereq_messages_list.append("A configuration must be loaded (Configuration tab)")
         if not script_loaded:
             prereq_messages_list.append("An optimisation script must be loaded (Optimisation tab)")
-        if not optimisation_run or not optimisation_results_exist:
-            prereq_messages_list.append("Route optimisation must be run (Optimisation tab)")
         
         with streamlit.expander("Prerequisites Not Met", expanded=True):
             streamlit.markdown("---")
@@ -123,14 +118,62 @@ def render_jade_operations_tab(ss):
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
 
+        # --- Optimisation Execution ---
+        with streamlit.expander("Optimisation Execution", expanded=True):
+            streamlit.markdown("---")
+        
+            # Fetch data section
+            if streamlit.button("Fetch Data for Optimisation", 
+                              key="fetch_optimisation_data_btn",
+                              use_container_width=True):
+                result = optimisation_logic.fetch_data_for_optimisation(ss)
+                display_operation_result(result)
+                streamlit.rerun()
+
+            if ss.optimisation_data_compilation_status_message:
+                msg_str = ss.optimisation_data_compilation_status_message
+                msg_type = _determine_message_type_from_string(msg_str)
+                display_operation_result({'type': msg_type, 'message': msg_str})
+
+            # Run optimisation section
+            run_disabled = not (ss.optimisation_script_loaded_successfully and ss.optimisation_input_data_ready)
+            if streamlit.button("Run Optimisation", 
+                              key="run_optimisation_script_button", 
+                              use_container_width=True,
+                              disabled=run_disabled):
+                result = optimisation_logic.run_optimisation_script_with_prepared_data(ss)
+                display_operation_result(result)
+                streamlit.rerun()
+
+            # Display execution results or errors
+            if ss.optimisation_run_error:
+                streamlit.error(f"Execution Error: {ss.optimisation_run_error}")
+        
+            if ss.optimisation_run_complete:
+                if ss.optimisation_results is not None:
+                    streamlit.success("Optimisation completed successfully")
+                    results = ss.optimisation_results
+
+                    # Display "All parcels assigned" message if applicable
+                    all_parcels_assigned = (
+                        "optimised_routes" in results and results["optimised_routes"] and
+                        not ("unassigned_parcels_details" in results and results["unassigned_parcels_details"])
+                    )
+                    if all_parcels_assigned:
+                        streamlit.info("All parcels were assigned")
+                    else:
+                        streamlit.warning("Not all parcels could be assigned")
+
+                    streamlit.markdown("---") # Divider between feedback and results
+
         # --- Route Management (only if JADE is running and agents are created) ---
         if ss.get("jade_agents_created"):
-            with streamlit.expander("Route Management", expanded=True):
+            with streamlit.expander("Route Dispatch", expanded=True):
                 streamlit.markdown("---")
                 optimisation_complete = ss.get("optimisation_run_complete", False) and ss.get("optimisation_results") is not None
 
                 if not optimisation_complete:
-                    streamlit.warning("Optimisation results are not available. Please run an optimisation in the 'Optimisation' tab first.")
+                    streamlit.warning("Optimisation results are not available. Please run an optimisation first.")
                 else:
                     # Display routes to be sent
                     if ss.optimisation_results.get("optimised_routes"):
@@ -153,16 +196,13 @@ def render_jade_operations_tab(ss):
                     else:
                         streamlit.info("Optimisation results exist, but no 'optimised_routes' found to display or send.")
 
-
                 if streamlit.button("Send to MRA", 
-                                    key="trigger_mra_dispatch_btn", 
-                                    use_container_width=True,
-                                    disabled=not optimisation_complete):
+                                  key="trigger_mra_dispatch_btn", 
+                                  use_container_width=True,
+                                  disabled=not optimisation_complete):
                     result = execution_logic.handle_trigger_mra_processing(ss)
-                    # ss.jade_dispatch_status_message is set by the backend.
-                    # It will be displayed by the logic below.
                     if result and result.get('type') == 'success':
-                         streamlit.rerun()
+                        streamlit.rerun()
 
                 # Display route dispatch status message (persistently)
                 if ss.get("jade_dispatch_status_message"):
