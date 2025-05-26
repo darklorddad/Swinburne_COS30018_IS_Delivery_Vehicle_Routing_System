@@ -117,6 +117,14 @@ def run_script(ss, mra_compiled_data_json_str, user_params):
     try:
         import json
         optimisation_input_data = json.loads(mra_compiled_data_json_str)
+        
+        # Transform data key for compatibility:
+        # If "delivery_agent_statuses" exists and "delivery_agents" does not,
+        # rename "delivery_agent_statuses" to "delivery_agents"
+        if ("delivery_agent_statuses" in optimisation_input_data and 
+            "delivery_agents" not in optimisation_input_data):
+            optimisation_input_data["delivery_agents"] = optimisation_input_data.pop("delivery_agent_statuses")
+            
     except Exception as e:
         ss.optimisation_run_error = f"Error parsing MRA compiled data JSON: {str(e)}"
         return
