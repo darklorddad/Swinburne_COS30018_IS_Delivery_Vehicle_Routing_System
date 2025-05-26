@@ -104,14 +104,9 @@ VIDEO_BACKGROUND_SETUP_HTML = """
     }
   }
 
-  // Run the setup function
-  // Ensuring DOM is ready can be helpful, though st.markdown usually injects late enough.
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGlobalVideoBackground);
-  } else {
-    // DOMContentLoaded has already fired
-    initGlobalVideoBackground();
-  }
+  // Run the setup function after a short delay
+  // This gives Streamlit more time to initialize before we modify the DOM.
+  setTimeout(initGlobalVideoBackground, 200); // Delay by 200 milliseconds
 </script>
 """
 
