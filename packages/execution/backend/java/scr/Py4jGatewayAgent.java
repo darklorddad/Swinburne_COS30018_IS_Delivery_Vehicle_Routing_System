@@ -6,6 +6,7 @@ import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import py4j.GatewayServer;
 
 public class Py4jGatewayAgent extends Agent {
