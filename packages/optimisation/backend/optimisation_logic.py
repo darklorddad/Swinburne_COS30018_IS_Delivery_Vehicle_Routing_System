@@ -136,25 +136,37 @@ def run_optimisation_script(ss):
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
 
-    if not ss.get("config_data"):
-        msg = "Configuration data (parcels, warehouse) not loaded. Please load a configuration."
+    # Use ss.data_for_optimisation_script which comes from MRA's TriggerOptimisationCycle
+    # This bundle already contains warehouse, parcels, and delivery_agents (statuses)
+    input_data_from_mra = ss.get("data_for_optimisation_script")
+
+    if not isinstance(input_data_from_mra, dict) or not input_data_from_mra:
+        msg = "Optimisation data from MRA is missing or invalid. Please ensure MRA prepared data."
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
-
-    if ss.get("fetched_delivery_agent_statuses") is None: # Check if it's None, empty list is valid
-        msg = "Delivery Agent statuses have not been fetched. Please fetch DA statuses first."
+    
+    # Validate essential keys expected by script_lifecycle.run_script
+    # MRA's OptimisationDataBundle should contain "warehouse_coordinates_x_y", "parcels", and "delivery_agents".
+    missing_keys = []
+    if "parcels" not in input_data_from_mra:
+        missing_keys.append("parcels")
+    if "warehouse_coordinates_x_y" not in input_data_from_mra:
+        missing_keys.append("warehouse_coordinates_x_y")
+    if "delivery_agents" not in input_data_from_mra: # MRA provides this key directly
+        missing_keys.append("delivery_agents")
+    
+    if missing_keys:
+        msg = f"MRA data bundle is missing essential keys: {', '.join(missing_keys)}. Cannot run optimisation."
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
-
-    # Construct the input data for the script
-    optimisation_input_data = {
-        "parcels": ss.config_data.get("parcels", []),
-        "warehouse_coordinates_x_y": ss.config_data.get("warehouse_coordinates_x_y", [0,0]),
-        "delivery_agent_statuses": ss.fetched_delivery_agent_statuses
-    }
 
     import json
-    current_input_data_json_str = json.dumps(optimisation_input_data)
+    try:
+        current_input_data_json_str = json.dumps(input_data_from_mra)
+    except Exception as e_json:
+        msg = f"Error serializing MRA data to JSON for script: {str(e_json)}"
+        ss.optimisation_execution_tab_run_status_message = msg
+        return {'type': 'error', 'message': msg}
 
     script_lifecycle.run_script(
         ss, 
