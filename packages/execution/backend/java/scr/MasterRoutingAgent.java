@@ -15,9 +15,8 @@ import org.json.JSONArray;
 
 public class MasterRoutingAgent extends Agent {
 
-    private JSONObject initialConfigData; // Will store full config: parcels, warehouse_coordinates_x_y, delivery_agents
-    private JSONArray deliveryAgentIdList; // Store just the IDs of DAs MRA is aware of
-    private Map<AID, JSONObject> deliveryAgentStatuses = new HashMap<>(); // Stores status from DAs
+    private JSONObject initialConfigData; // Stores warehouse, parcels. Populated by ReceiveWarehouseParcelData
+    private Map<AID, JSONObject> deliveryAgentStatusesCache = new HashMap<>(); // Cache for DA statuses
     private String mraName;
 
     protected void setup() {
@@ -58,8 +57,7 @@ public class MasterRoutingAgent extends Agent {
                     }
 
                     JSONObject compiledDataResponse = new JSONObject();
-                    JSONArray liveDAStatuses = new JSONArray(); // Declare here
-                    deliveryAgentStatuses.clear(); // Clear old cache if any
+                    JSONArray liveDAStatuses = new JSONArray();
 
                     try {
                         System.out.println("MRA (" + mraName + "): Searching DF for agents with service 'delivery-service'.");
@@ -99,7 +97,7 @@ public class MasterRoutingAgent extends Agent {
                                             daStatusJson.put("id", daName);
                                         }
                                         liveDAStatuses.put(daStatusJson);
-                                        deliveryAgentStatuses.put(daReply.getSender(), daStatusJson);
+                                        deliveryAgentStatusesCache.put(daReply.getSender(), daStatusJson);
                                         System.out.println("MRA (" + mraName + "): Received status from " + daName + " (ConvID: " + daReply.getConversationId() + "): " + daStatusJson.toString());
                                     } catch (Exception e_parse) {
                                         System.err.println("MRA (" + mraName + "): Error parsing DAStatusReport JSON from " + daName + ": " + e_parse.getMessage());
@@ -193,71 +191,25 @@ public class MasterRoutingAgent extends Agent {
                     }
 
                     JSONObject optimisationBundle = new JSONObject();
-                    JSONArray daStatusesForOptimisation = new JSONArray(); // Fresh query for optimisation
-
-                    if (initialConfigData != null && initialConfigData.has("warehouse_coordinates_x_y") && initialConfigData.has("parcels")) { // Check if MRA has basic data
+                    
+                    if (initialConfigData != null && initialConfigData.has("warehouse_coordinates_x_y") && initialConfigData.has("parcels")) {
                         optimisationBundle.put("warehouse_coordinates_x_y", initialConfigData.optJSONArray("warehouse_coordinates_x_y"));
                         optimisationBundle.put("parcels", initialConfigData.optJSONArray("parcels"));
                         
-                        try {
-                            System.out.println("MRA (" + mraName + "): OptimisationCycle - Searching DF for agents with service 'delivery-service'.");
-                            DFAgentDescription template = new DFAgentDescription();
-                            ServiceDescription sd = new ServiceDescription();
-                            sd.setType("delivery-service");
-                            template.addServices(sd);
-                            DFAgentDescription[] result = DFService.search(myAgent, template);
-
-                            if (result == null || result.length == 0) {
-                                System.out.println("MRA (" + mraName + "): OptimisationCycle - No DAs found via DF. Sending empty DA list.");
+                        // Use the cached DA statuses if available
+                        JSONArray daStatusesForBundle = new JSONArray();
+                        if (deliveryAgentStatusesCache != null && !deliveryAgentStatusesCache.isEmpty()) {
+                            System.out.println("MRA (" + mraName + "): OptimisationCycle - Using cached DA statuses. Count: " + deliveryAgentStatusesCache.size());
+                            for (JSONObject status : deliveryAgentStatusesCache.values()) {
+                                daStatusesForBundle.put(status);
                             }
-                            else {
-                                System.out.println("MRA (" + mraName + "): OptimisationCycle - Found " + result.length + " DAs via DF.");
-                                for (DFAgentDescription dfad : result) {
-                                    AID daAID = dfad.getName();
-                                    String daName = daAID.getLocalName();
-
-                                    ACLMessage queryToDA = new ACLMessage(ACLMessage.REQUEST);
-                                    queryToDA.addReceiver(daAID);
-                                    queryToDA.setOntology("QueryDAStatus");
-                                    String convId_daQuery = "status-query-" + daName + "-" + System.currentTimeMillis();
-                                    queryToDA.setConversationId(convId_daQuery);
-                                    queryToDA.setReplyWith(convId_daQuery + "-reply");
-                                    myAgent.send(queryToDA);
-                                    System.out.println("MRA (" + mraName + "): OptimisationCycle - Sent QueryDAStatus to " + daName + " (ConvID: " + convId_daQuery + ")");
-
-                                    MessageTemplate mtReplyFromDA = MessageTemplate.and(
-                                        MessageTemplate.MatchOntology("DAStatusReport"),
-                                        MessageTemplate.MatchInReplyTo(queryToDA.getReplyWith())
-                                    );
-                                    ACLMessage daReply = myAgent.blockingReceive(mtReplyFromDA, 3000);
-                                    if (daReply != null) {
-                                        try {
-                                            JSONObject daStatusJson = new JSONObject(daReply.getContent());
-                                            if (!daStatusJson.has("id")) { // Ensure 'id' is present
-                                                daStatusJson.put("id", daName);
-                                            }
-                                            daStatusesForOptimisation.put(daStatusJson);
-                                            System.out.println("MRA (" + mraName + "): OptimisationCycle - Received status from " + daName + ": " + daStatusJson.toString());
-                                        } catch (Exception e_parse) {
-                                            System.err.println("MRA (" + mraName + "): OptimisationCycle - Error parsing DAStatusReport from " + daName + ": " + e_parse.getMessage());
-                                        }
-                                    } else {
-                                        System.err.println("MRA (" + mraName + "): OptimisationCycle - No status reply from DA " + daName);
-                                        JSONObject errorStatus = new JSONObject();
-                                        errorStatus.put("id", daName);
-                                        errorStatus.put("capacity_weight", -1); 
-                                        errorStatus.put("operational_status", "unknown_timeout_mra_query");
-                                        daStatusesForOptimisation.put(errorStatus);
-                                    }
-                                }
-                            }
-                        } catch (FIPAException fe) {
-                            System.err.println("MRA (" + mraName + "): OptimisationCycle - FIPAException during DF search: " + fe.getMessage());
-                            fe.printStackTrace();
-                            optimisationBundle.put("error_mra_da_fetch", "FIPA Error during DF search for DAs: " + fe.getMessage());
+                        } else {
+                            // Fallback if DA statuses haven't been fetched yet
+                            System.err.println("MRA (" + mraName + "): OptimisationCycle - deliveryAgentStatusesCache is empty or null. DA information will be missing in bundle.");
                             reply.setPerformative(ACLMessage.FAILURE);
+                            optimisationBundle.put("error_mra", "DA statuses not fetched/available in MRA cache.");
                         }
-                        optimisationBundle.put("delivery_agents", daStatusesForOptimisation); // Python script expects "delivery_agents"
+                        optimisationBundle.put("delivery_agents", daStatusesForBundle);
                     } else {
                         System.err.println("MRA " + mraName + ": initialConfigData (warehouse/parcels) is null or incomplete. Cannot prepare full optimisation bundle.");
                         optimisationBundle.put("error_mra", "MRA initialConfigData (warehouse/parcels) is null or incomplete.");
