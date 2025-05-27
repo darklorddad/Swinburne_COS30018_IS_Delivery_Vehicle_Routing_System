@@ -1,4 +1,5 @@
 import streamlit
+import pandas as pd
 
 def render_optimisation_results_display(results):
     """Displays detailed optimisation results including routes, assigned parcels, and unassigned parcels."""
