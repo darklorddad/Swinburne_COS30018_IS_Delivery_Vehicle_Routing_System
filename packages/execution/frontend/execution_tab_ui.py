@@ -247,6 +247,12 @@ def render_jade_operations_tab(ss):
                 execution_logic.handle_send_optimised_routes_to_mra(ss)
                 streamlit.rerun()
 
+            # Show dispatch status message (from sending routes to MRA)
+            if ss.get("jade_dispatch_status_message"):
+                msg_str = ss.jade_dispatch_status_message
+                streamlit.info(msg_str)  # Always show as blue info alert
+                ss.jade_dispatch_status_message = None # Clear after display
+
             if ss.get("mra_optimisation_trigger_message"): # Message from MRA data compilation step
                 msg_str = ss.mra_optimisation_trigger_message
                 msg_type = _determine_message_type_from_string(msg_str)
@@ -286,9 +292,5 @@ def render_jade_operations_tab(ss):
             # Show dispatch status message (from sending routes to MRA)
             if ss.get("jade_dispatch_status_message"):
                 msg_str = ss.jade_dispatch_status_message
-                msg_type = _determine_message_type_from_string(msg_str)
-                if msg_type == 'info':
-                    streamlit.success(msg_str)  # Show as success alert for positive confirmation
-                else:
-                    display_operation_result({'type': msg_type, 'message': msg_str})
+                streamlit.info(msg_str)  # Always show as blue info alert
                 ss.jade_dispatch_status_message = None # Clear after display
