@@ -279,9 +279,8 @@ def handle_trigger_mra_optimisation_cycle(ss):
             ss.mra_optimisation_trigger_message = msg
             return {'type': 'error', 'message': msg}
         ss.data_for_optimisation_script = parsed_bundle # Store the whole bundle
-        msg = "Optimisation data ready for processing"
-        ss.mra_optimisation_trigger_message = msg
-        return {'type': 'info', 'message': msg}
+        ss.mra_optimisation_trigger_message = None
+        return {'type': 'info', 'message': None}
     except Exception as e:
         msg = f"Error parsing optimisation data bundle from MRA: {str(e)}. Data: {json_data_bundle[:200]}"
         ss.mra_optimisation_trigger_message = msg
