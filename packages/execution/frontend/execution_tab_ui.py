@@ -172,6 +172,7 @@ def render_jade_operations_tab(ss):
                 msg_str = ss.da_status_fetch_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
+                ss.da_status_fetch_message = None # Clear after display
 
             # --- Display DA Capacity Status ---
             if ss.get("fetched_delivery_agent_statuses") is not None: # Check if fetch attempt was made
@@ -214,12 +215,14 @@ def render_jade_operations_tab(ss):
                 msg_str = ss.mra_optimisation_trigger_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
+                ss.mra_optimisation_trigger_message = None # Clear after display
             
             # This message comes from run_optimisation_script
-            if ss.optimisation_execution_tab_run_status_message: 
+            if ss.get("optimisation_execution_tab_run_status_message"): 
                 msg_str = ss.optimisation_execution_tab_run_status_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
+                ss.optimisation_execution_tab_run_status_message = None # Clear after display
 
             if ss.optimisation_run_complete:
                 if ss.optimisation_results is not None:
@@ -265,3 +268,4 @@ def render_jade_operations_tab(ss):
                 msg_str = ss.jade_dispatch_status_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
+                ss.jade_dispatch_status_message = None # Clear after display
