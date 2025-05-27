@@ -1,5 +1,9 @@
 import jade.core.Agent;
-import jade.core.AID; // Added import for AID
+import jade.core.AID;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.SequentialBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
@@ -19,6 +23,21 @@ public class DeliveryAgent extends Agent {
         if (args != null && args.length > 0 && args[0] instanceof String) {
             this.agentInitialConfigJsonString = (String) args[0]; // Initialize the field
             System.out.println("DA " + getLocalName() + " initialised with Configuration (JSON): " + this.agentInitialConfigJsonString);
+
+            // Register the delivery-service service with the DF
+            DFAgentDescription dfd = new DFAgentDescription();
+            dfd.setName(getAID());
+            ServiceDescription sd = new ServiceDescription();
+            sd.setType("delivery-service"); // MRA will search for this type
+            sd.setName(getLocalName() + "-delivery-service");
+            dfd.addServices(sd);
+            try {
+                DFService.register(this, dfd);
+                System.out.println("DA " + getLocalName() + ": Registered 'delivery-service' with DF.");
+            } catch (FIPAException fe) {
+                System.err.println("DA " + getLocalName() + ": Error registering with DF: " + fe.getMessage());
+                fe.printStackTrace();
+            }
 
             // Behaviour to listen for status queries from MRA
             addBehaviour(new CyclicBehaviour(this) {
@@ -128,5 +147,13 @@ public class DeliveryAgent extends Agent {
 
     protected void takeDown() {
         System.out.println("DeliveryAgent " + getAID().getName() + " terminating.");
+        // Deregister from the DF
+        try {
+            DFService.deregister(this);
+            System.out.println("DA " + getLocalName() + ": Deregistered from DF.");
+        } catch (FIPAException fe) {
+            System.err.println("DA " + getLocalName() + ": Error deregistering from DF: " + fe.getMessage());
+            fe.printStackTrace();
+        }
     }
 }
