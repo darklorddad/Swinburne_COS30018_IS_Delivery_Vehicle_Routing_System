@@ -124,7 +124,7 @@ def render_jade_operations_tab(ss):
             streamlit.markdown("---")
 
             # --- Request MRA Config Subset (for display/debug) ---
-            if streamlit.button("Send Warehouse & Parcel Data to MRA", 
+            if streamlit.button("Send warehouse and parcel data to MRA", 
                                  key="send_warehouse_parcel_data_to_mra_btn", 
                                  use_container_width=True,
                                  disabled=not ss.get("jade_agents_created", False)):
@@ -144,7 +144,7 @@ def render_jade_operations_tab(ss):
 
 
             # --- Fetch Delivery Agent Statuses Section (via MRA) ---
-            if streamlit.button("Fetch Delivery Agent Statuses",
+            if streamlit.button("Fetch Delivery Agent statuses",
                                 key="fetch_optimisation_data_btn",
                                 use_container_width=True,
                                 disabled=not ss.get("jade_agents_created", False)
@@ -166,10 +166,9 @@ def render_jade_operations_tab(ss):
                     status_df_data = []
                     for da_status in da_statuses: # Already a list of dicts
                         status_df_data.append({
-                            "Agent ID": da_status.get("id", "N/A"), # Prefer "id"
-                            # Ensure Capacity Weight is numeric or a clear placeholder string
-                            "Capacity Weight": int(da_status.get("capacity_weight", -1)) if str(da_status.get("capacity_weight", -1)).replace('-','').isdigit() else str(da_status.get("capacity_weight", "N/A")),
-                            "Operational Status": da_status.get("operational_status", "N/A")
+                            "id": da_status.get("id", "N/A"),
+                            "capacity_weight": da_status.get("capacity_weight", "N/A"),
+                            "operational_status": da_status.get("operational_status", "N/A")
                         })
                     df_da_statuses = pd.DataFrame(status_df_data)
                     # Attempt to convert Capacity Weight to numeric, coercing errors to NaN then to a string representation if needed
@@ -182,7 +181,7 @@ def render_jade_operations_tab(ss):
                 streamlit.markdown("---")
 
             # --- Trigger MRA Optimisation Cycle (MRA compiles data, Python script runs) ---
-            if streamlit.button("Execute Optimisation Cycle (MRA Compiles Data)",
+            if streamlit.button("Run route optimisation",
                                  key="trigger_mra_optimisation_cycle_btn",
                                  use_container_width=True,
                                  disabled=not ss.get("jade_agents_created", False) or not ss.get("optimisation_script_loaded_successfully", False)
