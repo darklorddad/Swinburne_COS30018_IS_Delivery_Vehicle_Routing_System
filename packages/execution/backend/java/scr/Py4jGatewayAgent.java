@@ -157,29 +157,29 @@ public class Py4jGatewayAgent extends Agent {
         }
     }
 
-    public String receiveConfigSubsetAndForwardToMRA(String mraName, String configSubsetJson) {
-        System.out.println("Py4jGatewayAgent: Received config subset from Python for MRA: " + mraName);
-        System.out.println("Py4jGatewayAgent: Config subset JSON: " + configSubsetJson);
+    public String receiveOperationalDataAndForwardToMRA(String mraName, String operationalDataJson) {
+        System.out.println("Py4jGatewayAgent: Received operational data from Python for MRA: " + mraName);
+        System.out.println("Py4jGatewayAgent: Operational data JSON (first 100 chars): " + operationalDataJson.substring(0, Math.min(operationalDataJson.length(), 100)) + "...");
         try {
             ACLMessage msgToMRA = new ACLMessage(ACLMessage.INFORM);
             msgToMRA.addReceiver(new AID(mraName, AID.ISLOCALNAME));
-            msgToMRA.setOntology("ReceiveConfigSubset");
+            msgToMRA.setOntology("ReceiveOperationalData");
             msgToMRA.setLanguage("JSON");
-            msgToMRA.setContent(configSubsetJson);
+            msgToMRA.setContent(operationalDataJson);
             
-            String convId = "send-config-subset-" + System.currentTimeMillis();
+            String convId = "send-op-data-" + System.currentTimeMillis();
             msgToMRA.setConversationId(convId);
             msgToMRA.setReplyWith(convId + "-reply");
 
             send(msgToMRA);
-            System.out.println("Py4jGatewayAgent: Sent config subset to MRA '" + mraName + "'.");
+            System.out.println("Py4jGatewayAgent: Sent operational data to MRA '" + mraName + "'.");
             
-            return "Config subset sent to MRA " + mraName + " successfully by Py4jGatewayAgent.";
+            return "Operational data sent to MRA " + mraName + " successfully by Py4jGatewayAgent.";
 
         } catch (Exception e) {
-            System.err.println("Py4jGatewayAgent: Error sending config subset to MRA '" + mraName + "': " + e.getMessage());
+            System.err.println("Py4jGatewayAgent: Error sending operational data to MRA '" + mraName + "': " + e.getMessage());
             e.printStackTrace();
-            return "{\"error\": \"Exception in Py4jGatewayAgent while sending config subset to MRA: " + e.getMessage() + "\"}";
+            return "{\"error\": \"Exception in Py4jGatewayAgent while sending operational data to MRA: " + e.getMessage() + "\"}";
         }
     }
 }
