@@ -22,6 +22,7 @@ public class MasterRoutingAgent extends Agent {
     protected void setup() {
         mraName = getAID().getName(); // Useful for logging
         System.out.println("MasterRoutingAgent " + mraName + " is ready.");
+        System.out.println("MRA " + mraName + ": setup() started at " + System.currentTimeMillis());
         
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
@@ -39,6 +40,7 @@ public class MasterRoutingAgent extends Agent {
         }
 
         // Behaviour to handle data requests from Py4jGatewayAgent
+        System.out.println("MRA " + mraName + ": Adding RequestCompiledData behavior at " + System.currentTimeMillis());
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 MessageTemplate mt = MessageTemplate.and(
@@ -151,6 +153,7 @@ public class MasterRoutingAgent extends Agent {
         });
 
         // Behaviour to listen for full optimisation results from Py4jGatewayAgent
+        System.out.println("MRA " + mraName + ": Adding FullVRPResults behavior at " + System.currentTimeMillis());
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 MessageTemplate mt = MessageTemplate.MatchOntology("FullVRPResults");
@@ -189,6 +192,7 @@ public class MasterRoutingAgent extends Agent {
         });
 
         // Behaviour to handle TriggerOptimisationCycle requests
+        System.out.println("MRA " + mraName + ": Adding TriggerOptimisationCycle behavior at " + System.currentTimeMillis());
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 MessageTemplate mt = MessageTemplate.and(
@@ -248,6 +252,7 @@ public class MasterRoutingAgent extends Agent {
         });
 
         // Behaviour to listen for delivery confirmations from DAs
+        System.out.println("MRA " + mraName + ": Adding DeliveryConfirmation behavior at " + System.currentTimeMillis());
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
                 MessageTemplate mt = MessageTemplate.MatchOntology("DeliveryConfirmation");
