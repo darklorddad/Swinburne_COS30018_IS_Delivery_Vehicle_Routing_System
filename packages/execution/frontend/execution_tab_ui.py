@@ -9,17 +9,19 @@ from packages.configuration.frontend.ui_utils import display_operation_result
 # Helper to determine message type from a string for display_operation_result
 def _determine_message_type_from_string(message_str):
     if not message_str:
-        return 'info' 
+        return 'info'
     msg_lower = message_str.lower()
-    if "success" in msg_lower or "started" in msg_lower or "stopped" in msg_lower or \
+    if "jade process is running" in msg_lower or "jade terminated" in msg_lower:
+        return 'success'
+    elif "fail" in msg_lower or "error" in msg_lower or "exception" in msg_lower:
+        return 'error'
+    elif "warn" in msg_lower:
+        return 'warning'
+    elif "success" in msg_lower or "started" in msg_lower or "stopped" in msg_lower or \
        "running" in msg_lower or "requested" in msg_lower or "terminated" in msg_lower or \
        "created" in msg_lower or "sent" in msg_lower or "processed" in msg_lower or \
        "forwarded" in msg_lower or "completed" in msg_lower or "connected" in msg_lower or "received" in msg_lower:
         return 'info'
-    elif "fail" in msg_lower or "error" in msg_lower:
-        return 'error'
-    elif "warn" in msg_lower:
-        return 'warning'
     return 'info'
 
 # Renders the JADE tab for JADE interaction.
@@ -134,15 +136,11 @@ def render_jade_operations_tab(ss):
                 parcels_data = ss.config_data.get("parcels", [])
 
                 # Warehouse info
-                streamlit.markdown(f"**Warehouse Coordinates:** {warehouse_data}")
-
-                # Parcels info in a DataFrame
-                if parcels_data:
-                    streamlit.markdown("**Parcels:**")
-                    parcels_df = pd.DataFrame(parcels_data)
-                    streamlit.dataframe(parcels_df, use_container_width=True, hide_index=True)
+                if isinstance(warehouse_data, list) and len(warehouse_data) == 2:
+                    wh_text = f"<strong>Warehouse Coordinates (to send)</strong><br><span style='font-size: 0.9em; color: #888;'>X: {warehouse_data[0]}, Y: {warehouse_data[1]}</span>"
                 else:
-                    streamlit.info("No parcels in the current configuration to send.")
+                    wh_text = f"<strong>Warehouse Coordinates (to send)</strong><br><span style='font-size: 0.9em; color: #888;'>{str(warehouse_data)}</span>"
+                streamlit.markdown(wh_text, unsafe_allow_html=True)
             else:
                 streamlit.info("No configuration loaded to send to MRA.")
 
