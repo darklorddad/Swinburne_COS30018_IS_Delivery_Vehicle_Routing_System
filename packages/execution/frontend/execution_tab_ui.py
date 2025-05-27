@@ -201,27 +201,6 @@ def render_jade_operations_tab(ss):
                 display_operation_result({'type': msg_type, 'message': msg_str})
                 ss.da_status_fetch_message = None # Clear after display
 
-            # --- Display DA Capacity Status ---
-            if ss.get("fetched_delivery_agent_statuses") is not None: # Check if fetch attempt was made
-                da_statuses = ss.fetched_delivery_agent_statuses
-                if da_statuses: # Check if list is not empty
-                    streamlit.markdown("##### Delivery Agent Statuses (Fetched from MRA)")
-                    status_df_data = []
-                    for da_status in da_statuses: # Already a list of dicts
-                        status_df_data.append({
-                            "id": da_status.get("id", "N/A"),
-                            "capacity_weight": da_status.get("capacity_weight", "N/A"),
-                            "operational_status": da_status.get("operational_status", "N/A")
-                        })
-                    df_da_statuses = pd.DataFrame(status_df_data)
-                    # Attempt to convert capacity_weight to numeric, coercing errors to NaN then to a string representation if needed
-                    df_da_statuses["capacity_weight"] = pd.to_numeric(df_da_statuses["capacity_weight"], errors='coerce').fillna("Error/NA")
-
-                    streamlit.dataframe(df_da_statuses, use_container_width=True, hide_index=True)
-                elif isinstance(da_statuses, list) and not da_statuses: # Empty list means fetch was successful but no DAs reported
-                    streamlit.info("No Delivery Agent statuses were reported by the MRA.")
-                # If ss.fetched_delivery_agent_statuses is None, the message from da_status_fetch_message already covers it.
-                streamlit.markdown("---")
 
             # --- Trigger MRA Optimisation Cycle (MRA compiles data, Python script runs) ---
             if streamlit.button("Run route optimisation",
