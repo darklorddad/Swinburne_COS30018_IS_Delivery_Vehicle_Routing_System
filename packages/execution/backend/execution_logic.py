@@ -1,4 +1,5 @@
 from . import jade_controller 
+from . import py4j_gateway
 
 # Default JADE agent names and classes
 DEFAULT_MRA_NAME = "MRA"
