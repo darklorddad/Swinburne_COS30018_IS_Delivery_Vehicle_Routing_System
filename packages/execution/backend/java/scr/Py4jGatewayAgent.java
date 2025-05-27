@@ -108,12 +108,14 @@ public class Py4jGatewayAgent extends Agent {
 
     /**
      * Called by Python to get compiled optimization data from the MasterRoutingAgent.
-     * This method will send a request to the MRA and wait for its response.
+     * This method will send a request to the MRA for its current DA statuses (or other compiled data it chooses to send for this ontology)
+     * and wait for its response.
      * @param mraName The local name of the MasterRoutingAgent (e.g., "MRA").
-     * @return A JSON string containing the compiled data from MRA, 
+     * @return A JSON string containing the data from MRA (expected to be DA statuses),
      * or a JSON string with an error field if something goes wrong.
      */
     public String getCompiledOptimizationDataFromMRA(String mraName) {
+        System.out.println("Py4jGatewayAgent: Received request from Python to get DA statuses (via RequestCompiledData) from MRA: " + mraName);
         System.out.println("Py4jGatewayAgent: Received request from Python to get compiled data from MRA: " + mraName);
         try {
             ACLMessage requestToMRA = new ACLMessage(ACLMessage.REQUEST);
