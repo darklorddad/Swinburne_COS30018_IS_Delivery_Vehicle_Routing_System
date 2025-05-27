@@ -92,20 +92,20 @@ def trigger_mra_optimisation_cycle(gateway, mra_name):
     except Exception as e:
         return None, f"Error triggering MRA optimisation cycle: {str(e)}"
 
-def send_operational_data_to_mra(gateway, mra_name, operational_data_json):
+def send_warehouse_parcel_data_to_mra(gateway, mra_name, warehouse_parcel_json):
     """
-    Sends operational data (warehouse, parcels, DA IDs list) from Python to the MRA.
+    Sends warehouse and parcel data from Python to the MRA.
+    MRA will discover DAs via DF rather than receiving IDs from Python.
     """
     if not gateway:
-        return False, "Py4J Gateway not available for sending operational data."
+        return False, "Py4J Gateway not available for sending warehouse/parcel data."
     try:
-        # Call a new method on the Java Py4jGatewayAgent
-        response_message = gateway.entry_point.receiveOperationalDataAndForwardToMRA(mra_name, operational_data_json)
+        response_message = gateway.entry_point.receiveWarehouseParcelDataAndForwardToMRA(mra_name, warehouse_parcel_json)
         if "success" in response_message.lower():
             return True, response_message
         else:
-            return False, f"MRA/Gateway reported issue receiving operational data: {response_message}"
+            return False, f"MRA/Gateway reported issue receiving warehouse/parcel data: {response_message}"
     except Py4JNetworkError as e_net:
-        return False, f"Network error sending operational data to MRA: {str(e_net)}"
+        return False, f"Network error sending warehouse/parcel data to MRA: {str(e_net)}"
     except Exception as e_exc:
-        return False, f"Exception sending operational data to MRA: {str(e_exc)}"
+        return False, f"Exception sending warehouse/parcel data to MRA: {str(e_exc)}"

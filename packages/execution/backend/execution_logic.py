@@ -207,43 +207,40 @@ def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_p
         ss.jade_dispatch_status_message = message or "Failed to send optimised routes to MRA"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
 
-def handle_initialize_mra_with_operational_data(ss):
+def handle_send_warehouse_parcel_data_to_mra(ss):
     """
-    Called when user clicks "Initialize MRA with Operational Data".
-    This function will take warehouse, parcels, and a list of DA IDs
-    from ss.config_data (Python) and send them to the MRA.
+    Called when user clicks "Send Warehouse & Parcel Data to MRA".
+    Sends only warehouse and parcel data from Python's ss.config_data to the MRA.
+    MRA will discover DAs via DF rather than receiving IDs from Python.
     """
-    ss.mra_initialization_message = None
+    ss.mra_initialization_message = None 
     gateway = ss.get("py4j_gateway_object")
     mra_name = DEFAULT_MRA_NAME
 
     if not gateway:
-        msg = "JADE Gateway not available. Cannot send operational data to MRA."
+        msg = "JADE Gateway not available. Cannot send warehouse/parcel data to MRA."
         ss.mra_initialization_message = msg
         return {'type': 'error', 'message': msg}
     if not ss.get("jade_agents_created"): # MRA must exist
-        msg = "MRA not created. Cannot send operational data."
+        msg = "MRA not created. Cannot send warehouse/parcel data."
         ss.mra_initialization_message = msg
         return {'type': 'error', 'message': msg} 
     if not ss.config_data or \
        "parcels" not in ss.config_data or \
-       "warehouse_coordinates_x_y" not in ss.config_data or \
-       "delivery_agents" not in ss.config_data: 
-        msg = "Required configuration (parcels, warehouse, delivery_agents list for IDs) not found in Python session state."
+       "warehouse_coordinates_x_y" not in ss.config_data: 
+        msg = "Required configuration (parcels, warehouse coordinates) not found in Python session state."
         ss.mra_initialization_message = msg
         return {'type': 'error', 'message': msg}
 
-    da_ids_list = [da.get("id") for da in ss.config_data.get("delivery_agents", []) if da.get("id")]
-
-    operational_data_bundle = {
+    warehouse_parcel_data = {
         "warehouse_coordinates_x_y": ss.config_data.get("warehouse_coordinates_x_y"),
-        "parcels": ss.config_data.get("parcels"),
-        "delivery_agent_ids": da_ids_list # Send only the IDs
+        "parcels": ss.config_data.get("parcels")
+        # DA information is explicitly omitted
     }
     import json
-    operational_data_json = json.dumps(operational_data_bundle)
+    warehouse_parcel_json = json.dumps(warehouse_parcel_data)
 
-    success, message = py4j_gateway.send_operational_data_to_mra(gateway, mra_name, operational_data_json)
+    success, message = py4j_gateway.send_warehouse_parcel_data_to_mra(gateway, mra_name, warehouse_parcel_json)
     ss.mra_initialization_message = message 
     if success:
         return {'type': 'success', 'message': message}
