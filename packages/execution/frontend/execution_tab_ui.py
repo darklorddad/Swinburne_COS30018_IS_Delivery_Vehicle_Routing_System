@@ -35,15 +35,12 @@ def render_jade_operations_tab(ss):
         if not script_loaded:
             prereq_messages_list.append("An optimisation script must be loaded (Optimisation tab)")
         
-        with streamlit.expander("Prerequisites Not Met", expanded=True):
-            streamlit.markdown("---")
-            streamlit.warning(
-                "Please complete these steps first:\n\n" + 
-                "\n".join([f"- {msg}" for msg in prereq_messages_list])
-            )
+        # Moved out of expander and removed expander
+        streamlit.warning(
+            "Please complete these steps first:\n\n" + 
+            "\n".join([f"- {msg}" for msg in prereq_messages_list])
+        )
         return # Stop rendering the rest of the Execution tab
-
-    # Removed streamlit.header("JADE Agent Operations")
 
     # --- JADE Platform Control ---
     with streamlit.expander("JADE Management", expanded=True):
@@ -84,21 +81,22 @@ def render_jade_operations_tab(ss):
                 agents_to_create_data = []
                 # MRA
                 agents_to_create_data.append({
-                    "Agent ID": execution_logic.DEFAULT_MRA_NAME,
-                    "Capacity Weight": "N/A",  # MRA doesn't have weight capacity
-                    "Agent Class": execution_logic.DEFAULT_MRA_CLASS
+                    "id": execution_logic.DEFAULT_MRA_NAME,
+                    "capacity_weight": "N/A",  # MRA doesn't have weight capacity
+                    "agent_class": execution_logic.DEFAULT_MRA_CLASS
                 })
                 # DAs
                 if ss.config_data.get("delivery_agents"):
                     for da_config in ss.config_data["delivery_agents"]:
                         agents_to_create_data.append({
-                            "Agent ID": da_config.get("id", "N/A"),
-                            "Capacity Weight": da_config.get("capacity_weight", "N/A"),
-                            "Agent Class": execution_logic.DEFAULT_DA_CLASS
+                            "id": da_config.get("id", "N/A"),
+                            "capacity_weight": da_config.get("capacity_weight", "N/A"),
+                            "agent_class": execution_logic.DEFAULT_DA_CLASS
                         })
                 if agents_to_create_data:
                     streamlit.dataframe(
                         pd.DataFrame(agents_to_create_data),
+                        column_order=("id", "capacity_weight", "agent_class"), # Ensure desired order
                         use_container_width=True,
                         hide_index=True
                     )
