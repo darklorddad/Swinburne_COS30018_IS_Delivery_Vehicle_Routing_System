@@ -286,8 +286,12 @@ def render_jade_operations_tab(ss):
                     streamlit.warning("Optimisation completed, but no results were returned by the script.")
                 
 
+            # Show dispatch status message (from sending routes to MRA)
             if ss.get("jade_dispatch_status_message"):
                 msg_str = ss.jade_dispatch_status_message
                 msg_type = _determine_message_type_from_string(msg_str)
-                display_operation_result({'type': msg_type, 'message': msg_str})
+                if msg_type == 'info':
+                    streamlit.success(msg_str)  # Show as success alert for positive confirmation
+                else:
+                    display_operation_result({'type': msg_type, 'message': msg_str})
                 ss.jade_dispatch_status_message = None # Clear after display
