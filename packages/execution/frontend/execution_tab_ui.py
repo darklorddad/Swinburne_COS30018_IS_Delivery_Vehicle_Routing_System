@@ -244,24 +244,21 @@ def render_jade_operations_tab(ss):
                                 use_container_width=True,
                                 disabled=not routes_available or not ss.get("jade_agents_created", False) or not ss.get("jade_platform_running", False)
                                 ):
-                result = execution_logic.handle_send_optimised_routes_to_mra(ss) 
-                display_operation_result(result)
-                if result and result.get('type') != 'error':
-                    ss.jade_dispatch_status_message = None
+                execution_logic.handle_send_optimised_routes_to_mra(ss)
                 streamlit.rerun()
 
             if ss.get("mra_optimisation_trigger_message"): # Message from MRA data compilation step
                 msg_str = ss.mra_optimisation_trigger_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
-                # ss.mra_optimisation_trigger_message = None
+                ss.mra_optimisation_trigger_message = None
             
             # This message comes from run_optimisation_script
             if ss.get("optimisation_execution_tab_run_status_message"): 
                 msg_str = ss.optimisation_execution_tab_run_status_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
-                # ss.optimisation_execution_tab_run_status_message = None
+                ss.optimisation_execution_tab_run_status_message = None
 
             # Show optimisation results section if we have any state about optimisation
             if ss.get("optimisation_run_complete") or ss.get("optimisation_run_error"):
