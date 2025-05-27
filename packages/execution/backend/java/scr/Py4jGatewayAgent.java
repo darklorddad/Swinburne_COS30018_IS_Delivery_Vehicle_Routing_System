@@ -157,26 +157,29 @@ public class Py4jGatewayAgent extends Agent {
         }
     }
 
-    public String requestMRAConfigSubset(String mraName) {
-        System.out.println("Py4jGatewayAgent: Requesting config subset (warehouse, parcels) from MRA: " + mraName);
-        ACLMessage requestMsg = new ACLMessage(ACLMessage.REQUEST);
-        requestMsg.addReceiver(new AID(mraName, AID.ISLOCALNAME));
-        requestMsg.setOntology("RequestConfigSubset");
-        String convId = "req-config-subset-" + System.currentTimeMillis();
-        requestMsg.setConversationId(convId);
-        requestMsg.setReplyWith(convId + "-reply");
-        send(requestMsg);
+    public String receiveConfigSubsetAndForwardToMRA(String mraName, String configSubsetJson) {
+        System.out.println("Py4jGatewayAgent: Received config subset from Python for MRA: " + mraName);
+        System.out.println("Py4jGatewayAgent: Config subset JSON: " + configSubsetJson);
+        try {
+            ACLMessage msgToMRA = new ACLMessage(ACLMessage.INFORM);
+            msgToMRA.addReceiver(new AID(mraName, AID.ISLOCALNAME));
+            msgToMRA.setOntology("ReceiveConfigSubset");
+            msgToMRA.setLanguage("JSON");
+            msgToMRA.setContent(configSubsetJson);
+            
+            String convId = "send-config-subset-" + System.currentTimeMillis();
+            msgToMRA.setConversationId(convId);
+            msgToMRA.setReplyWith(convId + "-reply");
 
-        MessageTemplate replyTemplate = MessageTemplate.and(
-            MessageTemplate.MatchOntology("ConfigSubsetResponse"),
-            MessageTemplate.MatchInReplyTo(requestMsg.getReplyWith())
-        );
-        ACLMessage reply = blockingReceive(replyTemplate, 5000); 
-        if (reply != null) {
-            return reply.getContent();
-        } else {
-            System.err.println("Py4jGatewayAgent: Timeout or no reply from MRA '" + mraName + "' for RequestConfigSubset.");
-            return "{\"error\": \"Timeout or no reply from MRA for RequestConfigSubset\"}";
+            send(msgToMRA);
+            System.out.println("Py4jGatewayAgent: Sent config subset to MRA '" + mraName + "'.");
+            
+            return "Config subset sent to MRA " + mraName + " successfully by Py4jGatewayAgent.";
+
+        } catch (Exception e) {
+            System.err.println("Py4jGatewayAgent: Error sending config subset to MRA '" + mraName + "': " + e.getMessage());
+            e.printStackTrace();
+            return "{\"error\": \"Exception in Py4jGatewayAgent while sending config subset to MRA: " + e.getMessage() + "\"}";
         }
     }
 }

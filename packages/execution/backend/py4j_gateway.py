@@ -92,17 +92,19 @@ def trigger_mra_optimisation_cycle(gateway, mra_name):
     except Exception as e:
         return None, f"Error triggering MRA optimisation cycle: {str(e)}"
 
-def get_mra_config_subset(gateway, mra_name):
+def send_config_subset_to_mra(gateway, mra_name, config_subset_json):
     """
-    Gets warehouse and parcel data from MRA via Py4jGatewayAgent.
-    Returns JSON string with warehouse_coordinates_x_y and parcels.
+    Sends a subset of configuration data (warehouse, parcels) from Python to the MRA.
     """
     if not gateway:
-        return None, "Py4J Gateway not available"
+        return False, "Py4J Gateway not available for sending config subset."
     try:
-        data_json_str = gateway.entry_point.requestMRAConfigSubset(mra_name)
-        return data_json_str, None
-    except Py4JNetworkError as e:
-        return None, f"Network error getting config subset from MRA: {str(e)}"
-    except Exception as e:
-        return None, f"Error getting config subset from MRA: {str(e)}"
+        response_message = gateway.entry_point.receiveConfigSubsetAndForwardToMRA(mra_name, config_subset_json)
+        if "success" in response_message.lower():
+            return True, response_message
+        else:
+            return False, f"MRA/Gateway reported issue receiving config subset: {response_message}"
+    except Py4JNetworkError as e_net:
+        return False, f"Network error sending config subset to MRA: {str(e_net)}"
+    except Exception as e_exc:
+        return False, f"Exception sending config subset to MRA: {str(e_exc)}"

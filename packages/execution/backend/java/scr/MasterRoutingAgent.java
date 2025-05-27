@@ -21,18 +21,11 @@ public class MasterRoutingAgent extends Agent {
         
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
-            if (args[0] instanceof String) {
-                String configJsonString = (String) args[0];
-                System.out.println("MRA Configuration (JSON): " + configJsonString);
-                try {
-                    initialConfigData = new JSONObject(configJsonString);
-                    // You can optionally parse and log parts of the config here, e.g.:
-                    // JSONArray parcels = initialConfigData.optJSONArray("parcels");
-                    // if (parcels != null) System.out.println("MRA: Parsed " + parcels.length() + " parcels.");
-                } catch (Exception e) {
-                    System.err.println("MRA: Error parsing initial configuration JSON: " + e.getMessage());
-                    // Consider doDelete() or other error handling if config is crucial
-                }
+            // If MRA is created with arguments for other purposes, handle them here
+            System.out.println("MRA " + mraName + " created with arguments. First arg: " + args[0].toString());
+            if (args[0] instanceof String && !((String)args[0]).isEmpty()) {
+                System.out.println("MRA " + mraName + " received a non-empty string argument, but will wait for explicit config subset.");
+                initialConfigData = null; 
             }
         } else {
             System.out.println("MRA: No arguments provided for initial setup.");

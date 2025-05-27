@@ -207,36 +207,43 @@ def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_p
         ss.jade_dispatch_status_message = message or "Failed to send optimised routes to MRA"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
 
-def handle_request_mra_config_subset(ss):
+def handle_send_config_subset_to_mra(ss):
+    """
+    Called when user clicks "Request MRA Config (Warehouse/Parcels)".
+    This function will take the relevant parts from ss.config_data (Python)
+    and send them to the MRA.
+    """
     ss.mra_config_subset_data = None
     ss.mra_config_subset_message = None
     gateway = ss.get("py4j_gateway_object")
     mra_name = DEFAULT_MRA_NAME
 
     if not gateway:
-        msg = "JADE Gateway not available. Cannot request config subset from MRA."
+        msg = "JADE Gateway not available. Cannot send config subset to MRA."
         ss.mra_config_subset_message = msg
         return {'type': 'error', 'message': msg}
     if not ss.get("jade_agents_created"): # MRA must exist
-        msg = "MRA not created. Cannot request config subset."
+        msg = "MRA not created. Cannot send config subset."
+        ss.mra_config_subset_message = msg
+        return {'type': 'error', 'message': msg}
+    if not ss.config_data or "parcels" not in ss.config_data or "warehouse_coordinates_x_y" not in ss.config_data:
+        msg = "Required configuration (parcels, warehouse coordinates) not found in Python session state."
         ss.mra_config_subset_message = msg
         return {'type': 'error', 'message': msg}
 
-    json_data, err_msg = py4j_gateway.get_mra_config_subset(gateway, mra_name)
+    config_subset = {
+        "warehouse_coordinates_x_y": ss.config_data.get("warehouse_coordinates_x_y"),
+        "parcels": ss.config_data.get("parcels")
+    }
+    import json
+    config_subset_json = json.dumps(config_subset)
 
-    if err_msg:
-        ss.mra_config_subset_message = err_msg
-        return {'type': 'error', 'message': err_msg}
-    try:
-        import json
-        ss.mra_config_subset_data = json.loads(json_data)
-        msg = f"Config subset (warehouse, parcels) received from MRA '{mra_name}'."
-        ss.mra_config_subset_message = msg
-        return {'type': 'success', 'message': msg}
-    except Exception as e:
-        msg = f"Error parsing config subset from MRA: {str(e)}. Data: {json_data[:200]}"
-        ss.mra_config_subset_message = msg
-        return {'type': 'error', 'message': msg}
+    success, message = py4j_gateway.send_config_subset_to_mra(gateway, mra_name, config_subset_json)
+    ss.mra_config_subset_message = message
+    if success:
+        return {'type': 'success', 'message': message}
+    else:
+        return {'type': 'error', 'message': message}
 
 def handle_trigger_mra_optimisation_cycle(ss):
     ss.data_for_optimisation_script = None # Clear previous data
