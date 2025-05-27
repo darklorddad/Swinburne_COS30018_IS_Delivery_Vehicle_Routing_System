@@ -117,7 +117,7 @@ def fetch_delivery_agent_statuses(ss):
             ss.da_status_fetch_message = msg
             return {'type': 'error', 'message': msg}
 
-        msg = "Delivery Agent statuses successfully fetched" # Changed message
+        msg = "DA statuses successfully fetched" # Changed message
         ss.da_status_fetch_message = msg
         return {'type': 'info', 'message': msg} # Changed from success to info
 
