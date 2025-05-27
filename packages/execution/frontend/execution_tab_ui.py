@@ -14,8 +14,8 @@ def _determine_message_type_from_string(message_str):
     if "success" in msg_lower or "started" in msg_lower or "stopped" in msg_lower or \
        "running" in msg_lower or "requested" in msg_lower or "terminated" in msg_lower or \
        "created" in msg_lower or "sent" in msg_lower or "processed" in msg_lower or \
-       "forwarded" in msg_lower or "completed" in msg_lower or "connected" in msg_lower:
-        return 'success'
+       "forwarded" in msg_lower or "completed" in msg_lower or "connected" in msg_lower or "received" in msg_lower:
+        return 'info'
     elif "fail" in msg_lower or "error" in msg_lower:
         return 'error'
     elif "warn" in msg_lower:
@@ -107,16 +107,16 @@ def render_jade_operations_tab(ss):
             if streamlit.button("Create agents", 
                                 key="create_jade_agents_btn", 
                                 use_container_width=True,
-                                disabled=not config_loaded or ss.get("jade_agents_created", False)):
+                                disabled=not config_loaded or ss.get("jade_agents_created", False) or not ss.get("jade_platform_running")):
                 result = execution_logic.handle_create_agents(ss)
-                # Force rerun to immediately show status updates
+                display_operation_result(result)
                 streamlit.rerun()
 
-            # Display agent creation status message (persistently)
             if ss.get("jade_agent_creation_status_message"):
                 msg_str = ss.jade_agent_creation_status_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
+                ss.jade_agent_creation_status_message = None
 
     # --- Master Routing Agent Operations ---
     if ss.get("jade_platform_running"): # This section only active if JADE is running
