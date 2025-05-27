@@ -127,19 +127,11 @@ def render_jade_operations_tab(ss):
 
             # --- Display Data to be Sent (Warehouse/Parcels from ss.config_data) ---
             if ss.config_data:
-                streamlit.markdown("##### Data to be sent to MRA (from current configuration)")
-                data_to_send = {
-                    "warehouse_coordinates_x_y": ss.config_data.get("warehouse_coordinates_x_y", "Not set"),
-                    "parcels": ss.config_data.get("parcels", [])
-                }
                 warehouse_data = ss.config_data.get("warehouse_coordinates_x_y", "Not set")
-                parcels_data = ss.config_data.get("parcels", [])
-
-                # Warehouse info
                 if isinstance(warehouse_data, list) and len(warehouse_data) == 2:
-                    wh_text = f"<strong>Warehouse Coordinates (to send)</strong><br><span style='font-size: 0.9em; color: #888;'>X: {warehouse_data[0]}, Y: {warehouse_data[1]}</span>"
+                    wh_text = f"<strong>Warehouse Coordinates</strong><br><span style='font-size: 0.9em; color: #888;'>X: {warehouse_data[0]}, Y: {warehouse_data[1]}</span>"
                 else:
-                    wh_text = f"<strong>Warehouse Coordinates (to send)</strong><br><span style='font-size: 0.9em; color: #888;'>{str(warehouse_data)}</span>"
+                    wh_text = f"<strong>Warehouse Coordinates</strong><br><span style='font-size: 0.9em; color: #888;'>{str(warehouse_data)}</span>"
                 streamlit.markdown(wh_text, unsafe_allow_html=True)
             else:
                 streamlit.info("No configuration loaded to send to MRA.")
@@ -168,7 +160,25 @@ def render_jade_operations_tab(ss):
 
 
             # --- Fetch Delivery Agent Statuses Section (via MRA) ---
-            if streamlit.button("Fetch Delivery Agent statuses",
+            # --- Display DA Status Table ---
+            if ss.get("fetched_delivery_agent_statuses") is not None:
+                da_statuses = ss.fetched_delivery_agent_statuses
+                if da_statuses:
+                    status_df_data = []
+                    for da_status in da_statuses:
+                        status_df_data.append({
+                            "id": da_status.get("id", "N/A"),
+                            "capacity_weight": da_status.get("capacity_weight", "N/A"),
+                            "operational_status": da_status.get("operational_status", "N/A")
+                        })
+                    df_da_statuses = pd.DataFrame(status_df_data)
+                    df_da_statuses["capacity_weight"] = pd.to_numeric(df_da_statuses["capacity_weight"], errors='coerce').fillna("Error/NA")
+                    streamlit.dataframe(df_da_statuses, use_container_width=True, hide_index=True)
+                elif isinstance(da_statuses, list) and not da_statuses:
+                    streamlit.info("No DA statuses were reported by the MRA.")
+                streamlit.markdown("---")
+
+            if streamlit.button("Fetch DA statuses",
                                 key="fetch_optimisation_data_btn",
                                 use_container_width=True,
                                 disabled=not ss.get("jade_agents_created", False)

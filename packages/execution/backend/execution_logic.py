@@ -243,9 +243,8 @@ def handle_send_warehouse_parcel_data_to_mra(ss):
     success, message = py4j_gateway.send_warehouse_parcel_data_to_mra(gateway, mra_name, warehouse_parcel_json)
     ss.mra_initialization_message = message 
     if success:
-        user_friendly_message = "Warehouse and parcel data sent to MRA successfully."
-        ss.mra_initialization_message = user_friendly_message
-        return {'type': 'info', 'message': user_friendly_message}
+        ss.mra_initialization_message = "Warehouse and parcel data sent successfully"
+        return {'type': 'info', 'message': ss.mra_initialization_message}
     else:
         return {'type': 'error', 'message': message}
 
@@ -280,7 +279,7 @@ def handle_trigger_mra_optimisation_cycle(ss):
             ss.mra_optimisation_trigger_message = msg
             return {'type': 'error', 'message': msg}
         ss.data_for_optimisation_script = parsed_bundle # Store the whole bundle
-        msg = f"Optimisation data bundle received from MRA '{mra_name}'. Ready for Python script."
+        msg = "Optimisation data ready for processing"
         ss.mra_optimisation_trigger_message = msg
         return {'type': 'info', 'message': msg}
     except Exception as e:

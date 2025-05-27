@@ -37,7 +37,7 @@ def _render_script_management_section(ss):
                     streamlit.info("No configurable parameters defined in this script")
             
             streamlit.markdown("---")  # Divider before script management buttons
-            streamlit.success(f"Script loaded: {ss.optimisation_script_filename}")  # Changed to success for green
+            streamlit.success(f"{ss.optimisation_script_filename}")
             
             # "Load Another Optimisation Script" button moved here
             if streamlit.button("Load script", key="initiate_load_another_script_btn", use_container_width=True):
