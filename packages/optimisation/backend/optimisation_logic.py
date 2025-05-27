@@ -166,18 +166,23 @@ def run_optimisation_script(ss):
         msg = f"Optimisation script execution failed: {ss.optimisation_run_error}"
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
-    elif ss.get("optimisation_run_complete"):
-        if ss.optimisation_results is None:
+    elif ss.get("optimisation_run_complete"): # This is set by script_lifecycle.run_script
+        # script_lifecycle.run_script also sets ss.optimisation_results
+        if ss.get("optimisation_results") is None:
             msg = "Optimisation completed but returned no results"
             ss.optimisation_execution_tab_run_status_message = msg
-            return {'type': 'warning', 'message': msg}
+            return {
+                'type': 'warning', 
+                'message': msg,
+                'results': None # Explicitly indicate no results in the return dict
+            }
         else:
             msg = "Optimisation completed successfully"
             ss.optimisation_execution_tab_run_status_message = msg
             return {
-                'type': 'success', 
+                'type': 'success', # Changed to 'success' to better reflect completion with results
                 'message': msg,
-                'results': ss.optimisation_results  # Include the actual results
+                'results': ss.get("optimisation_results") # Ensure we get from ss
             }
     else:
         msg = "Optimisation did not complete"

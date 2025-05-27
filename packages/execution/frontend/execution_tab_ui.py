@@ -220,18 +220,22 @@ def render_jade_operations_tab(ss):
                 result_mra_data = execution_logic.handle_trigger_mra_optimisation_cycle(ss)
                 display_operation_result(result_mra_data)
                 if result_mra_data and result_mra_data.get('type') == 'success':
+                    # ss.data_for_optimisation_script is set by handle_trigger_mra_optimisation_cycle
                     # Step 2: If MRA data received, run the Python script with it
-                    result_script_run = optimisation_logic.run_optimisation_script(ss) # Uses ss.data_for_optimisation_script
+                    result_script_run = optimisation_logic.run_optimisation_script(ss)
                     display_operation_result(result_script_run)
                     
-                    # Store results in session state
+                    # Explicitly update session state based on script run results
                     if result_script_run:
                         if result_script_run.get('type') == 'success':
                             ss.optimisation_run_complete = True
                             ss.optimisation_results = result_script_run.get('results', None)
                         else:
                             ss.optimisation_run_error = result_script_run.get('message')
-                streamlit.rerun() # Rerun to show all messages and results
+                            ss.optimisation_run_complete = False
+                            ss.optimisation_results = None
+                # Always rerun to reflect any state changes from both steps
+                streamlit.rerun()
 
             if ss.get("mra_optimisation_trigger_message"): # Message from MRA data compilation step
                 msg_str = ss.mra_optimisation_trigger_message
