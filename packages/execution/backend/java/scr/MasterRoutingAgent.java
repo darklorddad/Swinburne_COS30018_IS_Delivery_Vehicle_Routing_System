@@ -130,7 +130,7 @@ public class MasterRoutingAgent extends Agent {
                     }
                     reply.setContent(compiledDataResponse.toString());
                     myAgent.send(reply);
-                    System.out.println("MRA: Sent CompiledDataResponse to msg.get msg.getSender().getName() + " with ConvID " + reply.getConversationId() + ". Performative: " + ACLMessage.getPerformative(reply.getPerformative()) + ". Content: " + compiledDataResponse.toString().substring(0, Math.min(compiledDataResponse.toString().length(),100))+"...");
+                    System.out.println("MRA: Sent CompiledDataResponse to " + msg.getSender().getName() + " with ConvID " + reply.getConversationId() + ". Performative: " + ACLMessage.getPerformative(reply.getPerformative()) + ". Content: " + compiledDataResponse.toString().substring(0, Math.min(compiledDataResponse.toString().length(),100))+"...");
                 } else {
                     block();
                 }
