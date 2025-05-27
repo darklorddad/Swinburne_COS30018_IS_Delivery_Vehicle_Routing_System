@@ -152,6 +152,45 @@ public class MasterRoutingAgent extends Agent {
             }
         });
 
+        // Behaviour to receive and store warehouse and parcel data
+        System.out.println("MRA " + mraName + ": Adding ReceiveWarehouseParcelData behavior at " + System.currentTimeMillis());
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
+                MessageTemplate mt = MessageTemplate.and(
+                    MessageTemplate.MatchPerformative(ACLMessage.INFORM), 
+                    MessageTemplate.MatchOntology("ReceiveWarehouseParcelData") 
+                );
+                ACLMessage msg = myAgent.receive(mt); 
+                if (msg != null) {
+                    System.out.println("MRA " + mraName + ": ===== Received 'ReceiveWarehouseParcelData' INFORM message from " + msg.getSender().getName() + " =====");
+                    String warehouseParcelJson = msg.getContent();
+                    System.out.println("MRA " + mraName + ": Warehouse/Parcel Data JSON received: " + warehouseParcelJson.substring(0, Math.min(warehouseParcelJson.length(),100)) + "...");
+                    try {
+                        System.out.println("MRA " + mraName + ": ReceiveWarehouseParcelData - Before processing, this.initialConfigData is: " + (initialConfigData == null ? "NULL" : initialConfigData.toString().substring(0, Math.min(initialConfigData.toString().length(),100))+"..."));
+                        JSONObject receivedData = new JSONObject(warehouseParcelJson);
+                        
+                        if (initialConfigData == null) { 
+                            initialConfigData = new JSONObject();
+                            System.out.println("MRA " + mraName + ": ReceiveWarehouseParcelData - Initialized new initialConfigData JSONObject.");
+                        }
+                        if (receivedData.has("warehouse_coordinates_x_y")) {
+                            initialConfigData.put("warehouse_coordinates_x_y", receivedData.getJSONArray("warehouse_coordinates_x_y"));
+                            System.out.println("MRA " + mraName + ": Stored warehouse: " + initialConfigData.optJSONArray("warehouse_coordinates_x_y"));
+                        }
+                        if (receivedData.has("parcels")) {
+                             initialConfigData.put("parcels", receivedData.getJSONArray("parcels")); 
+                             System.out.println("MRA " + mraName + ": Stored parcels count: " + initialConfigData.optJSONArray("parcels").length());
+                        }
+                        System.out.println("MRA " + mraName + ": ReceiveWarehouseParcelData - After processing, this.initialConfigData is: " + initialConfigData.toString().substring(0, Math.min(initialConfigData.toString().length(),100))+"...");
+                    } catch (Exception e) {
+                        System.err.println("MRA " + mraName + ": Error parsing received warehouse/parcel data JSON: " + e.getMessage());
+                    }
+                } else {
+                    block();
+                }
+            }
+        });
+
         // Behaviour to listen for full optimisation results from Py4jGatewayAgent
         System.out.println("MRA " + mraName + ": Adding FullVRPResults behavior at " + System.currentTimeMillis());
         addBehaviour(new CyclicBehaviour(this) {
