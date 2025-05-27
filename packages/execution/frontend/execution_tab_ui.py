@@ -213,7 +213,7 @@ def render_jade_operations_tab(ss):
                                  ):
                 # Clear previous results
                 ss.optimisation_run_complete = False
-.optim.optimisation_run_error = None
+                ss.optimisation_run_error = None
                 ss.optimisation_results = None
                 
                 # Step 1: Ask MRA to compile data
