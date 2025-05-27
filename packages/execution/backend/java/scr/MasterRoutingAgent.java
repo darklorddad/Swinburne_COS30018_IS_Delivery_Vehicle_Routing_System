@@ -46,53 +46,28 @@ public class MasterRoutingAgent extends Agent {
                 );
                 ACLMessage msg = myAgent.receive(mt);
                 if (msg != null) {
-                    System.out.println("MRA " + mraName + ": Received data request from " + msg.getSender().getName());
+                    System.out.println("MRA " + mraName + ": Received RequestCompiledData from " + msg.getSender().getName() + 
+                                     ", ConvID: " + msg.getConversationId());
                     ACLMessage reply = msg.createReply();
                     reply.setPerformative(ACLMessage.INFORM);
-                    reply.setOntology("CompiledDataResponse"); // Py4jGatewayAgent expects this ontology for the reply
+                    reply.setOntology("CompiledDataResponse");
+                    
+                    // Ensure conversation ID is set correctly
+                    if (reply.getConversationId() == null) {
+                        reply.setConversationId(msg.getConversationId());
+                    }
 
                     JSONObject compiledData = new JSONObject();
-
-                    // Actively query DAs for their current status
-                    JSONArray liveDAStatuses = new JSONArray();
-                    deliveryAgentStatuses.clear(); // Clear old statuses before querying
-
-                    JSONArray deliveryAgentsFromConfig = initialConfigData.optJSONArray("delivery_agents");
-                    if (deliveryAgentsFromConfig != null) {
-                        System.out.println("MRA: Querying " + deliveryAgentsFromConfig.length() + " DAs for status...");
-                        for (int i = 0; i < deliveryAgentsFromConfig.length(); i++) {
-                            JSONObject daConfig = deliveryAgentsFromConfig.getJSONObject(i);
-                            String daName = daConfig.getString("id");
-                            AID daAID = new AID(daName, AID.ISLOCALNAME);
-
-                            ACLMessage queryToDA = new ACLMessage(ACLMessage.REQUEST);
-                            queryToDA.addReceiver(daAID);
-                            queryToDA.setOntology("QueryDAStatus");
-                            String convId = "status-query-" + daName + "-" + System.currentTimeMillis();
-                            queryToDA.setConversationId(convId);
-                            queryToDA.setReplyWith(convId + "-reply");
-                            myAgent.send(queryToDA);
-                            System.out.println("MRA: Sent QueryDAStatus to " + daName);
-
-                            MessageTemplate mtReplyFromDA = MessageTemplate.and(
-                                MessageTemplate.MatchOntology("DAStatusReport"),
-                                MessageTemplate.MatchInReplyTo(queryToDA.getReplyWith())
-                            );
-                            ACLMessage daReply = myAgent.blockingReceive(mtReplyFromDA, 3000);
-
-                            if (daReply != null) {
-                                try {
-                                    JSONObject daStatusJson = new JSONObject(daReply.getContent());
-                                    liveDAStatuses.put(daStatusJson);
-                                    deliveryAgentStatuses.put(daReply.getSender(), daStatusJson);
-                                    System.out.println("MRA: Received status from " + daName + ": " + daStatusJson.toString());
-                                } catch (Exception e_parse) {
-                                    System.err.println("MRA: Error parsing DAStatusReport JSON from " + daName + ": " + e_parse.getMessage());
-                                }
-                            } else {
-                                System.err.println("MRA: No status reply from DA " + daName + " within timeout.");
-                            }
-                        }
+                    try {
+                        System.out.println("MRA " + mraName + ": Querying DA statuses via DF...");
+                        JSONArray liveDAStatuses = getCurrentDAStatuses();
+                        compiledData.put("delivery_agent_statuses", liveDAStatuses);
+                        System.out.println("MRA " + mraName + ": Got " + liveDAStatuses.length() + " DA statuses");
+                    } catch (Exception e) {
+                        System.err.println("MRA " + mraName + ": Error getting DA statuses: " + e.getMessage());
+                        e.printStackTrace();
+                        reply.setPerformative(ACLMessage.FAILURE);
+                        compiledData.put("error", "MRA failed to get DA statuses: " + e.getMessage());
                     }
                     // The duplicated block that started with:
                     // JSONArray deliveryAgentsFromConfig = initialConfigData.optJSONArray("delivery_agents");
