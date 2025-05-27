@@ -130,7 +130,7 @@ def render_jade_operations_tab(ss):
                                  key="request_mra_config_subset_btn",
                                  use_container_width=True,
                                  disabled=not ss.get("jade_agents_created", False)):
-                result = execution_logic.handle_request_mra_config_subset(ss)
+                result = execution_logic.handle_send_config_subset_to_mra(ss)
                 display_operation_result(result)
                 streamlit.rerun()
             
