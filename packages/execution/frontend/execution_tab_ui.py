@@ -123,24 +123,39 @@ def render_jade_operations_tab(ss):
         with streamlit.expander("Master Routing Agent Operations", expanded=True):
             streamlit.markdown("---")
 
-            # --- Request MRA Config Subset (for display/debug) ---
+            # --- Display Data to be Sent (Warehouse/Parcels from ss.config_data) ---
+            if ss.config_data:
+                streamlit.markdown("##### Data to be sent to MRA (from current configuration)")
+                data_to_send = {
+                    "warehouse_coordinates_x_y": ss.config_data.get("warehouse_coordinates_x_y", "Not set"),
+                    "parcels": ss.config_data.get("parcels", [])
+                }
+                streamlit.json(data_to_send, expanded=False)
+                streamlit.markdown("---")
+            else:
+                streamlit.info("No configuration loaded to send to MRA.")
+
+            # --- Send Warehouse & Parcel Data to MRA ---
             if streamlit.button("Send warehouse and parcel data to MRA", 
                                  key="send_warehouse_parcel_data_to_mra_btn", 
                                  use_container_width=True,
-                                 disabled=not ss.get("jade_agents_created", False)):
+                                 disabled=not ss.get("jade_agents_created", False) or not ss.get("jade_platform_running", False) or not ss.config_data):
                 result = execution_logic.handle_send_warehouse_parcel_data_to_mra(ss)
                 display_operation_result(result)
+                if result and result.get('type') != 'error':
+                    ss.mra_initialization_message = None
                 streamlit.rerun()
             
-            if ss.get("mra_initialization_message"): # Use new state var for message
+            if ss.get("mra_initialization_message"):
                 msg_str = ss.mra_initialization_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
-            
+                ss.mra_initialization_message = None
+
             if ss.get("mra_config_subset_data"):
-                streamlit.markdown("##### Config Subset from MRA (Warehouse/Parcels)")
+                streamlit.markdown("##### Confirmation: Warehouse and Parcel Data received by MRA")
                 streamlit.json(ss.mra_config_subset_data, expanded=False)
-                streamlit.markdown("---")
+            streamlit.markdown("---")
 
 
             # --- Fetch Delivery Agent Statuses Section (via MRA) ---
