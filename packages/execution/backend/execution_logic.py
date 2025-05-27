@@ -14,6 +14,10 @@ def initialise_session_state(ss):
         ss.jade_agents_created = False
         ss.jade_agent_creation_status_message = None
         ss.jade_dispatch_status_message = None # Renamed from jade_execution_status_message
+        ss.mra_config_subset_data = None # For warehouse/parcels from MRA
+        ss.mra_config_subset_message = None
+        ss.data_for_optimisation_script = None # Data bundle from MRA for script
+        ss.mra_optimisation_trigger_message = None
         
         # Store JADE process info (e.g., Popen object from subprocess or simulated dict)
         ss.jade_process_info = None 
@@ -91,7 +95,9 @@ def handle_stop_jade(ss):
     # Reset downstream states
     ss.jade_agents_created = False
     ss.jade_agent_creation_status_message = None
-    ss.jade_dispatch_status_message = None # Renamed
+    ss.jade_dispatch_status_message = None
+    ss.mra_config_subset_data = None
+    ss.data_for_optimisation_script = None
 
 def handle_create_agents(ss):
     if not ss.get("jade_platform_running"):
@@ -167,22 +173,22 @@ def handle_create_agents(ss):
         return {'type': 'error', 'message': final_message}
 
 
-def handle_trigger_mra_processing(ss): # Renamed from handle_dispatch_routes
+def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_processing
     if not ss.get("jade_platform_running"):
-        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: JADE is not running"
+        ss.jade_dispatch_status_message = "Cannot send routes to MRA: JADE is not running"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
     
     py4j_gateway = ss.get("py4j_gateway_object")
     if not py4j_gateway:
-        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Py4J Gateway to JADE is not available"
+        ss.jade_dispatch_status_message = "Cannot send routes to MRA: Py4J Gateway to JADE is not available"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
         
     if not ss.get("jade_agents_created"):
-        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Agents have not been created in JADE"
+        ss.jade_dispatch_status_message = "Cannot send routes to MRA: Agents have not been created in JADE"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
     if not ss.get("optimisation_run_complete") or not ss.get("optimisation_results"):
-        ss.jade_dispatch_status_message = "Cannot trigger MRA processing: Optimisation results not available. Please run optimisation in the 'Optimisation' tab first"
-        return {'type': 'warning', 'message': ss.jade_dispatch_status_message}
+        ss.jade_dispatch_status_message = "Cannot send routes to MRA: Optimisation results not available. Please run optimisation first."
+        return {'type': 'error', 'message': ss.jade_dispatch_status_message}
 
     optimisation_results = ss.optimisation_results
 
@@ -194,8 +200,75 @@ def handle_trigger_mra_processing(ss): # Renamed from handle_dispatch_routes
     )
 
     if success:
-        ss.jade_dispatch_status_message = message or "Optimisation results sent to MRA for processing and dispatch"
+        ss.jade_dispatch_status_message = message or "Optimised routes sent to MRA for dispatch"
         return {'type': 'success', 'message': ss.jade_dispatch_status_message}
     else:
-        ss.jade_dispatch_status_message = message or "Failed to send optimisation results to MRA"
+        ss.jade_dispatch_status_message = message or "Failed to send optimised routes to MRA"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
+
+def handle_request_mra_config_subset(ss):
+    ss.mra_config_subset_data = None
+    ss.mra_config_subset_message = None
+    gateway = ss.get("py4j_gateway_object")
+    mra_name = DEFAULT_MRA_NAME
+
+    if not gateway:
+        msg = "JADE Gateway not available. Cannot request config subset from MRA."
+        ss.mra_config_subset_message = msg
+        return {'type': 'error', 'message': msg}
+    if not ss.get("jade_agents_created"): # MRA must exist
+        msg = "MRA not created. Cannot request config subset."
+        ss.mra_config_subset_message = msg
+        return {'type': 'error', 'message': msg}
+
+    json_data, err_msg = py4j_gateway.get_mra_config_subset(gateway, mra_name)
+
+    if err_msg:
+        ss.mra_config_subset_message = err_msg
+        return {'type': 'error', 'message': err_msg}
+    try:
+        import json
+        ss.mra_config_subset_data = json.loads(json_data)
+        msg = f"Config subset (warehouse, parcels) received from MRA '{mra_name}'."
+        ss.mra_config_subset_message = msg
+        return {'type': 'success', 'message': msg}
+    except Exception as e:
+        msg = f"Error parsing config subset from MRA: {str(e)}. Data: {json_data[:200]}"
+        ss.mra_config_subset_message = msg
+        return {'type': 'error', 'message': msg}
+
+def handle_trigger_mra_optimisation_cycle(ss):
+    ss.data_for_optimisation_script = None # Clear previous data
+    ss.mra_optimisation_trigger_message = None
+    gateway = ss.get("py4j_gateway_object")
+    mra_name = DEFAULT_MRA_NAME
+
+    if not gateway:
+        msg = "JADE Gateway not available. Cannot trigger MRA optimisation cycle."
+        ss.mra_optimisation_trigger_message = msg
+        return {'type': 'error', 'message': msg}
+    if not ss.get("jade_agents_created"): # MRA must exist
+        msg = "MRA not created. Cannot trigger MRA optimisation cycle."
+        ss.mra_optimisation_trigger_message = msg
+        return {'type': 'error', 'message': msg}
+
+    json_data_bundle, err_msg = py4j_gateway.trigger_mra_optimisation_cycle(gateway, mra_name)
+
+    if err_msg:
+        ss.mra_optimisation_trigger_message = err_msg
+        return {'type': 'error', 'message': err_msg}
+    try:
+        import json
+        parsed_bundle = json.loads(json_data_bundle)
+        if isinstance(parsed_bundle, dict) and "error" in parsed_bundle: # Check for error field from Java
+            msg = f"MRA returned an error during optimisation data preparation: {parsed_bundle['error']}"
+            ss.mra_optimisation_trigger_message = msg
+            return {'type': 'error', 'message': msg}
+        ss.data_for_optimisation_script = parsed_bundle # Store the whole bundle
+        msg = f"Optimisation data bundle received from MRA '{mra_name}'. Ready for Python script."
+        ss.mra_optimisation_trigger_message = msg
+        return {'type': 'success', 'message': msg}
+    except Exception as e:
+        msg = f"Error parsing optimisation data bundle from MRA: {str(e)}. Data: {json_data_bundle[:200]}"
+        ss.mra_optimisation_trigger_message = msg
+        return {'type': 'error', 'message': msg}
