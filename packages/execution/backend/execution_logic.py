@@ -121,12 +121,12 @@ def handle_create_agents(ss):
     ss.jade_agent_creation_status_message = None
     ss.jade_agents_created = False
 
-    # Create MRA
+    # Create MRA - it starts "fresh" without initial full config
     mra_success, mra_msg = jade_controller.create_mra_agent(
         py4j_gateway, # Pass the gateway object
         DEFAULT_MRA_NAME,
         DEFAULT_MRA_CLASS,
-        ss.config_data 
+        {} # Pass an empty dictionary, or a specific minimal set of args MRA might need for its own identity
     )
 
     if not mra_success:
@@ -207,14 +207,13 @@ def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_p
         ss.jade_dispatch_status_message = message or "Failed to send optimised routes to MRA"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
 
-def handle_send_config_subset_to_mra(ss):
+def handle_initialize_mra_with_config(ss):
     """
-    Called when user clicks "Request MRA Config (Warehouse/Parcels)".
-    This function will take the relevant parts from ss.config_data (Python)
-    and send them to the MRA.
+    Called when user clicks "Initialize MRA with Config".
+    This function will take warehouse, parcels, and the list of delivery_agents
+    from ss.config_data (Python) and send them to the MRA.
     """
-    ss.mra_config_subset_data = None
-    ss.mra_config_subset_message = None
+    ss.mra_initialization_message = None # New state variable for this operation's message
     gateway = ss.get("py4j_gateway_object")
     mra_name = DEFAULT_MRA_NAME
 
@@ -226,9 +225,12 @@ def handle_send_config_subset_to_mra(ss):
         msg = "MRA not created. Cannot send config subset."
         ss.mra_config_subset_message = msg
         return {'type': 'error', 'message': msg}
-    if not ss.config_data or "parcels" not in ss.config_data or "warehouse_coordinates_x_y" not in ss.config_data:
-        msg = "Required configuration (parcels, warehouse coordinates) not found in Python session state."
-        ss.mra_config_subset_message = msg
+    if not ss.config_data or \
+       "parcels" not in ss.config_data or \
+       "warehouse_coordinates_x_y" not in ss.config_data or \
+       "delivery_agents" not in ss.config_data: # Crucially, MRA needs this list too
+        msg = "Required configuration (parcels, warehouse, delivery_agents list) not found in Python session state."
+        ss.mra_initialization_message = msg
         return {'type': 'error', 'message': msg}
 
     config_subset = {

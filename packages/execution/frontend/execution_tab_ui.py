@@ -126,16 +126,16 @@ def render_jade_operations_tab(ss):
             streamlit.markdown("---")
 
             # --- Request MRA Config Subset (for display/debug) ---
-            if streamlit.button("Request MRA Config (Warehouse/Parcels)",
-                                 key="request_mra_config_subset_btn",
+            if streamlit.button("Initialize MRA with Config (Warehouse/Parcels/DAs)", # Renamed button
+                                 key="initialize_mra_with_config_btn", # New key
                                  use_container_width=True,
                                  disabled=not ss.get("jade_agents_created", False)):
-                result = execution_logic.handle_send_config_subset_to_mra(ss)
+                result = execution_logic.handle_initialize_mra_with_config(ss) # Call new handler
                 display_operation_result(result)
                 streamlit.rerun()
             
-            if ss.get("mra_config_subset_message"):
-                msg_str = ss.mra_config_subset_message
+            if ss.get("mra_initialization_message"): # Use new state var for message
+                msg_str = ss.mra_initialization_message
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
             
