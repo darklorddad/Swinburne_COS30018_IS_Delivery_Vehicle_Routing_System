@@ -151,9 +151,11 @@ def render_jade_operations_tab(ss):
                                  use_container_width=True,
                                  disabled=not ss.get("jade_agents_created", False) or not ss.get("jade_platform_running", False) or not ss.config_data):
                 result = execution_logic.handle_send_warehouse_parcel_data_to_mra(ss)
+                # Always display the result immediately
                 display_operation_result(result)
-                if result and result.get('type') != 'error':
-                    ss.mra_initialization_message = None
+                # Store the message in session state for persistence
+                if result:
+                    ss.mra_initialization_message = result.get('message')
                 streamlit.rerun()
             
             if ss.get("mra_initialization_message"):
