@@ -119,13 +119,13 @@ def _render_main_layout(ss):
 
         with tab_config:
             if ss.get("jade_platform_running", False):
-                streamlit.warning("Configuration cannot be changed while the JADE platform is running. Please stop JADE in the 'Execution' tab to make changes.")
+                streamlit.warning("Configuration cannot be changed while the JADE platform is running")
             else:
                 render_config_tab(ss)
 
         with tab_optimisation:
             if ss.get("jade_platform_running", False):
-                streamlit.warning("Optimisation script and parameters cannot be changed while the JADE platform is running. Please stop JADE in the 'Execution' tab to make changes.")
+                streamlit.warning("Optimisation script and parameters cannot be changed while the JADE platform is running")
             else:
                 render_optimisation_tab(ss)
             

@@ -109,7 +109,7 @@ def fetch_delivery_agent_statuses(ss):
                     ss.fetched_delivery_agent_statuses = None # Clear if invalid format
                     return {'type': 'error', 'message': msg}
             else:
-                msg = f"MRA '{mra_name}' returned JSON but without 'delivery_agent_statuses' key. Data: {da_statuses_json_str[:200]}"
+                msg = f"MRA returned JSON but without 'delivery_agent_statuses' key. Data: {da_statuses_json_str[:200]}" # Removed MRA name from msg
                 ss.da_status_fetch_message = msg
                 return {'type': 'error', 'message': msg}
         except json.JSONDecodeError as json_e:
@@ -117,9 +117,9 @@ def fetch_delivery_agent_statuses(ss):
             ss.da_status_fetch_message = msg
             return {'type': 'error', 'message': msg}
 
-        msg = f"Delivery Agent statuses successfully fetched from MRA '{mra_name}'."
+        msg = "Delivery Agent statuses successfully fetched" # Changed message
         ss.da_status_fetch_message = msg
-        return {'type': 'success', 'message': msg}
+        return {'type': 'info', 'message': msg} # Changed from success to info
 
     except Exception as e:
         msg = f"An unexpected error occurred while fetching DA statuses from MRA: {str(e)}"
@@ -167,7 +167,7 @@ def run_optimisation_script(ss):
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
     elif ss.get("optimisation_run_complete"):
-        msg = "Optimisation script executed successfully."
+        msg = "Route optimised" # Changed message
         if ss.optimisation_results is None:
              msg += " However, the script returned no results (None)."
              ss.optimisation_execution_tab_run_status_message = msg

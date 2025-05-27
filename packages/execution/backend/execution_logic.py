@@ -243,7 +243,7 @@ def handle_send_warehouse_parcel_data_to_mra(ss):
     success, message = py4j_gateway.send_warehouse_parcel_data_to_mra(gateway, mra_name, warehouse_parcel_json)
     ss.mra_initialization_message = message 
     if success:
-        return {'type': 'success', 'message': message}
+        return {'type': 'info', 'message': "Warehouse and parcel data sent to MRA successfully"} # Changed message
     else:
         return {'type': 'error', 'message': message}
 
