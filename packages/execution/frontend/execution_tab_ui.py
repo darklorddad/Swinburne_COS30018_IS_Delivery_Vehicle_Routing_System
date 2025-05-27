@@ -219,7 +219,7 @@ def render_jade_operations_tab(ss):
                 # Step 1: Ask MRA to compile data
                 result_mra_data = execution_logic.handle_trigger_mra_optimisation_cycle(ss)
                 display_operation_result(result_mra_data)
-                if result_mra_data and result_mra_data.get('type') == 'success':
+                if result_mra_data and result_mra_data.get('type') in ['success', 'info']:
                     # ss.data_for_optimisation_script is set by handle_trigger_mra_optimisation_cycle
                     # Step 2: If MRA data received, run the Python script with it
                     result_script_run = optimisation_logic.run_optimisation_script(ss)
