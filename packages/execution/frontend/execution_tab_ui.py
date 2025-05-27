@@ -249,7 +249,7 @@ def render_jade_operations_tab(ss):
 
             # Show dispatch status message (from sending routes to MRA)
             if ss.get("jade_dispatch_status_message"):
-                msg_str = ss.jade_dispatch_status_message.replace("'MRA' successfully", "")  # Remove the redundant text
+                msg_str = ss.jade_dispatch_status_message.replace("'MRA' successfully", "").rstrip('.')  # Remove redundant text and trailing dot
                 streamlit.info(msg_str)  # Always show as blue info alert
                 ss.jade_dispatch_status_message = None # Clear after display
 
