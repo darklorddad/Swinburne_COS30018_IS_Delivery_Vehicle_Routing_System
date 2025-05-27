@@ -29,7 +29,8 @@ public class MasterRoutingAgent extends Agent {
             System.out.println("MRA " + mraName + " created with arguments. First arg: " + args[0].toString());
             if (args[0] instanceof String && !((String)args[0]).isEmpty()) {
                 System.out.println("MRA " + mraName + " received a non-empty string argument, but will wait for explicit config subset.");
-                initialConfigData = null; 
+                initialConfigData = null;
+                System.out.println("MRA " + mraName + ": setup() - initialConfigData explicitly set to NULL.");
             }
         } else {
             System.out.println("MRA: No arguments provided for initial setup.");
@@ -45,11 +46,13 @@ public class MasterRoutingAgent extends Agent {
                 );
                 ACLMessage msg = myAgent.receive(mt);
                 if (msg != null) {
-                    System.out.println("MRA " + mraName + ": TriggerOptimisationCycle BEHAVIOR entered. Checking initialConfigData...");
+                    System.out.println("MRA " + mraName + ": TriggerOptimisationCycle BEHAVIOR - Action Started. Checking initialConfigData...");
                     if (initialConfigData == null) {
-                        System.out.println("MRA " + mraName + ": Current initialConfigData is NULL.");
+                        System.err.println("MRA " + mraName + ": TriggerOptimisationCycle - Current initialConfigData is NULL at behavior start!");
                     } else {
-                        System.out.println("MRA " + mraName + ": Current initialConfigData: " + initialConfigData.toString().substring(0, Math.min(initialConfigData.toString().length(), 100)) +"...");
+                        System.out.println("MRA " + mraName + ": TriggerOptimisationCycle - Current initialConfigData (at behavior start): " + initialConfigData.toString().substring(0, Math.min(initialConfigData.toString().length(), 100)) +"...");
+                        System.out.println("MRA " + mraName + ": TriggerOptimisationCycle - initialConfigData.has('warehouse_coordinates_x_y'): " + initialConfigData.has("warehouse_coordinates_x_y"));
+                        System.out.println("MRA " + mraName + ": TriggerOptimisationCycle - initialConfigData.has('parcels'): " + initialConfigData.has("parcels"));
                     }
                     System.out.println("MRA " + mraName + ": Received RequestCompiledData from " + msg.getSender().getName() + 
                                      ", ConvID: " + msg.getConversationId());
@@ -58,8 +61,13 @@ public class MasterRoutingAgent extends Agent {
                     reply.setOntology("CompiledDataResponse");
                     
                     // Ensure conversation ID is set correctly
-                    if (reply.getConversationId() == null) {
+                    if (reply.getConversationId() == null && msg.getConversationId() != null) {
+                        System.out.println("MRA " + mraName + ": RequestCompiledData - Manually setting ConvID on reply to: " + msg.getConversationId());
                         reply.setConversationId(msg.getConversationId());
+                    } else if (reply.getConversationId() != null) {
+                        System.out.println("MRA " + mraName + ": RequestCompiledData - Reply ConvID already set by createReply() to: " + reply.getConversationId());
+                    } else {
+                        System.out.println("MRA " + mraName + ": RequestCompiledData - Msg ConvID is null, reply ConvID is also null.");
                     }
 
                     JSONObject compiledDataResponse = new JSONObject();
