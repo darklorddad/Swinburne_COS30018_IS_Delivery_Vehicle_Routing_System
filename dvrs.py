@@ -63,14 +63,14 @@ def _apply_custom_styling(ss):
           border-radius: 0.5rem !important;
       }}
       div[data-testid="stTextInputRootElement"]:focus-within {{
-          border-color: #007BFF !important;
+          border-color: #0059BB !important;
       }}
       div[data-baseweb="select"] > div {{
           border: 1px solid #000000 !important;
           border-radius: 0.5rem !important;
       }}
       div[data-baseweb="select"]:focus-within {{
-          border-color: #007BFF !important;
+          border-color: #0059BB !important;
       }}
       div[data-testid="stTabPanel"],
       div[data-testid="stExpander"] > details {{
