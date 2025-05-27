@@ -238,7 +238,7 @@ def render_jade_operations_tab(ss):
                 streamlit.rerun()
 
             # Show send routes button (disabled if no routes)
-            routes_available = ss.get("optimisation_run_complete") and ss.optimisation_results and ssisation_resultsisation_results.get("optimised_routes")
+            routes_available = ss.get("optimisation_run_complete") and ss.optimisation_results and ss.optimisation_results.get("optimised_routes")
             if streamlit.button("Send routes to MRA",
                                 key="send_routes_to_mra_btn", 
                                 use_container_width=True,
