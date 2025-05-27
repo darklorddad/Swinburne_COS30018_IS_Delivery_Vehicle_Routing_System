@@ -202,8 +202,8 @@ def render_jade_operations_tab(ss):
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
                 ss.da_status_fetch_message = None # Clear after display
-                streamlit.markdown("---") # Add separator after message
 
+            streamlit.markdown("---") # Separator before optimisation section
 
             # --- Trigger MRA Optimisation Cycle (MRA compiles data, Python script runs) ---
             if streamlit.button("Run route optimisation",
