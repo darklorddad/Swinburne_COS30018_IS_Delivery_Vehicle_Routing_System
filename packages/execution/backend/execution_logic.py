@@ -233,15 +233,16 @@ def handle_initialize_mra_with_config(ss):
         ss.mra_initialization_message = msg
         return {'type': 'error', 'message': msg}
 
-    config_subset = {
+    full_operational_config = {
         "warehouse_coordinates_x_y": ss.config_data.get("warehouse_coordinates_x_y"),
-        "parcels": ss.config_data.get("parcels")
+        "parcels": ss.config_data.get("parcels"),
+        "delivery_agents": ss.config_data.get("delivery_agents") # MRA needs to know about DAs
     }
     import json
-    config_subset_json = json.dumps(config_subset)
+    config_bundle_json = json.dumps(full_operational_config)
 
-    success, message = py4j_gateway.send_config_subset_to_mra(gateway, mra_name, config_subset_json)
-    ss.mra_config_subset_message = message
+    success, message = py4j_gateway.send_full_config_to_mra(gateway, mra_name, config_bundle_json) # New Py4J gateway function
+    ss.mra_initialization_message = message 
     if success:
         return {'type': 'success', 'message': message}
     else:
