@@ -175,6 +175,103 @@ public class MasterRoutingAgent extends Agent {
             }
         });
 
+        // Behaviour to handle TriggerOptimisationCycle requests
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
+                MessageTemplate mt = MessageTemplate.and(
+                    MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+                    MessageTemplate.MatchOntology("TriggerOptimisationCycle")
+                );
+                ACLMessage msg = myAgent.receive(mt);
+                if (msg != null) {
+                    System.out.println("MRA " + mraName + ": Received TriggerOptimisationCycle from " + msg.getSender().getName() + ", ConvID: " + msg.getConversationId());
+                    ACLMessage reply = msg.createReply();
+                    reply.setPerformative(ACLMessage.INFORM); // Default to INFORM
+                    reply.setOntology("OptimisationDataBundle"); 
+                    if (reply.getConversationId() == null && msg.getConversationId() != null) {
+                         reply.setConversationId(msg.getConversationId());
+                    }
+
+                    JSONObject optimisationBundle = new JSONObject();
+                    JSONArray daStatusesForOptimisation = new JSONArray(); // Fresh query for optimisation
+
+                    if (initialConfigData != null && initialConfigData.has("warehouse_coordinates_x_y") && initialConfigData.has("parcels")) { // Check if MRA has basic data
+                        optimisationBundle.put("warehouse_coordinates_x_y", initialConfigData.optJSONArray("warehouse_coordinates_x_y"));
+                        optimisationBundle.put("parcels", initialConfigData.optJSONArray("parcels"));
+                        
+                        try {
+                            System.out.println("MRA (" + mraName + "): OptimisationCycle - Searching DF for agents with service 'delivery-service'.");
+                            DFAgentDescription template = new DFAgentDescription();
+                            ServiceDescription sd = new ServiceDescription();
+                            sd.setType("delivery-service");
+                            template.addServices(sd);
+                            DFAgentDescription[] result = DFService.search(myAgent, template);
+
+                            if (result == null || result.length == 0) {
+                                System.out.println("MRA (" + mraName + "): OptimisationCycle - No DAs found via DF. Sending empty DA list.");
+                            }
+                            else {
+                                System.out.println("MRA (" + mraName + "): OptimisationCycle - Found " + result.length + " DAs via DF.");
+                                for (DFAgentDescription dfad : result) {
+                                    AID daAID = dfad.getName();
+                                    String daName = daAID.getLocalName();
+
+                                    ACLMessage queryToDA = new ACLMessage(ACLMessage.REQUEST);
+                                    queryToDA.addReceiver(daAID);
+                                    queryToDA.setOntology("QueryDAStatus");
+                                    String convId_daQuery = "status-query-" + daName + "-" + System.currentTimeMillis();
+                                    queryToDA.setConversationId(convId_daQuery);
+                                    queryToDA.setReplyWith(convId_daQuery + "-reply");
+                                    myAgent.send(queryToDA);
+                                    System.out.println("MRA (" + mraName + "): OptimisationCycle - Sent QueryDAStatus to " + daName + " (ConvID: " + convId_daQuery + ")");
+
+                                    MessageTemplate mtReplyFromDA = MessageTemplate.and(
+                                        MessageTemplate.MatchOntology("DAStatusReport"),
+                                        MessageTemplate.MatchInReplyTo(queryToDA.getReplyWith())
+                                    );
+                                    ACLMessage daReply = myAgent.blockingReceive(mtReplyFromDA, 3000);
+                                    if (daReply != null) {
+                                        try {
+                                            JSONObject daStatusJson = new JSONObject(daReply.getContent());
+                                            if (!daStatusJson.has("id")) { // Ensure 'id' is present
+                                                daStatusJson.put("id", daName);
+                                            }
+                                            daStatusesForOptimisation.put(daStatusJson);
+                                            System.out.println("MRA (" + mraName + "): OptimisationCycle - Received status from " + daName + ": " + daStatusJson.toString());
+                                        } catch (Exception e_parse) {
+                                            System.err.println("MRA (" + mraName + "): OptimisationCycle - Error parsing DAStatusReport from " + daName + ": " + e_parse.getMessage());
+                                        }
+                                    } else {
+                                        System.err.println("MRA (" + mraName + "): OptimisationCycle - No status reply from DA " + daName);
+                                        JSONObject errorStatus = new JSONObject();
+                                        errorStatus.put("id", daName);
+                                        errorStatus.put("capacity_weight", -1); 
+                                        errorStatus.put("operational_status", "unknown_timeout_mra_query");
+                                        daStatusesForOptimisation.put(errorStatus);
+                                    }
+                                }
+                            }
+                        } catch (FIPAException fe) {
+                            System.err.println("MRA (" + mraName + "): OptimisationCycle - FIPAException during DF search: " + fe.getMessage());
+                            fe.printStackTrace();
+                            optimisationBundle.put("error_mra_da_fetch", "FIPA Error during DF search for DAs: " + fe.getMessage());
+                            reply.setPerformative(ACLMessage.FAILURE);
+                        }
+                        optimisationBundle.put("delivery_agents", daStatusesForOptimisation); // Python script expects "delivery_agents"
+                    } else {
+                        System.err.println("MRA " + mraName + ": initialConfigData (warehouse/parcels) is null or incomplete. Cannot prepare full optimisation bundle.");
+                        optimisationBundle.put("error_mra", "MRA initialConfigData (warehouse/parcels) is null or incomplete.");
+                        reply.setPerformative(ACLMessage.FAILURE);
+                    }
+                    reply.setContent(optimisationBundle.toString());
+                    myAgent.send(reply);
+                    System.out.println("MRA: Sent OptimisationDataBundle to " + msg.getSender().getName() + " with ConvID " + reply.getConversationId() + ". Performative: " + ACLMessage.getPerformative(reply.getPerformative()) + ". Content: " + optimisationBundle.toString().substring(0, Math.min(optimisationBundle.toString().length(), 100)) + "...");
+                } else {
+                    block();
+                }
+            }
+        });
+
         // Behaviour to listen for delivery confirmations from DAs
         addBehaviour(new CyclicBehaviour(this) {
             public void action() {
