@@ -185,7 +185,6 @@ def render_jade_operations_tab(ss):
                     streamlit.dataframe(df_da_statuses, use_container_width=True, hide_index=True)
                 elif isinstance(da_statuses, list) and not da_statuses:
                     streamlit.info("No DA statuses were reported by the MRA.")
-                streamlit.markdown("---")
 
             if streamlit.button("Fetch DA statuses",
                                 key="fetch_optimisation_data_btn",
