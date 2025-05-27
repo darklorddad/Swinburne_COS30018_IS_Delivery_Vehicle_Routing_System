@@ -157,29 +157,29 @@ public class Py4jGatewayAgent extends Agent {
         }
     }
 
-    public String receiveOperationalDataAndForwardToMRA(String mraName, String operationalDataJson) {
-        System.out.println("Py4jGatewayAgent: Received operational data from Python for MRA: " + mraName);
-        System.out.println("Py4jGatewayAgent: Operational data JSON (first 100 chars): " + operationalDataJson.substring(0, Math.min(operationalDataJson.length(), 100)) + "...");
+    public String receiveWarehouseParcelDataAndForwardToMRA(String mraName, String warehouseParcelJson) {
+        System.out.println("Py4jGatewayAgent: Received warehouse/parcel data from Python for MRA: " + mraName);
+        System.out.println("Py4jGatewayAgent: Warehouse/Parcel JSON (first 100 chars): " + warehouseParcelJson.substring(0, Math.min(warehouseParcelJson.length(), 100)) + "...");
         try {
             ACLMessage msgToMRA = new ACLMessage(ACLMessage.INFORM);
             msgToMRA.addReceiver(new AID(mraName, AID.ISLOCALNAME));
-            msgToMRA.setOntology("ReceiveOperationalData");
+            msgToMRA.setOntology("ReceiveWarehouseParcelData");
             msgToMRA.setLanguage("JSON");
-            msgToMRA.setContent(operationalDataJson);
+            msgToMRA.setContent(warehouseParcelJson);
             
-            String convId = "send-op-data-" + System.currentTimeMillis();
+            String convId = "send-wh-parcel-data-" + System.currentTimeMillis();
             msgToMRA.setConversationId(convId);
             msgToMRA.setReplyWith(convId + "-reply");
 
             send(msgToMRA);
-            System.out.println("Py4jGatewayAgent: Sent operational data to MRA '" + mraName + "'.");
+            System.out.println("Py4jGatewayAgent: Sent warehouse/parcel data to MRA '" + mraName + "'.");
             
-            return "Operational data sent to MRA " + mraName + " successfully by Py4jGatewayAgent.";
+            return "Warehouse/parcel data sent to MRA " + mraName + " successfully by Py4jGatewayAgent.";
 
         } catch (Exception e) {
-            System.err.println("Py4jGatewayAgent: Error sending operational data to MRA '" + mraName + "': " + e.getMessage());
+            System.err.println("Py4jGatewayAgent: Error sending warehouse/parcel data to MRA '" + mraName + "': " + e.getMessage());
             e.printStackTrace();
-            return "{\"error\": \"Exception in Py4jGatewayAgent while sending operational data to MRA: " + e.getMessage() + "\"}";
+            return "{\"error\": \"Exception in Py4jGatewayAgent while sending warehouse/parcel data to MRA: " + e.getMessage() + "\"}";
         }
     }
 }
