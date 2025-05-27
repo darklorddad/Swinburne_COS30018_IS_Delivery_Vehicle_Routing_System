@@ -64,18 +64,45 @@ def send_optimisation_results(gateway, mra_name, results):
 
 def get_compiled_optimization_data_from_mra(gateway, mra_name):
     """
-    Calls the Py4jGatewayAgent on the Java side to get compiled data from the MRA.
-    Returns the data as a JSON string, and an error message if any.
+    Gets current delivery agent statuses from MRA via Py4jGatewayAgent.
+    Returns JSON string with 'delivery_agent_statuses' array, or error.
     """
     if not gateway:
         return None, "Py4J Gateway not available"
     try:
-        # This calls the getCompiledOptimizationDataFromMRA method in Py4jGatewayAgent.java
         data_json_str = gateway.entry_point.getCompiledOptimizationDataFromMRA(mra_name)
-        # The Java method should return a JSON string. If it contains an error structure,
-        # the Python side might want to parse it and handle it. For now, just return.
         return data_json_str, None 
     except Py4JNetworkError as e:
-        return None, f"Network error getting compiled data from MRA: {str(e)}"
+        return None, f"Network error getting DA statuses from MRA: {str(e)}"
     except Exception as e:
-        return None, f"Error getting compiled data from MRA (Exception: {type(e).__name__} - {str(e)})"
+        return None, f"Error getting DA statuses from MRA: {str(e)}"
+
+def trigger_mra_optimisation_cycle(gateway, mra_name):
+    """
+    Triggers MRA to compile warehouse, parcels and DA statuses for optimisation.
+    Returns JSON string with all data needed for optimisation script.
+    """
+    if not gateway:
+        return None, "Py4J Gateway not available"
+    try:
+        data_json_str = gateway.entry_point.triggerMRAOptimisationCycleAndGetData(mra_name)
+        return data_json_str, None
+    except Py4JNetworkError as e:
+        return None, f"Network error triggering MRA optimisation cycle: {str(e)}"
+    except Exception as e:
+        return None, f"Error triggering MRA optimisation cycle: {str(e)}"
+
+def get_mra_config_subset(gateway, mra_name):
+    """
+    Gets warehouse and parcel data from MRA via Py4jGatewayAgent.
+    Returns JSON string with warehouse_coordinates_x_y and parcels.
+    """
+    if not gateway:
+        return None, "Py4J Gateway not available"
+    try:
+        data_json_str = gateway.entry_point.requestMRAConfigSubset(mra_name)
+        return data_json_str, None
+    except Py4JNetworkError as e:
+        return None, f"Network error getting config subset from MRA: {str(e)}"
+    except Exception as e:
+        return None, f"Error getting config subset from MRA: {str(e)}"
