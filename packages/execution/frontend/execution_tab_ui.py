@@ -213,7 +213,7 @@ def render_jade_operations_tab(ss):
                                  ):
                 # Clear previous results
                 ss.optimisation_run_complete = False
-                ss.optimisation_run_error = None
+.optim.optimisation_run_error = None
                 ss.optimisation_results = None
                 
                 # Step 1: Ask MRA to compile data
@@ -237,6 +237,19 @@ def render_jade_operations_tab(ss):
                 # Always rerun to reflect any state changes from both steps
                 streamlit.rerun()
 
+            # Show send routes button (disabled if no routes)
+            routes_available = ss.get("optimisation_run_complete") and ss.optimisation_results and ssisation_resultsisation_results.get("optimised_routes")
+            if streamlit.button("Send routes to MRA",
+                                key="send_routes_to_mra_btn", 
+                                use_container_width=True,
+                                disabled=not routes_available or not ss.get("jade_agents_created", False) or not ss.get("jade_platform_running", False)
+                                ):
+                result = execution_logic.handle_send_optimised_routes_to_mra(ss) 
+                display_operation_result(result)
+                if result and result.get('type') != 'error':
+                    ss.jade_dispatch_status_message = None
+                streamlit.rerun()
+
             if ss.get("mra_optimisation_trigger_message"): # Message from MRA data compilation step
                 msg_str = ss.mra_optimisation_trigger_message
                 msg_type = _determine_message_type_from_string(msg_str)
@@ -249,19 +262,6 @@ def render_jade_operations_tab(ss):
                 msg_type = _determine_message_type_from_string(msg_str)
                 display_operation_result({'type': msg_type, 'message': msg_str})
                 ss.optimisation_execution_tab_run_status_message = None # Clear after display
-
-            # Show send routes button (disabled if no routes)
-            routes_available = ss.get("optimisation_run_complete") and ss.optimisation_results and ss.optimisation_results.get("optimised_routes")
-            if streamlit.button("Send routes to MRA",
-                                key="send_routes_to_mra_btn", 
-                                use_container_width=True,
-                                disabled=not routes_available or not ss.get("jade_agents_created", False) or not ss.get("jade_platform_running", False)
-                                ):
-                result = execution_logic.handle_send_optimised_routes_to_mra(ss) 
-                display_operation_result(result)
-                if result and result.get('type') != 'error':
-                    ss.jade_dispatch_status_message = None
-                streamlit.rerun()
 
             # Show optimisation results section if we have any state about optimisation
             if ss.get("optimisation_run_complete") or ss.get("optimisation_run_error"):
