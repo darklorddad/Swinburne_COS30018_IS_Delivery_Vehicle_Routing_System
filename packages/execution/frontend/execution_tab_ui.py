@@ -126,11 +126,11 @@ def render_jade_operations_tab(ss):
             streamlit.markdown("---")
 
             # --- Request MRA Config Subset (for display/debug) ---
-            if streamlit.button("Initialize MRA with Config (Warehouse/Parcels/DAs)", # Renamed button
-                                 key="initialize_mra_with_config_btn", # New key
+            if streamlit.button("Initialize MRA with Operational Data (W/H, Parcels, DA IDs)", 
+                                 key="initialize_mra_with_op_data_btn", 
                                  use_container_width=True,
                                  disabled=not ss.get("jade_agents_created", False)):
-                result = execution_logic.handle_initialize_mra_with_config(ss) # Call new handler
+                result = execution_logic.handle_initialize_mra_with_operational_data(ss)
                 display_operation_result(result)
                 streamlit.rerun()
             
