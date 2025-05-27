@@ -168,11 +168,16 @@ def render_jade_operations_tab(ss):
                     status_df_data = []
                     for da_status in da_statuses: # Already a list of dicts
                         status_df_data.append({
-                            "Agent ID": da_status.get("agent_id", da_status.get("id", "N/A")), # Handle both potential keys
-                            "Capacity Weight": da_status.get("capacity_weight", "N/A"),
+                            "Agent ID": da_status.get("id", "N/A"), # Prefer "id"
+                            # Ensure Capacity Weight is numeric or a clear placeholder string
+                            "Capacity Weight": int(da_status.get("capacity_weight", -1)) if str(da_status.get("capacity_weight", -1)).replace('-','').isdigit() else str(da_status.get("capacity_weight", "N/A")),
                             "Operational Status": da_status.get("operational_status", "N/A")
                         })
-                    streamlit.dataframe(pd.DataFrame(status_df_data), use_container_width=True, hide_index=True)
+                    df_da_statuses = pd.DataFrame(status_df_data)
+                    # Attempt to convert Capacity Weight to numeric, coercing errors to NaN then to a string representation if needed
+                    df_da_statuses["Capacity Weight"] = pd.to_numeric(df_da_statuses["Capacity Weight"], errors='coerce').fillna("Error/NA")
+
+                    streamlit.dataframe(df_da_statuses, use_container_width=True, hide_index=True)
                 elif isinstance(da_statuses, list) and not da_statuses: # Empty list means fetch was successful but no DAs reported
                     streamlit.info("No Delivery Agent statuses were reported by the MRA.")
                 # If ss.fetched_delivery_agent_statuses is None, the message from da_status_fetch_message already covers it.
