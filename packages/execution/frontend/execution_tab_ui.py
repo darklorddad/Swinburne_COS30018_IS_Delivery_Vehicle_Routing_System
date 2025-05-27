@@ -171,8 +171,8 @@ def render_jade_operations_tab(ss):
                             "operational_status": da_status.get("operational_status", "N/A")
                         })
                     df_da_statuses = pd.DataFrame(status_df_data)
-                    # Attempt to convert Capacity Weight to numeric, coercing errors to NaN then to a string representation if needed
-                    df_da_statuses["Capacity Weight"] = pd.to_numeric(df_da_statuses["Capacity Weight"], errors='coerce').fillna("Error/NA")
+                    # Attempt to convert capacity_weight to numeric, coercing errors to NaN then to a string representation if needed
+                    df_da_statuses["capacity_weight"] = pd.to_numeric(df_da_statuses["capacity_weight"], errors='coerce').fillna("Error/NA")
 
                     streamlit.dataframe(df_da_statuses, use_container_width=True, hide_index=True)
                 elif isinstance(da_statuses, list) and not da_statuses: # Empty list means fetch was successful but no DAs reported
