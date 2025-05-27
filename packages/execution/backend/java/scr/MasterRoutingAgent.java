@@ -16,6 +16,7 @@ import org.json.JSONArray;
 public class MasterRoutingAgent extends Agent {
 
     private JSONObject initialConfigData; // Will store full config: parcels, warehouse_coordinates_x_y, delivery_agents
+    private JSONArray deliveryAgentIdList; // Store just the IDs of DAs MRA is aware of
     private Map<AID, JSONObject> deliveryAgentStatuses = new HashMap<>(); // Stores status from DAs
     private String mraName;
 
