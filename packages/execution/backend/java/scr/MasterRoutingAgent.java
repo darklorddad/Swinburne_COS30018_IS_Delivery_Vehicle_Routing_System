@@ -57,24 +57,77 @@ public class MasterRoutingAgent extends Agent {
                         reply.setConversationId(msg.getConversationId());
                     }
 
-                    JSONObject compiledData = new JSONObject();
-                    try {
-                        System.out.println("MRA " + mraName + ": Querying DA statuses via DF...");
-                        JSONArray liveDAStatuses = getCurrentDAStatuses();
-                        compiledData.put("delivery_agent_statuses", liveDAStatuses);
-                        System.out.println("MRA " + mraName + ": Got " + liveDAStatuses.length() + " DA statuses");
-                    } catch (Exception e) {
-                        System.err.println("MRA " + mraName + ": Error getting DA statuses: " + e.getMessage());
-                        e.printStackTrace();
-                        reply.setPerformative(ACLMessage.FAILURE);
-                        compiledData.put("error", "MRA failed to get DA statuses: " + e.getMessage());
-                    }
-                    // The duplicated block that started with:
-                    // JSONArray deliveryAgentsFromConfig = initialConfigData.optJSONArray("delivery_agents");
-                    // has been removed from here to fix the re-declaration error.
-                    // The liveDAStatuses are correctly populated by the preceding block.
+                    JSONObject compiledDataResponse = new JSONObject();
+                    JSONArray liveDAStatuses = new JSONArray(); // Declare here
+                    deliveryAgentStatuses.clear(); // Clear old cache if any
 
-                    compiledData.put("delivery_agent_statuses", liveDAStatuses); // Add DA statuses to the response
+                    try {
+                        System.out.println("MRA (" + mraName + "): Searching DF for agents with service 'delivery-service'.");
+                        DFAgentDescription template = new DFAgentDescription();
+                        ServiceDescription sd = new ServiceDescription();
+                        sd.setType("delivery-service");
+                        template.addServices(sd);
+                        DFAgentDescription[] result = DFService.search(myAgent, template);
+
+                        if (result == null || result.length == 0) {
+                            System.out.println("MRA (" + mraName + "): No DAs found via DF offering 'delivery-service'.");
+                        } else {
+                            System.out.println("MRA (" + mraName + "): Found " + result.length + " DAs via DF that offer 'delivery-service'.");
+                            for (DFAgentDescription dfad : result) {
+                                AID daAID = dfad.getName();
+                                String daName = daAID.getLocalName();
+
+                                ACLMessage queryToDA = new ACLMessage(ACLMessage.REQUEST);
+                                queryToDA.addReceiver(daAID);
+                                queryToDA.setOntology("QueryDAStatus");
+                                String convId_daQuery = "status-query-" + daName + "-" + System.currentTimeMillis();
+                                queryToDA.setConversationId(convId_daQuery);
+                                queryToDA.setReplyWith(convId_daQuery + "-reply");
+                                myAgent.send(queryToDA);
+                                System.out.println("MRA (" + mraName + "): Sent QueryDAStatus to DF-discovered DA: " + daName + " (ConvID: " + convId_daQuery + ")");
+
+                                MessageTemplate mtReplyFromDA = MessageTemplate.and(
+                                    MessageTemplate.MatchOntology("DAStatusReport"),
+                                    MessageTemplate.MatchInReplyTo(queryToDA.getReplyWith())
+                                );
+                                ACLMessage daReply = myAgent.blockingReceive(mtReplyFromDA, 3000);
+
+                                if (daReply != null) {
+                                    try {
+                                        JSONObject daStatusJson = new JSONObject(daReply.getContent());
+                                        if (!daStatusJson.has("id")) {
+                                            daStatusJson.put("id", daName);
+                                        }
+                                        liveDAStatuses.put(daStatusJson);
+                                        deliveryAgentStatuses.put(daReply.getSender(), daStatusJson);
+                                        System.out.println("MRA (" + mraName + "): Received status from " + daName + " (ConvID: " + daReply.getConversationId() + "): " + daStatusJson.toString());
+                                    } catch (Exception e_parse) {
+                                        System.err.println("MRA (" + mraName + "): Error parsing DAStatusReport JSON from " + daName + ": " + e_parse.getMessage());
+                                    }
+                                } else {
+                                    System.err.println("MRA (" + mraName + "): No status reply from DA " + daName + " within timeout for status query (ConvID: " + convId_daQuery + ").");
+                                    JSONObject errorStatus = new JSONObject();
+                                    errorStatus.put("id", daName);
+                                    errorStatus.put("capacity_weight", -1); 
+                                    errorStatus.put("operational_status", "unknown_timeout_mra_query");
+                                    liveDAStatuses.put(errorStatus);
+                                }
+                            }
+                        }
+                        compiledDataResponse.put("delivery_agent_statuses", liveDAStatuses);
+                        System.out.println("MRA " + mraName + ": Successfully processed " + liveDAStatuses.length() + " DA statuses. Preparing to send reply.");
+
+                    } catch (FIPAException fe) {
+                        System.err.println("MRA (" + mraName + "): FIPAException during DF search for DA statuses: " + fe.getMessage());
+                        fe.printStackTrace();
+                        reply.setPerformative(ACLMessage.FAILURE);
+                        compiledDataResponse.put("error_mra", "MRA FIPAException during DF search: " + fe.getMessage());
+                    } catch (Exception e) {
+                        System.err.println("MRA " + mraName + ": General Exception while getting/sending DA statuses: " + e.getMessage());
+                        e.printStackTrace();
+                        reply.setPerformative(ACLMessage.FAILURE); 
+                        compiledDataResponse.put("error_mra", "MRA internal error fetching DA statuses: " + e.getMessage());
+                    }
                     reply.setContent(compiledData.toString());
                     myAgent.send(reply);
                     System.out.println("MRA: Sent delivery agent statuses to " + msg.getSender().getName());
