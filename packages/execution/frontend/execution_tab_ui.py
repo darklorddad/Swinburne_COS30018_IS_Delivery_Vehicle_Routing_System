@@ -178,25 +178,31 @@ def render_jade_operations_tab(ss):
                 # If ss.fetched_delivery_agent_statuses is None, the message from da_status_fetch_message already covers it.
                 streamlit.markdown("---")
 
-            # --- Run Optimisation Section ---
-            run_disabled = not (
-                ss.get("optimisation_script_loaded_successfully", False) and
-                ss.get("config_data") is not None and
-                ss.get("fetched_delivery_agent_statuses") is not None # Check for actual fetched data
-            )
-            if streamlit.button("Run Optimisation Script",
-                                key="run_optimisation_script_button",
-                                use_container_width=True,
-                                disabled=run_disabled):
-                result = optimisation_logic.run_optimisation_script(ss) # Changed function call
-                display_operation_result(result)
-                if result and result.get('type') == 'success':
-                    streamlit.rerun()
+            # --- Trigger MRA Optimisation Cycle (MRA compiles data, Python script runs) ---
+            if streamlit.button("Execute Optimisation Cycle (MRA Compiles Data)",
+                                 key="trigger_mra_optimisation_cycle_btn",
+                                 use_container_width=True,
+                                 disabled=not ss.get("jade_agents_created", False) or not ss.get("optimisation_script_loaded_successfully", False)
+                                 ):
+                # Step 1: Ask MRA to compile data
+                result_mra_data = execution_logic.handle_trigger_mra_optimisation_cycle(ss)
+                display_operation_result(result_mra_data)
+                if result_mra_data and result_mra_data.get('type') == 'success':
+                    # Step 2: If MRA data received, run the Python script with it
+                    result_script_run = optimisation_logic.run_optimisation_script(ss) # Uses ss.data_for_optimisation_script
+                    display_operation_result(result_script_run)
+                streamlit.rerun() # Rerun to show all messages and results
 
-            if ss.optimisation_execution_tab_run_status_message:
-                 msg_str = ss.optimisation_execution_tab_run_status_message
-                 msg_type = _determine_message_type_from_string(msg_str)
-                 display_operation_result({'type': msg_type, 'message': msg_str})
+            if ss.get("mra_optimisation_trigger_message"): # Message from MRA data compilation step
+                msg_str = ss.mra_optimisation_trigger_message
+                msg_type = _determine_message_type_from_string(msg_str)
+                display_operation_result({'type': msg_type, 'message': msg_str})
+            
+            # This message comes from run_optimisation_script
+            if ss.optimisation_execution_tab_run_status_message: 
+                msg_str = ss.optimisation_execution_tab_run_status_message
+                msg_type = _determine_message_type_from_string(msg_str)
+                display_operation_result({'type': msg_type, 'message': msg_str})
 
             if ss.optimisation_run_complete:
                 if ss.optimisation_results is not None:
