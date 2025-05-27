@@ -125,7 +125,27 @@ def render_jade_operations_tab(ss):
         with streamlit.expander("Master Routing Agent Operations", expanded=True):
             streamlit.markdown("---")
 
-            # --- Fetch Delivery Agent Statuses Section ---
+            # --- Request MRA Config Subset (for display/debug) ---
+            if streamlit.button("Request MRA Config (Warehouse/Parcels)",
+                                 key="request_mra_config_subset_btn",
+                                 use_container_width=True,
+                                 disabled=not ss.get("jade_agents_created", False)):
+                result = execution_logic.handle_request_mra_config_subset(ss)
+                display_operation_result(result)
+                streamlit.rerun()
+            
+            if ss.get("mra_config_subset_message"):
+                msg_str = ss.mra_config_subset_message
+                msg_type = _determine_message_type_from_string(msg_str)
+                display_operation_result({'type': msg_type, 'message': msg_str})
+            
+            if ss.get("mra_config_subset_data"):
+                streamlit.markdown("##### Config Subset from MRA (Warehouse/Parcels)")
+                streamlit.json(ss.mra_config_subset_data, expanded=False)
+                streamlit.markdown("---")
+
+
+            # --- Fetch Delivery Agent Statuses Section (via MRA) ---
             if streamlit.button("Fetch Delivery Agent Statuses",
                                 key="fetch_optimisation_data_btn",
                                 use_container_width=True,
@@ -209,11 +229,11 @@ def render_jade_operations_tab(ss):
                     streamlit.info("Optimisation results do not contain any routes to send to MRA.")
 
             if streamlit.button("Send Optimised Routes to MRA",
-                                key="trigger_mra_dispatch_btn",
+                                key="send_routes_to_mra_btn", # Changed key for clarity
                                 use_container_width=True,
                                 disabled=not optimisation_complete_with_results or not ss.get("jade_agents_created", False)
                                 ):
-                result = execution_logic.handle_trigger_mra_processing(ss)
+                result = execution_logic.handle_send_optimised_routes_to_mra(ss) # Changed function call
                 display_operation_result(result)
                 if result and result.get('type') == 'success':
                     streamlit.rerun()
