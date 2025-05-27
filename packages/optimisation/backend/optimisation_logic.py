@@ -167,15 +167,20 @@ def run_optimisation_script(ss):
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
     elif ss.get("optimisation_run_complete"):
-        msg = "Route optimised" # Changed message
         if ss.optimisation_results is None:
-             msg += " However, the script returned no results (None)."
-             ss.optimisation_execution_tab_run_status_message = msg
-             return {'type': 'warning', 'message': msg}
-        ss.optimisation_execution_tab_run_status_message = msg
-        return {'type': 'success', 'message': msg}
+            msg = "Optimisation completed but returned no results"
+            ss.optimisation_execution_tab_run_status_message = msg
+            return {'type': 'warning', 'message': msg}
+        else:
+            msg = "Optimisation completed successfully"
+            ss.optimisation_execution_tab_run_status_message = msg
+            return {
+                'type': 'success', 
+                'message': msg,
+                'results': ss.optimisation_results  # Include the actual results
+            }
     else:
-        msg = "Optimisation script execution did not complete as expected."
+        msg = "Optimisation did not complete"
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
 

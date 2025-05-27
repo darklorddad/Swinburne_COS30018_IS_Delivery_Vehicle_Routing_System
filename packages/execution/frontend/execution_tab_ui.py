@@ -225,10 +225,12 @@ def render_jade_operations_tab(ss):
                     display_operation_result(result_script_run)
                     
                     # Store results in session state
-                    if result_script_run and result_script_run.get('type') == 'success':
-                        ss.optimisation_run_complete = True
-                    elif result_script_run and result_script_run.get('type') == 'error':
-                        ss.optimisation_run_error = result_script_run.get('message')
+                    if result_script_run:
+                        if result_script_run.get('type') == 'success':
+                            ss.optimisation_run_complete = True
+                            ss.optimisation_results = result_script_run.get('results', None)
+                        else:
+                            ss.optimisation_run_error = result_script_run.get('message')
                 streamlit.rerun() # Rerun to show all messages and results
 
             if ss.get("mra_optimisation_trigger_message"): # Message from MRA data compilation step
