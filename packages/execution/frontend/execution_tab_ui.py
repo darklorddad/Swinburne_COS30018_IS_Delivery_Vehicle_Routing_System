@@ -248,21 +248,21 @@ def render_jade_operations_tab(ss):
             # --- Route Dispatch to MRA Section ---
             optimisation_complete_with_results = ss.get("optimisation_run_complete", False) and ss.get("optimisation_results") is not None
 
-            if not optimisation_complete_with_results:
-                streamlit.warning("Optimisation results are not available to be sent. Please run optimisation first.")
-            else:
-                if not ss.optimisation_results.get("optimised_routes"):
-                    streamlit.info("Optimisation results do not contain any routes to send to MRA.")
-
-            if streamlit.button("Send Optimised Routes to MRA",
-                                key="send_routes_to_mra_btn", # Changed key for clarity
-                                use_container_width=True,
-                                disabled=not optimisation_complete_with_results or not ss.get("jade_agents_created", False)
-                                ):
-                result = execution_logic.handle_send_optimised_routes_to_mra(ss) # Changed function call
-                display_operation_result(result)
-                if result and result.get('type') == 'success':
+            if optimisation_complete_with_results and ss.optimisation_results.get("optimised_routes"):
+                if streamlit.button("Send Optimised Routes to MRA",
+                                    key="send_routes_to_mra_btn", 
+                                    use_container_width=True,
+                                    disabled=not ss.get("jade_agents_created", False) or not ss.get("jade_platform_running", False)
+                                    ):
+                    result = execution_logic.handle_send_optimised_routes_to_mra(ss) 
+                    display_operation_result(result)
+                    if result and result.get('type') != 'error':
+                         ss.jade_dispatch_status_message = None # Clear after display if not error
                     streamlit.rerun()
+            elif optimisation_complete_with_results and not ss.optimisation_results.get("optimised_routes"):
+                 display_operation_result({'type': 'info', 'message': "Optimisation results do not contain any routes to send to MRA."})
+            else: # Optimisation not complete or no results
+                 display_operation_result({'type': 'warning', 'message': "Optimisation results are not available to be sent. Please run route optimisation first."})
 
             if ss.get("jade_dispatch_status_message"):
                 msg_str = ss.jade_dispatch_status_message
