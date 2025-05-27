@@ -270,8 +270,11 @@ def handle_trigger_mra_optimisation_cycle(ss):
     try:
         import json
         parsed_bundle = json.loads(json_data_bundle)
-        if isinstance(parsed_bundle, dict) and "error" in parsed_bundle: # Check for error field from Java
-            msg = f"MRA returned an error during optimisation data preparation: {parsed_bundle['error']}"
+        # Check for our specific error key from MRA or a general error key from Py4jGatewayAgent
+        if isinstance(parsed_bundle, dict) and \
+           ("error_mra" in parsed_bundle or "error" in parsed_bundle): 
+            error_detail = parsed_bundle.get("error_mra", parsed_bundle.get("error", "Unknown MRA error"))
+            msg = f"MRA reported an issue during optimisation data preparation: {error_detail}"
             ss.mra_optimisation_trigger_message = msg
             return {'type': 'error', 'message': msg}
         ss.data_for_optimisation_script = parsed_bundle # Store the whole bundle

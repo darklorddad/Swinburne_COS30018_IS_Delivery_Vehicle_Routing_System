@@ -45,6 +45,12 @@ public class MasterRoutingAgent extends Agent {
                 );
                 ACLMessage msg = myAgent.receive(mt);
                 if (msg != null) {
+                    System.out.println("MRA " + mraName + ": TriggerOptimisationCycle BEHAVIOR entered. Checking initialConfigData...");
+                    if (initialConfigData == null) {
+                        System.out.println("MRA " + mraName + ": Current initialConfigData is NULL.");
+                    } else {
+                        System.out.println("MRA " + mraName + ": Current initialConfigData: " + initialConfigData.toString().substring(0, Math.min(initialConfigData.toString().length(), 100)) +"...");
+                    }
                     System.out.println("MRA " + mraName + ": Received RequestCompiledData from " + msg.getSender().getName() + 
                                      ", ConvID: " + msg.getConversationId());
                     ACLMessage reply = msg.createReply();
