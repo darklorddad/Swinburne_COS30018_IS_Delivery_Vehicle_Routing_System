@@ -128,11 +128,21 @@ def render_jade_operations_tab(ss):
             # --- Display Data to be Sent (Warehouse/Parcels from ss.config_data) ---
             if ss.config_data:
                 warehouse_data = ss.config_data.get("warehouse_coordinates_x_y", "Not set")
+                parcels_data = ss.config_data.get("parcels", [])
+                
                 if isinstance(warehouse_data, list) and len(warehouse_data) == 2:
                     wh_text = f"<strong>Warehouse Coordinates</strong><br><span style='font-size: 0.9em; color: #888;'>X: {warehouse_data[0]}, Y: {warehouse_data[1]}</span>"
                 else:
                     wh_text = f"<strong>Warehouse Coordinates</strong><br><span style='font-size: 0.9em; color: #888;'>{str(warehouse_data)}</span>"
                 streamlit.markdown(wh_text, unsafe_allow_html=True)
+                
+                # Display parcels table
+                if parcels_data:
+                    streamlit.markdown("**Parcels to send:**")
+                    parcels_df = pd.DataFrame(parcels_data)
+                    streamlit.dataframe(parcels_df, use_container_width=True, hide_index=True)
+                else:
+                    streamlit.info("No parcels in the current configuration to send.")
             else:
                 streamlit.info("No configuration loaded to send to MRA.")
 
