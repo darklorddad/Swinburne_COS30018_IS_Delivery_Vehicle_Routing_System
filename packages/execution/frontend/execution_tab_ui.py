@@ -233,45 +233,45 @@ def render_jade_operations_tab(ss):
                 display_operation_result({'type': msg_type, 'message': msg_str})
                 ss.optimisation_execution_tab_run_status_message = None # Clear after display
 
-            if ss.optimisation_run_complete:
-                if ss.optimisation_results is not None:
-                    results = ss.optimisation_results
-                    all_parcels_assigned = (
-                        "optimised_routes" in results and results["optimised_routes"] and
-                        not ("unassigned_parcels_details" in results and results["unassigned_parcels_details"])
-                    )
-                    if all_parcels_assigned:
-                        streamlit.info("All parcels were assigned by the optimisation script.")
+            # Always show optimisation results section if we have any state about optimisation
+            if ss.get("optimisation_run_complete") or ss.get("optimisation_run_error"):
+                if ss.optimisation_run_complete:
+                    if ss.optimisation_results is not None:
+                        results = ss.optimisation_results
+                        all_parcels_assigned = (
+                            "optimised_routes" in results and results["optimised_routes"] and
+                            not ("unassigned_parcels_details" in results and results["unassigned_parcels_details"])
+                        )
+                        if all_parcels_assigned:
+                            streamlit.info("All parcels were assigned by the optimisation script.")
+                        else:
+                            streamlit.warning("Not all parcels could be assigned by the optimisation script.")
+                        
+                        # Display the detailed optimisation results
+                        render_optimisation_results_display(results)
+
+                elif ss.optimisation_run_error:
+                    streamlit.error(f"Optimisation Script Execution Error: {ss.optimisation_run_error}")
+                elif not ss.optimisation_results:
+                    streamlit.warning("Optimisation completed, but no results were returned by the script.")
+                
+                streamlit.markdown("---")
+
+                # Show send routes button if we have results with routes
+                if ss.optimisation_run_complete and ss.optimisation_results:
+                    if ss.optimisation_results.get("optimised_routes"):
+                        if streamlit.button("Send routes to MRA",
+                                            key="send_routes_to_mra_btn", 
+                                            use_container_width=True,
+                                            disabled=not ss.get("jade_agents_created", False) or not ss.get("jade_platform_running", False)
+                                            ):
+                            result = execution_logic.handle_send_optimised_routes_to_mra(ss) 
+                            display_operation_result(result)
+                            if result and result.get('type') != 'error':
+                                ss.jade_dispatch_status_message = None
+                            streamlit.rerun()
                     else:
-                        streamlit.warning("Not all parcels could be assigned by the optimisation script.")
-                    
-                    # Display the detailed optimisation results
-                    render_optimisation_results_display(results)
-
-            elif ss.optimisation_run_error:
-                 streamlit.error(f"Optimisation Script Execution Error: {ss.optimisation_run_error}")
-            elif ss.optimisation_run_complete and not ss.optimisation_results and not ss.optimisation_run_error:
-                streamlit.warning("Optimisation completed, but no results were returned by the script.")
-            streamlit.markdown("---")
-
-            # --- Route Dispatch to MRA Section ---
-            optimisation_complete_with_results = ss.get("optimisation_run_complete", False) and ss.get("optimisation_results") is not None
-
-            if optimisation_complete_with_results and ss.optimisation_results.get("optimised_routes"):
-                if streamlit.button("Send routes to MRA",
-                                    key="send_routes_to_mra_btn", 
-                                    use_container_width=True,
-                                    disabled=not ss.get("jade_agents_created", False) or not ss.get("jade_platform_running", False)
-                                    ):
-                    result = execution_logic.handle_send_optimised_routes_to_mra(ss) 
-                    display_operation_result(result)
-                    if result and result.get('type') != 'error':
-                         ss.jade_dispatch_status_message = None # Clear after display if not error
-                    streamlit.rerun()
-            elif optimisation_complete_with_results and ss.optimisation_results and not ss.optimisation_results.get("optimised_routes"):
-                 display_operation_result({'type': 'info', 'message': "Optimisation results do not contain any routes to send to MRA."})
-            else: # Optimisation not complete or no results
-                 display_operation_result({'type': 'warning', 'message': "Optimisation results are not available to be sent. Please run route optimisation first."})
+                        display_operation_result({'type': 'info', 'message': "Optimisation results do not contain any routes to send to MRA."})
 
             if ss.get("jade_dispatch_status_message"):
                 msg_str = ss.jade_dispatch_status_message
