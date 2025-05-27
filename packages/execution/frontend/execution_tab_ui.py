@@ -138,7 +138,6 @@ def render_jade_operations_tab(ss):
                 
                 # Display parcels table
                 if parcels_data:
-                    streamlit.markdown("**Parcels to send:**")
                     parcels_df = pd.DataFrame(parcels_data)
                     streamlit.dataframe(parcels_df, use_container_width=True, hide_index=True)
                 else:
