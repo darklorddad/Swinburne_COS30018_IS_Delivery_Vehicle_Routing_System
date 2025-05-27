@@ -146,8 +146,18 @@ def _render_main_layout(ss):
                 args = (ss,),
             )
 
+def _cleanup_jade(ss):
+    """Attempt to clean up JADE resources if they exist"""
+    if ss.get("jade_platform_running"):
+        from ..execution.backend import execution_logic
+        execution_logic.handle_stop_jade(ss)
+
 def main():
     streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
+    
+    # Register cleanup handler
+    import atexit
+    atexit.register(_cleanup_jade, streamlit.session_state)
 
     embed_video()
 

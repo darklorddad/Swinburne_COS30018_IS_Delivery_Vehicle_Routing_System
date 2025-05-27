@@ -202,7 +202,7 @@ def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_p
 
     if success:
         ss.jade_dispatch_status_message = message or "Optimised routes sent to MRA for dispatch"
-        return {'type': 'success', 'message': ss.jade_dispatch_status_message}
+        return {'type': 'info', 'message': ss.jade_dispatch_status_message}
     else:
         ss.jade_dispatch_status_message = message or "Failed to send optimised routes to MRA"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}

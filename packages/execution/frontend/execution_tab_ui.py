@@ -130,8 +130,19 @@ def render_jade_operations_tab(ss):
                     "warehouse_coordinates_x_y": ss.config_data.get("warehouse_coordinates_x_y", "Not set"),
                     "parcels": ss.config_data.get("parcels", [])
                 }
-                streamlit.json(data_to_send, expanded=False)
-                streamlit.markdown("---")
+                warehouse_data = ss.config_data.get("warehouse_coordinates_x_y", "Not set")
+                parcels_data = ss.config_data.get("parcels", [])
+
+                # Warehouse info
+                streamlit.markdown(f"**Warehouse Coordinates:** {warehouse_data}")
+
+                # Parcels info in a DataFrame
+                if parcels_data:
+                    streamlit.markdown("**Parcels:**")
+                    parcels_df = pd.DataFrame(parcels_data)
+                    streamlit.dataframe(parcels_df, use_container_width=True, hide_index=True)
+                else:
+                    streamlit.info("No parcels in the current configuration to send.")
             else:
                 streamlit.info("No configuration loaded to send to MRA.")
 
