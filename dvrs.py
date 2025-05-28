@@ -43,6 +43,7 @@ def _render_settings_content(ss):
             if "execution_module_initialised_v1" in ss:
                 del ss.execution_module_initialised_v1
             execution_logic.initialise_session_state(ss)
+            streamlit.rerun() # Force a full script rerun
         
         streamlit.toggle(
             "Simple Mode",
