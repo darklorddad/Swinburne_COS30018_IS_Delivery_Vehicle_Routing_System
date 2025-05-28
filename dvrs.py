@@ -123,20 +123,20 @@ def embed_video():
     """, unsafe_allow_html=True)
 
 # Renders the tab structure and content for the standard (non-simple) UI mode.
-def _standard_modestandard_mode_tabs(ss):
+def _render_standard_mode_tabs(ss):
     """Renders the tab structure and content for the standard (non-simple) UI mode."""
     # JADE tab accessibility will be handled within its own rendering function.
     # Tabs are now created unconditionally.
     tabs_list = [
-            "Configuration",
-            "Optimisation", 
-            "Execution", 
-            "Visualisation",
-            "Settings"
-        ]
-        tab_config, tab_optimisation, tab_execution, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
+        "Configuration",
+        "Optimisation", 
+        "Execution", 
+        "Visualisation",
+        "Settings"
+    ]
+    tab_config tab_exec tab_exec tab_exec tab_execution, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
 
-        with tab_config:
+    with tab_config:
             if ss.get("jade_platform_running", False):
                 streamlit.warning("Configuration cannot be changed while the JADE platform is running")
             else:
