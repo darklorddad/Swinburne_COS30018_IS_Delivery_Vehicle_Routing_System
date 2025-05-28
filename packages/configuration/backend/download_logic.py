@@ -31,7 +31,10 @@ def handle_save_and_download(ss):
 
     # Exits edit mode and resets the selected action, as the save/download action is complete.
     ss.edit_mode = False
-    ss.action_selected = None
+    if ss.get("simple_mode"):
+        ss.simple_config_action_selected = None
+    else:
+        ss.action_selected = None
 
     # If it was a new configuration, mark it as having been saved at least once.
     # This influences behaviour in handle_cancel_edit if the user later cancels further edits
