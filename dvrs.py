@@ -22,34 +22,17 @@ def _render_settings_content(ss):
             args = (ss,),
         )
         # Define the callback for the simple mode toggle
-        def simple_toggle_callback():
-            ss.simple_mode = not ss.simple_mode
-            # Clear all relevant session state to simulate a fresh start
-
-            # 1. Configuration module state reset
-            # The `clear_all=True` flag tells `initialise_session_state` in config_logic
-            # to reset all its managed keys to their default values.
-            config_logic.initialise_session_state(ss, clear_all=True)
-
-            # 2. Optimisation module state reset
-            # Delete the initialisation flag for the optimisation module.
-            # Then, calling its initialise_session_state will force it to reset all its keys.
-            if "optimisation_module_initialised_v2" in ss:
-                del ss.optimisation_module_initialised_v2
-            optimisation_logic.initialise_session_state(ss)
-
-            # 3. Execution module state reset
-            # Similar to the optimisation module.
-            if "execution_module_initialised_v1" in ss:
-                del ss.execution_module_initialised_v1
-            execution_logic.initialise_session_state(ss)
-            streamlit.rerun() # Force a full script rerun
+        def request_simple_mode_toggle(): # Renamed callback
+            # This callback now only sets a flag and requests a rerun.
+            # The actual mode switch and state clearing will happen at the top of main().
+            ss.mode_switch_requested = True
+            streamlit.rerun() 
         
         streamlit.toggle(
             "Simple Mode",
-            value=ss.simple_mode,
+            value=ss.simple_mode, # Reflects current mode for display
             key="simple_mode_toggle_widget",
-            on_change=simple_toggle_callback,
+            on_change=request_simple_mode_toggle, # Use the new callback
             help="Switch to a streamlined user interface with fewer tabs and guided steps."
         )
 
@@ -183,11 +166,32 @@ def main():
     embed_video()
 
     # Initialise session state variables using the function from config_logic
-    # Use an alias for streamlit.session_state for brevity
     ss = streamlit.session_state
-    config_logic.initialise_session_state(ss)
-    optimisation_logic.initialise_session_state(ss) # Initialise optimisation state
-    execution_logic.initialise_session_state(ss) # Initialise execution state
+
+    # === Handle Mode Switch Request FIRST ===
+    # This block executes at the top of every script run.
+    # If a mode switch was requested by the toggle's on_change callback:
+    if ss.get("mode_switch_requested", False):
+        ss.simple_mode = not ss.simple_mode # Actually flip the mode value
+        
+        # Perform a full reset of all relevant application states
+        config_logic.initialise_session_state(ss, clear_all=True)
+        
+        if "optimisation_module_initialised_v2" in ss:
+            del ss.optimisation_module_initialised_v2
+        optimisation_logic.initialise_session_state(ss)
+        
+        if "execution_module_initialised_v1" in ss:
+            del ss.execution_module_initialised_v1
+        execution_logic.initialise_session_state(ss)
+        
+        ss.mode_switch_requested = False # Reset the flag
+        # The script will now continue with the new ss.simple_mode and cleared states.
+
+    # Standard initialisation (will respect module-specific init flags if not cleared above)
+    config_logic.initialise_session_state(ss) 
+    optimisation_logic.initialise_session_state(ss)
+    execution_logic.initialise_session_state(ss)
 
     _apply_custom_styling(ss)
 
