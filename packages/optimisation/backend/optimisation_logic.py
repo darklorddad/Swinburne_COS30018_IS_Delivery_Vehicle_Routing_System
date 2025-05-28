@@ -62,14 +62,16 @@ def discover_featured_scripts():
     """Scans the 'featured_scripts' directory and returns a list of script names and paths."""
     scripts = []
     # Define the path to your featured scripts directory
-    scripts_dir = os.path.join(os.path.dirname(__file__), "featured_scripts")
+    # Look in pnp/featured directory which is a sibling to packages
+    packages_dir = os.path.dirname(os.path.dirname(__file__))  # Goes up from packages/optimisation/backend
+    scripts_dir = os.path.join(packages_dir, "..", "pnp", "featured")  # Go up to root then into pnp/featured
     if os.path.isdir(scripts_dir):
         for filename in os.listdir(scripts_dir):
             if filename.endswith(".py"):
                 scripts.append({"name": filename, "path": os.path.join(scripts_dir, filename)})
     else:
         # Optionally, log or handle the case where the directory doesn't exist
-        print(f"Warning: Featured scripts directory not found at {scripts_dir}")
+        print(f"Warning: Featured scripts directory not found at {os.path.abspath(scripts_dir)}")
     return scripts
 
 # Handles the upload of an optimisation script.
