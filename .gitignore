@@ -12,4 +12,5 @@ jadeagents
 MTPs-Main-Container.txt
 APDescription.txt
 
-*class
+packages/execution/backend/java/classes
+*.class

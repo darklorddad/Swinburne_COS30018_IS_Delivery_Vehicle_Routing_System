@@ -6,7 +6,10 @@ DEFAULT_MRA_NAME = "MRA"
 DEFAULT_MRA_CLASS = "MasterRoutingAgent" # Updated package
 DEFAULT_DA_CLASS = "DeliveryAgent"     # Updated package
 
-def initialise_session_state(ss):
+def initialise_session_state(ss, clear_all_flag_for_other_modules=False): # Added dummy flag
+    # If the init flag is not present (or if we were to implement a direct clear_all for this module),
+    # proceed to initialize/reset all execution-specific states.
+    # The dvrs.py will handle deleting this flag if a full reset is intended.
     if "execution_module_initialised_v1" not in ss: # Use a versioned key
         ss.execution_module_initialised_v1 = True
         

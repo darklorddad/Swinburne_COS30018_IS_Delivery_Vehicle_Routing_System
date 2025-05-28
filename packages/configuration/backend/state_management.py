@@ -16,8 +16,8 @@ DEFAULT_CONFIG_TEMPLATE = {
 }
 
 # Initialises session state variables if they do not already exist.
-def initialise_session_state(ss):
-    defaults = {
+def initialise_session_state(ss, clear_all=False): # Added clear_all
+    CONFIG_DATA_AND_UI_DEFAULTS = {
         "show_header": False,
         "config_data": None,
         "config_filename": "config.json",
@@ -33,11 +33,20 @@ def initialise_session_state(ss):
         "new_config_saved_to_memory_at_least_once": False,
         "fallback_config_state": None,
         "config_filename_snapshot": None,
-        "processed_file_id_for_buffer": None # Tracks the file ID of the current buffer content.
+        "processed_file_id_for_buffer": None, # Tracks the file ID of the current buffer content.
+        "simple_num_parcels_to_generate": 5, # Default for simple generator
+        "simple_num_agents_to_generate": 2, # Default for simple generator
+        "simple_config_action_selected": None, # Controls the view within the Simple tab
+        "simple_show_generate_options": False # To control visibility of generate inputs
     }
-    for key, value in defaults.items():
-        if key not in ss:
-            ss[key] = value
+    if clear_all:
+        # Set all config-specific session state keys to their defaults
+        for key, value in CONFIG_DATA_AND_UI_DEFAULTS.items():
+            ss[key] = copy.deepcopy(value) if isinstance(value, (list, dict)) else value
+    else: # Original behavior: initialize only if key is not present
+        for key, value in CONFIG_DATA_AND_UI_DEFAULTS.items():
+            if key not in ss:
+                ss[key] = copy.deepcopy(value) if isinstance(value, (list, dict)) else value
 
 # Helper function to stash the current configuration state as a fallback.
 def _stash_current_config_as_fallback(ss):
@@ -58,13 +67,17 @@ def handle_new_config_action(ss):
     # Stashes the current configuration, if any, as a fallback.
     _stash_current_config_as_fallback(ss)
 
-    # Initialises a new configuration using the default template.
+    # Initializes a new configuration using the default template.
     ss.config_data = copy.deepcopy(DEFAULT_CONFIG_TEMPLATE) # Ensures template is not modified.
     ss.config_filename = "new-config.json"
+    # Reset standard mode state
+    ss.action_selected = None
+    # Set simple mode navigation if applicable
+    if ss.get("simple_mode", False):
+        ss.simple_config_action_selected = "new_edit"
     ss.config_filename_snapshot = ss.config_filename
     ss.processed_file_id = None
     ss.last_uploaded_filename = None
-    ss.action_selected = None # Resets action, view determined by subsequent logic.
     ss.edit_mode = True
     ss.config_data_snapshot = copy.deepcopy(ss.config_data)
     ss.new_config_saved_to_memory_at_least_once = False
@@ -126,6 +139,14 @@ def clear_config_from_memory(ss):
     ss.fallback_config_state = None
     ss.uploaded_file_buffer = None
     ss.processed_file_id_for_buffer = None
+
+# Resets the simple config action.
+def reset_simple_config_action(ss):
+    ss.simple_config_action_selected = None
+
+# Sets the application to edit action.
+def handle_edit_config_action(ss):
+    ss.simple_config_action_selected = "edit"
     ss.edit_mode = False # Ensures not in edit mode if config is cleared.
     ss.action_selected = None # Resets action.
     return {'type': 'info', 'message': "Configuration cleared from memory"}
@@ -164,7 +185,11 @@ def handle_cancel_edit(ss):
             ss.config_filename_snapshot = None # No snapshot for a cleared new config.
 
     ss.edit_mode = False
-    ss.action_selected = None
+    
+    if ss.get("simple_mode"):
+        ss.simple_config_action_selected = None
+    else:
+        ss.action_selected = None
 
     is_current_config_new = ss.last_uploaded_filename is None
     current_new_config_never_saved_via_save_edits = not ss.new_config_saved_to_memory_at_least_once
