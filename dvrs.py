@@ -24,6 +24,25 @@ def _render_settings_content(ss):
         # Define the callback for the simple mode toggle
         def simple_toggle_callback():
             ss.simple_mode = not ss.simple_mode
+            # Clear all relevant session state to simulate a fresh start
+
+            # 1. Configuration module state reset
+            # The `clear_all=True` flag tells `initialise_session_state` in config_logic
+            # to reset all its managed keys to their default values.
+            config_logic.initialise_session_state(ss, clear_all=True)
+
+            # 2. Optimisation module state reset
+            # Delete the initialisation flag for the optimisation module.
+            # Then, calling its initialise_session_state will force it to reset all its keys.
+            if "optimisation_module_initialised_v2" in ss:
+                del ss.optimisation_module_initialised_v2
+            optimisation_logic.initialise_session_state(ss)
+
+            # 3. Execution module state reset
+            # Similar to the optimisation module.
+            if "execution_module_initialised_v1" in ss:
+                del ss.execution_module_initialised_v1
+            execution_logic.initialise_session_state(ss)
         
         streamlit.toggle(
             "Simple Mode",
