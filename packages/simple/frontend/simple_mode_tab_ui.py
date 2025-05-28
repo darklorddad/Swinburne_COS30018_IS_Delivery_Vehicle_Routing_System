@@ -18,16 +18,15 @@ def render_generate_config_view_simple(ss):
         
         col1, col2 = streamlit.columns(2)
         with col1:
-            if streamlit.button("Generate and Edit", key="simple_generate_and_edit_btn", use_container_width=True):
+            if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
+                ss.simple_config_action_selected = None # Go back to main simple view
+                streamlit.rerun()
+        with col2:
+            if streamlit.button("Generate", key="simple_generate_btn", use_container_width=True):
                 result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
                 display_operation_result(result)
                 if result.get('type') == 'success':
-                    ss.edit_mode = True # Prepare for edit view
-                    ss.simple_config_action_selected = "new_edit" # Transition to edit view
-                streamlit.rerun()
-        with col2:
-            if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
-                ss.simple_config_action_selected = None # Go back to main simple view
+                    ss.simple_config_action_selected = None # Return to main view
                 streamlit.rerun()
         
         if ss.config_data and ss.config_filename == "generated-quick-config.json": # Check if a generated config exists
