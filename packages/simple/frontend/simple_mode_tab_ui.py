@@ -15,22 +15,21 @@ def render_generate_config_view_simple(ss):
     num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
     num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
     
-    col1, col2 = streamlit.columns(2)
-    with col1:
-        if streamlit.button("Generate and Edit", key="simple_generate_and_edit_btn", use_container_width=True):
-            result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
-            display_operation_result(result)
-            if result.get('type') == 'success':
-                ss.edit_mode = True # Prepare for edit view
-                ss.simple_config_action_selected = "new_edit" # Transition to edit view (as generated is like a new one to edit)
-            streamlit.rerun()
-    with col2:
-        if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
-            ss.simple_config_action_selected = None # Go back to main simple view
-            streamlit.rerun()
+    if streamlit.button("Generate and Edit", key="simple_generate_and_edit_btn", use_container_width=True):
+        result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
+        display_operation_result(result)
+        if result.get('type') == 'success':
+            ss.edit_mode = True # Prepare for edit view
+            ss.simple_config_action_selected = "new_edit" # Transition to edit view
+        streamlit.rerun()
+    
+    if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
+        ss.simple_config_action_selected = None # Go back to main simple view
+        streamlit.rerun()
+    
     streamlit.markdown("---")
     if ss.config_data and ss.config_filename == "generated-quick-config.json": # Check if a generated config exists
-         streamlit.info(f"Previously generated: {ss.config_filename}. The 'Generate and Edit' button will overwrite this.")
+        streamlit.info(f"Previously generated: {ss.config_filename}. The 'Generate and Edit' button will overwrite this.")
 
 def render_simple_mode_tab(ss):
     # Configuration Action Rendering
@@ -40,26 +39,33 @@ def render_simple_mode_tab(ss):
         render_edit_view(ss)
     elif simple_config_action == "load":
         render_load_view(ss)
+    elif simple_config_action == "generate":
+        render_generate_config_view_simple(ss)
     else:
         # This is the main view of the simple tab when not editing or loading a config
         # Configure Section
         with streamlit.expander("Setup Configuration", expanded=True):
-            col_create, col_load_buttons = streamlit.columns(2)
-            with col_create:
-                if streamlit.button("New configuration", key="simple_create_btn", use_container_width=True):
-                    if ss.get("jade_platform_running"):
-                        streamlit.warning("Cannot create new configuration while JADE is running")
-                    else:
-                        config_logic.handle_new_config_action(ss)
-                        streamlit.rerun()
-            with col_load_buttons:
-                if streamlit.button("Load configuration", key="simple_load_btn", use_container_width=True):
-                    if ss.get("jade_platform_running"):
-                        streamlit.warning("Cannot load configuration while JADE is running")
-                    else:
-                        config_logic.handle_load_config_action(ss)
-                        ss.simple_config_action_selected = "load"
-                        streamlit.rerun()
+            if streamlit.button("New configuration", key="simple_create_btn", use_container_width=True):
+                if ss.get("jade_platform_running"):
+                    streamlit.warning("Cannot create new configuration while JADE is running")
+                else:
+                    config_logic.handle_new_config_action(ss)
+                    streamlit.rerun()
+            
+            if streamlit.button("Load configuration", key="simple_load_btn", use_container_width=True):
+                if ss.get("jade_platform_running"):
+                    streamlit.warning("Cannot load configuration while JADE is running")
+                else:
+                    config_logic.handle_load_config_action(ss)
+                    ss.simple_config_action_selected = "load"
+                    streamlit.rerun()
+            
+            if streamlit.button("Generate configuration", key="simple_generate_btn", use_container_width=True):
+                if ss.get("jade_platform_running"):
+                    streamlit.warning("Cannot generate configuration while JADE is running")
+                else:
+                    ss.simple_config_action_selected = "generate"
+                    streamlit.rerun()
 
         # Manage current configuration (only shows if a config exists and not in a sub-action)
         if ss.config_data:
