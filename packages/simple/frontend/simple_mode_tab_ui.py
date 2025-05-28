@@ -11,25 +11,28 @@ from packages.simple.backend import simple_logic
 
 # New view for generating configuration in simple mode
 def render_generate_config_view_simple(ss):
-    streamlit.subheader("Generate New Configuration")
-    num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
-    num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
-    
-    if streamlit.button("Generate and Edit", key="simple_generate_and_edit_btn", use_container_width=True):
-        result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
-        display_operation_result(result)
-        if result.get('type') == 'success':
-            ss.edit_mode = True # Prepare for edit view
-            ss.simple_config_action_selected = "new_edit" # Transition to edit view
-        streamlit.rerun()
-    
-    if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
-        ss.simple_config_action_selected = None # Go back to main simple view
-        streamlit.rerun()
-    
-    streamlit.markdown("---")
-    if ss.config_data and ss.config_filename == "generated-quick-config.json": # Check if a generated config exists
-        streamlit.info(f"Previously generated: {ss.config_filename}. The 'Generate and Edit' button will overwrite this.")
+    with streamlit.expander("Generate Configuration", expanded=True):
+        streamlit.markdown("---")
+        num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
+        num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
+        
+        col1, col2 = streamlit.columns(2)
+        with col1:
+            if streamlit.button("Generate and Edit", key="simple_generate_and_edit_btn", use_container_width=True):
+                result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
+                display_operation_result(result)
+                if result.get('type') == 'success':
+                    ss.edit_mode = True # Prepare for edit view
+                    ss.simple_config_action_selected = "new_edit" # Transition to edit view
+                streamlit.rerun()
+        with col2:
+            if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
+                ss.simple_config_action_selected = None # Go back to main simple view
+                streamlit.rerun()
+        
+        if ss.config_data and ss.config_filename == "generated-quick-config.json": # Check if a generated config exists
+            streamlit.markdown("---")
+            streamlit.info(f"Previously generated: {ss.config_filename}. The 'Generate and Edit' button will overwrite this.")
 
 def render_simple_mode_tab(ss):
     # Configuration Action Rendering
@@ -67,30 +70,27 @@ def render_simple_mode_tab(ss):
                     ss.simple_config_action_selected = "generate"
                     streamlit.rerun()
 
-        # Manage current configuration (only shows if a config exists and not in a sub-action)
+        # Manage current configuration (only shows if a config exists)
         if ss.config_data:
-            with streamlit.expander("Manage current configuration", expanded=True):
+            with streamlit.expander("Manage Current Configuration", expanded=True):
                 streamlit.markdown("---")
-                streamlit.success(f"{ss.config_filename}")
-                col_manage_load, col_manage_edit, col_manage_clear = streamlit.columns(3)
+                streamlit.success(f"Current configuration: {ss.config_filename}")
+                col_manage_edit, col_manage_load, col_manage_clear = streamlit.columns(3)
                 with col_manage_edit:
-                    if streamlit.button("Edit current configuration", key="simple_config_edit_current_btn", use_container_width=True):
+                    if streamlit.button("Edit", key="simple_config_edit_current_btn", use_container_width=True):
                         ss.simple_config_action_selected = "edit"
                         config_logic.enter_edit_mode(ss)
                         streamlit.rerun()
                 with col_manage_load:
-                    if streamlit.button("Load another configuration", key="simple_config_load_another_btn", use_container_width=True):
+                    if streamlit.button("Load Different", key="simple_config_load_another_btn", use_container_width=True):
                         ss.simple_config_action_selected = "load"
                         config_logic.handle_load_config_action(ss)
                         streamlit.rerun()
                 with col_manage_clear:
-                    if streamlit.button("Clear current configuration", key="simple_config_clear_current_btn", use_container_width=True):
+                    if streamlit.button("Clear", key="simple_config_clear_current_btn", use_container_width=True):
                         config_logic.clear_config_from_memory(ss)
                         config_logic.reset_simple_config_action(ss)
                         streamlit.rerun()
-        elif not simple_config_action:
-            with streamlit.expander("Manage current configuration", expanded=True):
-                streamlit.info("No configuration currently loaded. Create or Load one above.")
 
         # Optimisation Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
