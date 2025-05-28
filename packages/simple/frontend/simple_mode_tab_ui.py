@@ -13,6 +13,7 @@ from packages.simple.backend import simple_logic
 def render_generate_config_view_simple(ss):
     with streamlit.expander("Generate Configuration", expanded=True):
         streamlit.markdown("---")
+        config_name = streamlit.text_input("Configuration name", value="generated-config", key="simple_gen_config_name")
         num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
         num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
         
@@ -23,7 +24,7 @@ def render_generate_config_view_simple(ss):
                 streamlit.rerun()
         with col2:
             if streamlit.button("Generate", key="simple_generate_btn", use_container_width=True):
-                result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
+                result = simple_logic.generate_quick_config(ss, num_parcels, num_agents, config_name)
                 display_operation_result(result)
                 if result.get('type') == 'success':
                     ss.simple_config_action_selected = None # Return to main view
@@ -40,10 +41,15 @@ def render_simple_mode_tab(ss):
         render_load_view(ss)
     elif simple_config_action == "generate":
         render_generate_config_view_simple(ss)
+    elif simple_config_action == "load_script":
+        optimisation_logic.handle_initiate_load_script_action(ss)
+        ss.simple_config_action_selected = None
+        streamlit.rerun()
     else:
         # This is the main view of the simple tab when not editing or loading a config
         # Configuration Management Section
         with streamlit.expander("Configuration Management", expanded=True):
+            streamlit.markdown("---")
             if streamlit.button("New configuration", key="simple_create_btn", use_container_width=True):
                 if ss.get("jade_platform_running"):
                     streamlit.warning("Cannot create new configuration while JADE is running")
@@ -103,17 +109,24 @@ def render_simple_mode_tab(ss):
                         streamlit.success(f"Loaded: {ss.optimisation_script_filename}")
                     
                     # Add script selection dropdown
-                    script_options = ["Select script"]  # Will be populated from pnp/featured
-                    selected_script = streamlit.selectbox(
-                        "Select script",
-                        options=script_options,
-                        key="script_select_box"
-                    )
+                    import os
+                    script_dir = os.path.join("System", "Swinburne_COS30018_IS_Delivery_Vehicle_Routing_System", "pnp", "featured")
+                    script_options = []
+                    if os.path.exists(script_dir):
+                        script_options = [f for f in os.listdir(script_dir) if f.endswith('.py')]
                     
-                    if streamlit.button("Load script", key="simple_load_script_btn", use_container_width=True):
-                        if selected_script != "Select script":
-                            optimisation_logic.handle_initiate_load_script_action(ss)
+                    if script_options:
+                        selected_script = streamlit.selectbox(
+                            "Available scripts",
+                            options=script_options,
+                            key="script_select_box"
+                        )
+                        if selected_script:
+                            ss.optimisation_script_filename = os.path.join(script_dir, selected_script)
+                            ss.simple_config_action_selected = "load_script"
                             streamlit.rerun()
+                    else:
+                        streamlit.warning("No scripts found in pnp/featured directory")
 
         # Execution Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
