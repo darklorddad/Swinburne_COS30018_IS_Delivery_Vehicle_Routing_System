@@ -25,7 +25,7 @@ def generate_quick_config(ss, num_parcels, num_agents):
     for i in range(num_parcels):
         new_config["parcels"].append({
             "id": f"P{str(i+1).zfill(3)}",
-            "coordinates_x_y": [random.randint(-20,), random), random.randint(-20, 20)],
+            "coordinates_x_y": [random.randint(-20, 20), random.randint(-20, 20)],
             "weight": random.randint(1, 20)
         })
 
@@ -39,7 +39,7 @@ def generate_quick_config(ss, num_parcels, num_agents):
     new_config["warehouse_coordinates_x_y"] = [0,0] # Keep warehouse at default
 
     ss.config_data = new_config
-.config_filename.config_filename = "generated-quick-config.json"
+    ss.config_filename = "generated-quick-config.json"
     ss.config_filename_snapshot = ss.config_filename
     ss.processed_file_id = None # It's a new, generated config, not from a file
     ss.last_uploaded_filename = None # Not from upload
