@@ -22,31 +22,17 @@ def _render_settings_content(ss):
             args = (ss,),
         )
         # Define the callback for the simple mode toggle
-        def simple_mode_toggle_on_change():
-            # 1. Flip the mode
+        def simple_mode_on_change_callback():
+            # This callback ONLY flips the mode and requests a rerun.
+            # The state clearing will happen at the top of main() on the next script run.
             ss.simple_mode = not ss.get("simple_mode", False)
-
-            # 2. Clear configuration-specific state
-            config_logic.initialise_session_state(ss, clear_all=True)
-
-            # 3. Signal optimisation module to reset by deleting its init flag
-            if "optimisation_module_initialised_v2" in ss:
-                del ss.optimisation_module_initialised_v2
-            # optimisation_logic.initialise_session_state(ss) will be called in main()
-
-            # 4. Signal execution module to reset by deleting its init flag
-            if "execution_module_initialised_v1" in ss:
-                del ss.execution_module_initialised_v1
-            # execution_logic.initialise_session_state(ss) will be called in main()
-            
-            # 5. Rerun the script for UI to update
             streamlit.rerun()
 
         streamlit.toggle(
             "Simple Mode",
             value=ss.get("simple_mode", False), # Display current mode
             key="simple_mode_toggle_widget",
-            on_change=simple_mode_toggle_on_change,
+            on_change=simple_mode_on_change_callback,
             help="Switch to a streamlined user interface with fewer tabs and guided steps."
         )
 
@@ -182,18 +168,35 @@ def main():
     # Initialise session state variables using the function from config_logic
     ss = streamlit.session_state
 
-    # Initialize app-level UI state variables IF THEY DON'T EXIST.
-    # This typically runs only on the very first script execution per session.
+    # Store the mode *before* potential reset, to detect if it changed.
+    previous_simple_mode = ss.get("simple_mode_snapshot_for_reset", None)
+
+    # Ensure simple_mode is initialized on the very first run
     if "simple_mode" not in ss:
         ss.simple_mode = False
-    # The 'mode_switch_requested' flag is no longer needed with this pattern.
+    
+    current_simple_mode = ss.simple_mode
 
-    # Module-specific initialisations.
-    # These are called on every run. They will re-initialize if their init flags
-    # were deleted by the toggle's on_change callback. Otherwise, they do nothing.
+    # If the mode has changed since the last run (or if it's the first run with snapshot unset)
+    if previous_simple_mode is None or previous_simple_mode != current_simple_mode:
+        # This indicates a mode switch just happened (or it's initial load after a switch)
+        # Perform a full reset of all relevant application states
+        config_logic.initialise_session_state(ss, clear_all=True) # Resets config state
+        
+        if "optimisation_module_initialised_v2" in ss:
+            del ss.optimisation_module_initialised_v2 # Signal opt module to re-init
+        
+        if "execution_module_initialised_v1" in ss:
+            del ss.execution_module_initialised_v1 # Signal exec module to re-init
+
+    # Always call these. They will re-initialize if their flags were deleted above,
+    # or do nothing if already initialized and flags are present.
     config_logic.initialise_session_state(ss) # Initial call without clear_all here
     optimisation_logic.initialise_session_state(ss)
     execution_logic.initialise_session_state(ss)
+
+    # Update the snapshot *after* all state resets and initializations for the current mode
+    ss.simple_mode_snapshot_for_reset = ss.simple_mode
 
     _apply_custom_styling(ss)
 
