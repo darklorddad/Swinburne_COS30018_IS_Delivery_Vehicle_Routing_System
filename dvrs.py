@@ -137,25 +137,25 @@ def _render_standard_mode_tabs(ss):
     tab_config, tab_optimisation, tab_execution, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
 
     with tab_config:
-            if ss.get("jade_platform_running", False):
-                streamlit.warning("Configuration cannot be changed while the JADE platform is running")
-            else:
-                render_config_tab(ss)
+        if ss.get("jade_platform_running", False):
+            streamlit.warning("Configuration cannot be changed while the JADE platform is running")
+        else:
+            render_config_tab(ss)
 
-        with tab_optimisation:
-            if ss.get("jade_platform_running", False):
-                streamlit.warning("Optimisation script and parameters cannot be changed while the JADE platform is running")
-            else:
-                render_optimisation_tab(ss)
-            
-        with tab_execution: 
-            render_jade_operations_tab(ss) 
+    with tab_optimisation:
+        if ss.get("jade_platform_running", False):
+            streamlit.warning("Optimisation script and parameters cannot be changed while the JADE platform is running")
+        else:
+            render_optimisation_tab(ss)
+        
+    with tab_execution: 
+        render_jade_operations_tab(ss) 
 
-        with tab_visualisation: # Changed from tab_results
-            render_visualisation_tab(ss) # Call the new rendering function
+    with tab_visualisation: # Changed from tab_results
+        render_visualisation_tab(ss) # Call the new rendering function
 
-        with tab_settings:
-            _render_settings_content(ss)
+    with tab_settings:
+        _render_settings_content(ss)
 
 def main():
     streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
