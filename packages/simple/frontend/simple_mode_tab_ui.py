@@ -90,7 +90,7 @@ def render_simple_mode_tab(ss):
         if not simple_config_action:
             with streamlit.expander("Select Optimisation Method", expanded=True):
                 if ss.get("jade_platform_running"):
-                   isation scriptisation scriptisation scriptisation script cannot be changed while JADE is running")
+                    streamlit.warning("Optimisation script cannot be changed while JADE is running")
                 else:
                     if ss.optimisation_script_loaded_successfully:
                         streamlit.success(f"Loaded Script: {ss.optimisation_script_filename}")
