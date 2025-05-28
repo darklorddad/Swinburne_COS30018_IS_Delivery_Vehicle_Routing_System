@@ -10,6 +10,29 @@ from packages.simple.frontend.simple_mode_tab_ui import render_simple_mode_tab
 
 
 # Applies custom CSS to the Streamlit app.
+def _render_settings_content(ss):
+    """Renders the content for the 'Settings' tab."""
+    with streamlit.expander("User Interface", expanded=True):
+        streamlit.markdown("---")
+        streamlit.toggle(
+            "Show Streamlit header",
+            value = ss.show_header,
+            key = "show_header_toggle_widget",
+            on_change = config_logic.handle_show_header_toggle,
+            args = (ss,),
+        )
+        # Define the callback for the simple mode toggle
+        def simple_toggle_callback():
+            ss.simple_mode = not ss.simple_mode
+        
+        streamlit.toggle(
+            "Simple Mode",
+            value=ss.simple_mode,
+            key="simple_mode_toggle_widget",
+            on_change=simple_toggle_callback,
+            help="Switch to a streamlined user interface with fewer tabs and guided steps."
+        )
+
 def _apply_custom_styling(ss):
     header_style_properties = "background-color: transparent !important;" 
     if not ss.show_header:
@@ -99,16 +122,11 @@ def embed_video():
         </video>
     """, unsafe_allow_html=True)
 
-# Renders the main layout and tabs for the application.
-def _render_main_layout(ss):
-    # Create columns to centre the main content.
-    col1, col2, col3 = streamlit.columns([2.5, 5, 2.5]) # Adjust ratios to make middle narrower.
-
-    with col2: # This is the main content area, styled as a card.
-        streamlit.title("Delivery Vehicle Routing System")
-
-        # JADE tab accessibility will be handled within its own rendering function.
-        # Tabs are now created unconditionally.
+# Renders the tab structure and content for the standard (non-simple) UI mode.
+def _render_standard_mode_tabs(ss):
+    """Renders the tab structure and content for the standard (non-simple) UI mode."""
+    # JADE tab accessibility will be handled within its own rendering function.
+    # Tabs are now created unconditionally.
         tabs_list = [
             "Configuration",
             "Optimisation", 
@@ -137,25 +155,7 @@ def _render_main_layout(ss):
             render_visualisation_tab(ss) # Call the new rendering function
 
         with tab_settings:
-            with streamlit.expander("User Interface", expanded=True):
-                streamlit.markdown("---")
-                streamlit.toggle(
-                "Show Streamlit header",
-                value = ss.show_header,
-                key = "show_header_toggle_widget",
-                on_change = config_logic.handle_show_header_toggle,
-                args = (ss,),
-            )
-            def simple_toggle_callback():
-                ss.simple_mode = not ss.simple_mode
-                
-            streamlit.toggle(
-                "Simple Mode",
-                value=ss.simple_mode,
-                key="simple_mode_toggle_widget",
-                on_change=simple_toggle_callback,
-                help="Switch to a streamlined user interface with fewer tabs and guided steps."
-            )
+            _render_settings_content(ss)
 
 def main():
     streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
@@ -170,16 +170,24 @@ def main():
     execution_logic.initialise_session_state(ss) # Initialise execution state
 
     _apply_custom_styling(ss)
-    if ss.get("simple_mode", False):
-        # Simple UI Mode: Two tabs - "Simplified Workflow" and "Settings"
-        tab_simple_workflow, tab_settings_simple = streamlit.tabs(["Simplified Workflow", "Settings"])
-        with tab_simple_workflow:
-            render_simple_mode_tab(ss)
-        with tab_settings_simple:
-            _render_main_layout(ss) # Just show settings in simple mode
-    else:
-        # Standard UI Mode
-        _render_main_layout(ss)
+
+    # Create columns to centre the main content.
+    # This is now done in main() so the title is always within this structure.
+    col1, col2, col3 = streamlit.columns([2.5, 5, 2.5])
+
+    with col2: # This is the main content area
+        streamlit.title("Delivery Vehicle Routing System") # Title is now here
+
+        if ss.get("simple_mode", False):
+            # Simple UI Mode: Two tabs - "Simplified Workflow" and "Settings"
+            tab_simple_workflow, tab_settings_simple = streamlit.tabs(["Simplified Workflow", "Settings"])
+            with tab_simple_workflow:
+                render_simple_mode_tab(ss)
+            with tab_settings_simple:
+                _render_settings_content(ss) # Render only settings content
+        else:
+            # Standard UI Mode
+            _render_standard_mode_tabs(ss) # Render the standard tabs layout
 
 if __name__ == "__main__":
     main()
