@@ -109,3 +109,29 @@ def send_warehouse_parcel_data_to_mra(gateway, mra_name, warehouse_parcel_json):
         return False, f"Network error sending warehouse/parcel data to MRA: {str(e_net)}"
     except Exception as e_exc:
         return False, f"Exception sending warehouse/parcel data to MRA: {str(e_exc)}"
+
+def get_jade_simulated_routes_data(gateway):
+    if not gateway:
+        return None, "Py4J Gateway not available"
+    try:
+        # This method in Java returns a JSON string representing an array of route objects
+        json_array_string = gateway.entry_point.getAndClearJadeSimulatedRoutes()
+        # Attempt to parse it here to catch errors early and return Python objects
+        # If Java returns null or an empty string that is not valid JSON, json.loads will fail.
+        if json_array_string is None: # Handle case where Java might return null
+             return [], "JADE returned no data for simulated routes (null)."
+        
+        # Handle empty string which is not valid JSON
+        if not json_array_string.strip():
+            return [], "JADE returned empty string for simulated routes."
+
+        parsed_data = json.loads(json_array_string)
+        return parsed_data, None # Return parsed data and no error
+    except Py4JNetworkError as e:
+        return None, f"Network error getting JADE simulated routes: {str(e)}"
+    except json.JSONDecodeError as e:
+        # This will catch if json_array_string is not valid JSON
+        return None, f"Error decoding JSON from JADE for simulated routes: {str(e)}. Received: '{json_array_string[:200]}...'"
+    except Exception as e:
+        # Catch other potential Py4J errors or issues with the gateway call itself
+        return None, f"Error getting JADE simulated routes: {str(e)}"

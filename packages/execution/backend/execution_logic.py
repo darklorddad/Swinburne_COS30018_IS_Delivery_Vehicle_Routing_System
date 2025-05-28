@@ -22,13 +22,18 @@ def initialise_session_state(ss, clear_all_flag_for_other_modules=False): # Adde
         ss.mra_config_subset_message = None
         ss.data_for_optimisation_script = None # Data bundle from MRA for script
         ss.mra_optimisation_trigger_message = None
-        
+        ss.routes_sent_to_mra_successfully = None
+
         # Store JADE process info (e.g., Popen object from subprocess or simulated dict)
         ss.jade_process_info = None 
         # Store Py4J gateway object if used
         ss.py4j_gateway_object = None 
         # Event to stop JADE log reader threads
         ss.jade_log_stop_event = None
+
+        # Store the simulated routes data from JADE
+        ss.jade_simulated_routes_data = None
+        ss.jade_simulated_routes_message = None
 
 def handle_start_jade(ss):
     if ss.get("jade_platform_running", False):
@@ -74,6 +79,7 @@ def handle_start_jade(ss):
     ss.jade_agents_created = False
     ss.jade_agent_creation_status_message = None
     ss.jade_dispatch_status_message = None 
+    ss.routes_sent_to_mra_successfully = False
 
 def handle_stop_jade(ss):
     if not ss.get("jade_platform_running", False):
@@ -102,6 +108,9 @@ def handle_stop_jade(ss):
     ss.jade_dispatch_status_message = None
     ss.mra_config_subset_data = None
     ss.data_for_optimisation_script = None
+    ss.jade_simulated_routes_data = None
+    ss.jade_simulated_routes_message = None
+    ss.routes_sent_to_mra_successfully = False
 
 def handle_create_agents(ss):
     if not ss.get("jade_platform_running"):
@@ -123,6 +132,7 @@ def handle_create_agents(ss):
     # Reset previous status for this operation
     ss.jade_agent_creation_status_message = None
     ss.jade_agents_created = False
+    ss.routes_sent_to_mra_successfully = False
 
     # Create MRA - it starts "fresh" without initial full config
     mra_success, mra_msg = jade_controller.create_mra_agent(
@@ -178,6 +188,11 @@ def handle_create_agents(ss):
 
 
 def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_processing
+    ss.jade_simulated_routes_data = None
+    ss.jade_simulated_routes_message = None
+    ss.routes_sent_to_mra_successfully = False
+    ss.jade_dispatch_status_message = None
+
     if not ss.get("jade_platform_running"):
         ss.jade_dispatch_status_message = "Cannot send routes to MRA: JADE is not running"
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
@@ -195,7 +210,6 @@ def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_p
         return {'type': 'error', 'message': ss.jade_dispatch_status_message}
 
     optimisation_results = ss.optimisation_results
-
     # Send full optimisation results to MRA via Py4jGatewayAgent
     success, message = jade_controller.send_optimisation_results_to_mra(
         py4j_gateway,
@@ -205,6 +219,7 @@ def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_p
 
     if success:
         ss.jade_dispatch_status_message = message or "Optimised routes sent to MRA for dispatch"
+        ss.routes_sent_to_mra_successfully = True
         return {'type': 'info', 'message': ss.jade_dispatch_status_message}
     else:
         ss.jade_dispatch_status_message = message or "Failed to send optimised routes to MRA"
@@ -288,3 +303,41 @@ def handle_trigger_mra_optimisation_cycle(ss):
         msg = f"Error parsing optimisation data bundle from MRA: {str(e)}. Data: {json_data_bundle[:200]}"
         ss.mra_optimisation_trigger_message = msg
         return {'type': 'error', 'message': msg}
+
+def handle_get_simulated_routes_from_jade(ss):
+    ss.jade_simulated_routes_data = None
+    ss.jade_simulated_routes_message = None
+
+    gateway = ss.get("py4j_gateway_object")
+    if not gateway:
+        msg = "JADE Gateway not available. Cannot fetch simulated routes."
+        ss.jade_simulated_routes_message = msg
+        return {'type': 'error', 'message': msg}
+
+    if not ss.get("jade_platform_running"):
+        msg = "JADE platform is not running. Cannot fetch simulated routes."
+        ss.jade_simulated_routes_message = msg
+        return {'type': 'error', 'message': msg}
+
+    routes_data, error_msg = py4j_gateway.get_jade_simulated_routes_data(gateway)
+
+    if error_msg:
+        ss.jade_simulated_routes_message = error_msg
+        # routes_data would be None in this case as per py4j_gateway.get_jade_simulated_routes_data
+        return {'type': 'error', 'message': error_msg}
+    
+    # If no error, routes_data should be the parsed JSON (e.g., a list)
+    ss.jade_simulated_routes_data = routes_data
+    print(routes_data);
+    if routes_data is not None and isinstance(routes_data, list): # Check if it's a list as expected
+        msg = f"Successfully fetched {len(routes_data)} simulated routes from JADE."
+        ss.jade_simulated_routes_message = msg
+        return {'type': 'info', 'message': msg}
+    elif routes_data is None:
+        msg = "Fetched data from JADE, but it was null."
+        ss.jade_simulated_routes_message = msg
+        return {'type': 'warning', 'message': msg} # Or error
+    else: # Data is not None, not a list, but no error_msg (unexpected state)
+        msg = f"Fetched data from JADE, but it was not in the expected list format. Type: {type(routes_data)}"
+        ss.jade_simulated_routes_message = msg
+        return {'type': 'warning', 'message': msg}

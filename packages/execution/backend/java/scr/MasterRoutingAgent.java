@@ -297,8 +297,8 @@ public class MasterRoutingAgent extends Agent {
                     ACLMessage relayMsg = new ACLMessage(ACLMessage.INFORM);
                     relayMsg.addReceiver(new AID("py4jgw", AID.ISLOCALNAME));
                     relayMsg.setOntology("DeliveryRelay"); // New ontology for PGA
-                    relayMsg.setLanguage("STRING"); // Or JSON if more structure is needed
-                    relayMsg.setContent("MRA relayed: DA " + daName + " reported: " + content);
+                    relayMsg.setLanguage("JSON"); // Or JSON if more structure is needed
+                    relayMsg.setContent(content);
                     myAgent.send(relayMsg);
                     System.out.println("MRA: Relayed DA ("+ daName + ") confirmation to py4jgw.");
                 } else {

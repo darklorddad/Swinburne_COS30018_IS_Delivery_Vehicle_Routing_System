@@ -222,3 +222,6 @@ def create_da_agent(gateway, agent_name, agent_class, agent_config):
 
 def send_optimisation_results_to_mra(gateway, mra_name, results):
     return py4j_gateway.send_optimisation_results(gateway, mra_name, results)
+
+def get_simulated_routes_from_jade(gateway):
+    return py4j_gateway.get_jade_simulated_routes_data(gateway)
