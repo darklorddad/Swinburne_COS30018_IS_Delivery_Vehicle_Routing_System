@@ -185,7 +185,11 @@ def handle_cancel_edit(ss):
             ss.config_filename_snapshot = None # No snapshot for a cleared new config.
 
     ss.edit_mode = False
-    ss.action_selected = None
+    
+    if ss.get("simple_mode"):
+        ss.simple_config_action_selected = None
+    else:
+        ss.action_selected = None
 
     is_current_config_new = ss.last_uploaded_filename is None
     current_new_config_never_saved_via_save_edits = not ss.new_config_saved_to_memory_at_least_once
