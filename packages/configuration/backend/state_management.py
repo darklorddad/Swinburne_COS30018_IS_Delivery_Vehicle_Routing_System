@@ -238,10 +238,6 @@ def handle_show_header_toggle(ss):
 # Validates if preconditions for entering edit mode are met.
 # Specifically, checks if config_data exists.
 # If not, sets edit_mode to False and returns an appropriate status.
-# Toggles the simple mode.
-def handle_simple_toggle(ss):
-    ss.simple_mode = ss.get("simple_mode_toggle_widget", False)
-
 def validate_edit_mode_preconditions(ss):
     if ss.config_data is None:
         ss.edit_mode = False

@@ -146,11 +146,14 @@ def _render_main_layout(ss):
                 on_change = config_logic.handle_show_header_toggle,
                 args = (ss,),
             )
+            def simple_toggle_callback():
+                ss.simple_mode = not ss.simple_mode
+                
             streamlit.toggle(
                 "Simple Mode",
                 value=ss.simple_mode,
                 key="simple_mode_toggle_widget",
-                on_change=config_logic.handle_simple_toggle,
+                on_change=simple_toggle_callback,
                 help="Switch to a streamlined user interface with fewer tabs and guided steps."
             )
 

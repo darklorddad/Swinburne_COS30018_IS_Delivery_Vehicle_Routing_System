@@ -15,7 +15,6 @@ from .state_management import (
     handle_load_config_action,
     handle_show_header_toggle,
     validate_edit_mode_preconditions,
-    handle_simple_toggle
 )
 
 from .entity_management import (
@@ -55,7 +54,6 @@ __all__ = [
     "handle_load_config_action",
     "handle_show_header_toggle",
     "validate_edit_mode_preconditions",
-    "handle_simple_toggle",
     # Functions from entity_management
     "add_parcel",
     "remove_parcel",
