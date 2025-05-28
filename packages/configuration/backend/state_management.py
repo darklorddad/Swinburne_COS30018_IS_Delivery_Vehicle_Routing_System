@@ -36,7 +36,9 @@ def initialise_session_state(ss, clear_all=False): # Added clear_all
         "processed_file_id_for_buffer": None, # Tracks the file ID of the current buffer content.
         "simple_mode": False, # New state variable for simple UI
         "simple_num_parcels_to_generate": 5, # Default for simple generator
-        "simple_num_agents_to_generate": 2    # Default for simple generator
+        "simple_num_agents_to_generate": 2,    # Default for simple generator
+        "simple_show_generate_options": False, # To control visibility of generate inputs
+        "mode_switch_requested": False # New flag for handling mode switch
     }
     if clear_all:
         # Set all known config-related session state keys to their defaults
