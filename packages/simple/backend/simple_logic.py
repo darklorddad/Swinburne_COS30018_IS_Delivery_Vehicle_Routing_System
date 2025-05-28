@@ -4,7 +4,7 @@ import copy
 from packages.configuration.backend.state_management import DEFAULT_CONFIG_TEMPLATE, _stash_current_config_as_fallback
 from packages.configuration.backend.config_logic import clear_config_from_memory
 
-def generate_quick_config(ss, num_parcels, num_agents):
+def generate_quick_config(ss, num_parcels, num_agents, config_name="generated-config"):
     """
     Generates a new configuration with the specified number of parcels and delivery agents,
     and loads it into the session state.
@@ -39,7 +39,7 @@ def generate_quick_config(ss, num_parcels, num_agents):
     new_config["warehouse_coordinates_x_y"] = [0,0] # Keep warehouse at default
 
     ss.config_data = new_config
-    ss.config_filename = "generated-quick-config.json"
+    ss.config_filename = f"{config_name}.json" if config_name else "generated-config.json"
     ss.config_filename_snapshot = ss.config_filename
     ss.processed_file_id = None # It's a new, generated config, not from a file
     ss.last_uploaded_filename = None # Not from upload
@@ -52,4 +52,4 @@ def generate_quick_config(ss, num_parcels, num_agents):
     ss.uploaded_file_buffer = None
     ss.processed_file_id_for_buffer = None
 
-    return {'type': 'success', 'message': f"Successfully generated and loaded a new configuration with {num_parcels} parcels and {num_agents} agents."}
+    return {'type': 'success', 'message': f"Successfully generated and loaded configuration '{ss.config_filename}' with {num_parcels} parcels and {num_agents} agents."}
