@@ -10,7 +10,10 @@ from packages.execution.backend import execution_logic
 from packages.execution.backend import py4j_gateway
 
 # Initialises session state variables specific to the optimisation module.
-def initialise_session_state(ss):
+def initialise_session_state(ss, clear_all_flag_for_other_modules=False): # Added dummy flag
+    # If the init flag is not present (or if we were to implement a direct clear_all for this module),
+    # proceed to initialize/reset all optimisation-specific states.
+    # The dvrs.py will handle deleting this flag if a full reset is intended.
     if "optimisation_module_initialised_v2" not in ss:
         ss.optimisation_module_initialised_v2 = True
         
@@ -40,6 +43,11 @@ def initialise_session_state(ss):
         # UI view state
         ss.optimisation_action_selected = None
 
+        # For featured scripts
+        ss.featured_optimisation_scripts = [] # List of dicts {'name': str, 'path': str}
+        ss.selected_featured_script_path = None # Store the path of the chosen featured script
+        ss.featured_optimisation_scripts = discover_featured_scripts() # Discover on init
+
         # Clean up old state variables
         old_keys = [
             "optimisation_module_initialised", "selected_optimisation_technique_id",
@@ -50,6 +58,20 @@ def initialise_session_state(ss):
             if key in ss:
                 del ss[key]
 
+def discover_featured_scripts():
+    """Scans the 'featured_scripts' directory and returns a list of script names and paths."""
+    scripts = []
+    # Define the path to your featured scripts directory
+    scripts_dir = os.path.join(os.path.dirname(__file__), "featured_scripts")
+    if os.path.isdir(scripts_dir):
+        for filename in os.listdir(scripts_dir):
+            if filename.endswith(".py"):
+                scripts.append({"name": filename, "path": os.path.join(scripts_dir, filename)})
+    else:
+        # Optionally, log or handle the case where the directory doesn't exist
+        print(f"Warning: Featured scripts directory not found at {scripts_dir}")
+    return scripts
+
 # Handles the upload of an optimisation script.
 # Delegates to script_lifecycle.load_and_process_script and updates UI view state.
 def handle_optimisation_file_upload(ss):
@@ -57,15 +79,31 @@ def handle_optimisation_file_upload(ss):
 
     # script_lifecycle.load_and_process_script will update ss with content, schema, errors etc.
     # and will also handle clearing previous script data if uploaded_file is None.
-    success = script_lifecycle.load_and_process_script(ss, uploaded_file)
+    success = script_lifecycle.load_and_process_script_from_uploaded_file(ss, uploaded_file)
 
     if success:
         ss.optimisation_action_selected = None # Return to initial view on successful load
+        ss.selected_featured_script_path = None # Clear selected featured script
     else:
         # If loading failed, an error message is already set in ss by load_and_process_script.
         # The user remains in the "load_script" view to see the error.
         # If uploaded_file was None, load_and_process_script also sets an error message.
         pass
+
+# Handles loading a selected featured optimisation script.
+def handle_load_featured_script(ss):
+    script_path_to_load = ss.get("selected_featured_script_path_widget") # From selectbox
+    if script_path_to_load and script_path_to_load != "None":
+        ss.selected_featured_script_path = script_path_to_load
+        success = script_lifecycle.load_and_process_script_from_path(ss, ss.selected_featured_script_path)
+        if success:
+            ss.optimisation_action_selected = None # Return to initial view
+            # Clear the file uploader widget if a featured script is successfully loaded
+            if "optimisation_file_uploader_widget" in ss:
+                ss.optimisation_file_uploader_widget = None
+        # Error message is handled by load_and_process_script_from_path
+    else:
+        ss.selected_featured_script_path = None # User selected "None" or no selection
 
 # Executes the loaded optimisation script.
 # Delegates to script_lifecycle.run_script.
