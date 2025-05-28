@@ -17,7 +17,7 @@ DEFAULT_CONFIG_TEMPLATE = {
 
 # Initialises session state variables if they do not already exist.
 def initialise_session_state(ss, clear_all=False): # Added clear_all
-    all_config_defaults = { # Renamed to reflect it contains all managed keys
+    CONFIG_DATA_AND_UI_DEFAULTS = {
         "show_header": False,
         "config_data": None,
         "config_filename": "config.json",
@@ -34,20 +34,16 @@ def initialise_session_state(ss, clear_all=False): # Added clear_all
         "fallback_config_state": None,
         "config_filename_snapshot": None,
         "processed_file_id_for_buffer": None, # Tracks the file ID of the current buffer content.
-        "simple_mode": False, # New state variable for simple UI
         "simple_num_parcels_to_generate": 5, # Default for simple generator
         "simple_num_agents_to_generate": 2,    # Default for simple generator
-        "simple_show_generate_options": False, # To control visibility of generate inputs
-        "mode_switch_requested": False # New flag for handling mode switch
+        "simple_show_generate_options": False # To control visibility of generate inputs
     }
     if clear_all:
-        # Set all known config-related session state keys to their defaults
-        for key, value in all_config_defaults.items():
-            # Use deepcopy for mutable defaults if any (e.g., lists, dicts)
-            # For simple types and None, direct assignment is fine.
+        # Set all config-specific session state keys to their defaults
+        for key, value in CONFIG_DATA_AND_UI_DEFAULTS.items():
             ss[key] = copy.deepcopy(value) if isinstance(value, (list, dict)) else value
     else: # Original behavior: initialize only if key is not present
-        for key, value in all_config_defaults.items():
+        for key, value in CONFIG_DATA_AND_UI_DEFAULTS.items():
             if key not in ss:
                 ss[key] = copy.deepcopy(value) if isinstance(value, (list, dict)) else value
 
