@@ -42,6 +42,7 @@ def render_simple_mode_tab(ss):
                     streamlit.warning("Cannot create new configuration while JADE is running")
                 else:
                     config_logic.handle_new_config_action(ss)
+                    ss.simple_config_action_selected = "new_edit"  # Explicitly set navigation state
                     streamlit.rerun()
         with col_load:
             if streamlit.button("Load configuration", key="simple_load_btn", use_container_width=True):
@@ -54,7 +55,7 @@ def render_simple_mode_tab(ss):
 
     # Configuration Action Rendering
     simple_config_action = ss.get("simple_config_action_selected")
-    if simple_config_action == "edit" or simple_config_action == "new_edit":
+    if simple_config_action in ["edit", "new_edit"]:
         render_edit_view(ss)
     elif simple_config_action == "load":
         render_load_view(ss)

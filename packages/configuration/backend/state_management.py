@@ -70,9 +70,11 @@ def handle_new_config_action(ss):
     # Initializes a new configuration using the default template.
     ss.config_data = copy.deepcopy(DEFAULT_CONFIG_TEMPLATE) # Ensures template is not modified.
     ss.config_filename = "new-config.json"
-    # ss.action_selected = None # Standard mode state
-    if ss.get("simple_mode"):
-        ss.simple_config_action_selected = "new_edit" # For simple mode navigation
+    # Reset standard mode state
+    ss.action_selected = None
+    # Set simple mode navigation if applicable
+    if ss.get("simple_mode", False):
+        ss.simple_config_action_selected = "new_edit"
     ss.config_filename_snapshot = ss.config_filename
     ss.processed_file_id = None
     ss.last_uploaded_filename = None
