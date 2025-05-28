@@ -9,6 +9,29 @@ from packages.optimisation.frontend.optimisation_ui_utils import render_optimisa
 from packages.configuration.frontend.ui_utils import display_operation_result
 from packages.simple.backend import simple_logic
 
+# New view for generating configuration in simple mode
+def render_generate_config_view_simple(ss):
+    streamlit.subheader("Generate New Configuration")
+    num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
+    num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
+    
+    col1, col2 = streamlit.columns(2)
+    with col1:
+        if streamlit.button("Generate and Edit", key="simple_generate_and_edit_btn", use_container_width=True):
+            result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
+            display_operation_result(result)
+            if result.get('type') == 'success':
+                ss.edit_mode = True # Prepare for edit view
+                ss.simple_config_action_selected = "new_edit" # Transition to edit view (as generated is like a new one to edit)
+            streamlit.rerun()
+    with col2:
+        if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
+            ss.simple_config_action_selected = None # Go back to main simple view
+            streamlit.rerun()
+    streamlit.markdown("---")
+    if ss.config_data and ss.config_filename == "generated-quick-config.json": # Check if a generated config exists
+         streamlit.info(f"Previously generated: {ss.config_filename}. The 'Generate and Edit' button will overwrite this.")
+
 def render_simple_mode_tab(ss):
     # Configure Section
     with streamlit.expander("Setup Configuration", expanded=True):

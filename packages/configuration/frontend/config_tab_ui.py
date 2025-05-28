@@ -8,10 +8,11 @@ from .edit_view_ui import render_edit_view
 
 # Renders the entire Configuration tab.
 def render_config_tab(ss):
-    # Handle state cleanup if coming from Simple tab
-    if ss.get("simple_config_action_selected") in ('load', 'edit'):
-        reset_simple_config_action(ss)
-        streamlit.rerun()
+    # If user switches to standard Config tab while a simple_config_action was active, reset it.
+    if ss.get("simple_mode") is False and ss.get("simple_config_action_selected") is not None:
+        if ss.get("simple_config_action_selected") in ["new_edit", "load_config", "edit_current", "generate_config"]:
+            reset_simple_config_action(ss) # This sets it to None
+            streamlit.rerun() # Rerun to reflect that the simple_config_action is no longer active
 
     # Handle pending download if initiated
     if ss.get("initiate_download", False):
