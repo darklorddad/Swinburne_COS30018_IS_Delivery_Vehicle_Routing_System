@@ -89,10 +89,12 @@ public class DeliveryAgent extends Agent {
     }
 
     private class PerformDeliveryBehaviour extends SequentialBehaviour {
+        private String routeJsonString;
         public PerformDeliveryBehaviour(Agent a, String routeJson) {
             super(a);
+            this.routeJsonString = routeJson;
             try {
-                JSONObject route = new JSONObject(routeJson);
+                JSONObject route = new JSONObject(routeJsonString);
                 JSONArray stopIds = route.getJSONArray("route_stop_ids"); // e.g., ["Warehouse", "P001", "P002", "Warehouse"]
 
                 addSubBehaviour(new OneShotBehaviour(myAgent) {
@@ -126,7 +128,14 @@ public class DeliveryAgent extends Agent {
                         ACLMessage confirmationMsg = new ACLMessage(ACLMessage.INFORM);
                         confirmationMsg.addReceiver(new AID("MRA", AID.ISLOCALNAME)); // Send to MasterRoutingAgent
                         confirmationMsg.setOntology("DeliveryConfirmation");
-                        confirmationMsg.setContent("DA " + myAgent.getLocalName() + " completed route.");
+                        confirmationMsg.setLanguage("JSON");
+
+                        JSONObject routeConfirmationPayload = new JSONObject();
+                        routeConfirmationPayload.put("agent_id ", myAgent.getLocalName());
+                        JSONObject originalRoute = new JSONObject(routeJsonString);
+                        JSONArray originalStopIds = originalRoute.getJSONArray("route_stop_ids");
+                        routeConfirmationPayload.put("route_stop_ids", originalStopIds);
+                        confirmationMsg.setContent(routeConfirmationPayload.toString());
                         myAgent.send(confirmationMsg);
                         System.out.println("DA " + myAgent.getLocalName() + ": Sent delivery confirmation to MRA.");
                     }

@@ -7,10 +7,16 @@ import jade.wrapper.StaleProxyException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import py4j.GatewayServer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
+import org.json.JSONObject; // For parsing/validating
+import org.json.JSONArray;  // For constructing the response
 
 public class Py4jGatewayAgent extends Agent {
     private GatewayServer server;
     public static final int PY4J_PORT = 25333; // Default Py4J port
+    private List<String> completedRoutesLog = Collections.synchronizedList(new ArrayList<String>());
 
     protected void setup() {
         System.out.println("Py4jGatewayAgent " + getAID().getName() + " setup() method called.");
@@ -31,7 +37,16 @@ public class Py4jGatewayAgent extends Agent {
                 jade.lang.acl.MessageTemplate mt = jade.lang.acl.MessageTemplate.MatchOntology("DeliveryRelay");
                 ACLMessage msg = receive(mt); 
                 if (msg != null) {
+                    String relayedJsonContent = msg.getContent();
                     System.out.println("Py4jGatewayAgent: Received Relayed Delivery Status from " + msg.getSender().getName() + ". Content: " + msg.getContent());
+                    try {
+                        // Basic validation that it's a JSON object
+                        new JSONObject(relayedJsonContent); 
+                        completedRoutesLog.add(relayedJsonContent);
+                        System.out.println("Py4jGatewayAgent: Added completed route to log. Log size: " + completedRoutesLog.size());
+                    } catch (Exception e) {
+                        System.err.println("Py4jGatewayAgent: Error processing relayed JSON content: " + e.getMessage() + ". Content: " + relayedJsonContent);
+                    }
                 } else {
                     block(); 
                 }
@@ -45,6 +60,28 @@ public class Py4jGatewayAgent extends Agent {
             System.out.println("Py4J GatewayServer shut down.");
         }
         System.out.println("Py4jGatewayAgent " + getAID().getName() + " terminating.");
+    }
+
+    public String getAndClearJadeSimulatedRoutes() {
+        System.out.println("Py4jGatewayAgent: Python requested JADE simulated routes log.");
+        JSONArray routesArray = new JSONArray();
+        synchronized (completedRoutesLog) {
+            if (completedRoutesLog.isEmpty()) {
+                System.out.println("Py4jGatewayAgent: Completed routes log is empty.");
+                return "[]"; // Return empty JSON array string
+            }
+            for (String routeJsonString : completedRoutesLog) {
+                try {
+                    routesArray.put(new JSONObject(routeJsonString)); // Add each route object to the array
+                } catch (Exception e) {
+                     System.err.println("Py4jGatewayAgent: Could not parse stored route string to JSON: " + routeJsonString + " Error: " + e.getMessage());
+                     // Optionally add an error object to the array or skip
+                }
+            }
+            completedRoutesLog.clear();
+            System.out.println("Py4jGatewayAgent: Returned " + routesArray.length() + " simulated routes and cleared log.");
+        }
+        return routesArray.toString(); // Return as a JSON array string
     }
 
     public String createAgentByController(String agentName, String agentClass, String[] agentArgs) {
