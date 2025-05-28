@@ -123,11 +123,11 @@ def embed_video():
     """, unsafe_allow_html=True)
 
 # Renders the tab structure and content for the standard (non-simple) UI mode.
-def _render_standard_mode_tabs(ss):
+def _standard_modestandard_mode_tabs(ss):
     """Renders the tab structure and content for the standard (non-simple) UI mode."""
     # JADE tab accessibility will be handled within its own rendering function.
     # Tabs are now created unconditionally.
-        tabs_list = [
+    tabs_list = [
             "Configuration",
             "Optimisation", 
             "Execution", 
