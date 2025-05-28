@@ -67,13 +67,15 @@ def handle_new_config_action(ss):
     # Stashes the current configuration, if any, as a fallback.
     _stash_current_config_as_fallback(ss)
 
-    # Initialises a new configuration using the default template.
+    # Initializes a new configuration using the default template.
     ss.config_data = copy.deepcopy(DEFAULT_CONFIG_TEMPLATE) # Ensures template is not modified.
     ss.config_filename = "new-config.json"
+    # ss.action_selected = None # Standard mode state
+    if ss.get("simple_mode"):
+        ss.simple_config_action_selected = "new_edit" # For simple mode navigation
     ss.config_filename_snapshot = ss.config_filename
     ss.processed_file_id = None
     ss.last_uploaded_filename = None
-    ss.action_selected = None # Resets action, view determined by subsequent logic.
     ss.edit_mode = True
     ss.config_data_snapshot = copy.deepcopy(ss.config_data)
     ss.new_config_saved_to_memory_at_least_once = False
