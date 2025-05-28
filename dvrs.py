@@ -6,6 +6,7 @@ from packages.optimisation.frontend.optimisation_tab_ui import render_optimisati
 from packages.execution.backend import execution_logic 
 from packages.execution.frontend.execution_tab_ui import render_jade_operations_tab 
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab # New import
+from packages.simple.frontend.simple_mode_tab_ui import render_simple_mode_tab # New import
 
 
 # Applies custom CSS to the Streamlit app.
@@ -145,6 +146,13 @@ def _render_main_layout(ss):
                 on_change = config_logic.handle_show_header_toggle,
                 args = (ss,),
             )
+            streamlit.toggle(
+                "Simple Mode",
+                value=ss.simple_mode,
+                key="simple_mode_toggle_widget",
+                on_change=config_logic.handle_simple_toggle,
+                help="Switch to a streamlined user interface with fewer tabs and guided steps."
+            )
 
 def main():
     streamlit.set_page_config(layout = "wide", page_title = "Delivery Vehicle Routing System")
@@ -159,7 +167,16 @@ def main():
     execution_logic.initialise_session_state(ss) # Initialise execution state
 
     _apply_custom_styling(ss)
-    _render_main_layout(ss)
+    if ss.get("simple_mode", False):
+        # Simple UI Mode: Two tabs - "Simplified Workflow" and "Settings"
+        tab_simple_workflow, tab_settings_simple = streamlit.tabs(["Simplified Workflow", "Settings"])
+        with tab_simple_workflow:
+            render_simple_mode_tab(ss)
+        with tab_settings_simple:
+            _render_main_layout(ss) # Just show settings in simple mode
+    else:
+        # Standard UI Mode
+        _render_main_layout(ss)
 
 if __name__ == "__main__":
     main()

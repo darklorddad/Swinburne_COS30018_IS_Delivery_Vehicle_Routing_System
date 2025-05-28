@@ -33,7 +33,10 @@ def initialise_session_state(ss):
         "new_config_saved_to_memory_at_least_once": False,
         "fallback_config_state": None,
         "config_filename_snapshot": None,
-        "processed_file_id_for_buffer": None # Tracks the file ID of the current buffer content.
+        "processed_file_id_for_buffer": None, # Tracks the file ID of the current buffer content.
+        "simple_mode": False, # New state variable for simple UI
+        "simple_num_parcels_to_generate": 5, # Default for simple generator
+        "simple_num_agents_to_generate": 2    # Default for simple generator
     }
     for key, value in defaults.items():
         if key not in ss:
@@ -235,6 +238,10 @@ def handle_show_header_toggle(ss):
 # Validates if preconditions for entering edit mode are met.
 # Specifically, checks if config_data exists.
 # If not, sets edit_mode to False and returns an appropriate status.
+# Toggles the simple mode.
+def handle_simple_toggle(ss):
+    ss.simple_mode = ss.get("simple_mode_toggle_widget", False)
+
 def validate_edit_mode_preconditions(ss):
     if ss.config_data is None:
         ss.edit_mode = False
