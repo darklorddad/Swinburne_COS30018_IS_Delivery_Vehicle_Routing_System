@@ -22,17 +22,16 @@ def _render_settings_content(ss):
             args = (ss,),
         )
         # Define the callback for the simple mode toggle
-        def simple_mode_on_change_callback():
-            # This callback ONLY flips the mode and requests a rerun.
-            # The state clearing will happen at the top of main() on the next script run.
+        def simple_mode_toggle_callback():
+            # This callback now ONLY flips the mode.
+            # State clearing and UI update will be handled by the main script flow detecting this change.
             ss.simple_mode = not ss.get("simple_mode", False)
-            streamlit.rerun()
 
         streamlit.toggle(
             "Simple Mode",
             value=ss.get("simple_mode", False), # Display current mode
             key="simple_mode_toggle_widget",
-            on_change=simple_mode_on_change_callback,
+            on_change=simple_mode_toggle_callback,
             help="Switch to a streamlined user interface with fewer tabs and guided steps."
         )
 
@@ -168,35 +167,41 @@ def main():
     # Initialise session state variables using the function from config_logic
     ss = streamlit.session_state
 
-    # Store the mode *before* potential reset, to detect if it changed.
-    previous_simple_mode = ss.get("simple_mode_snapshot_for_reset", None)
+    # --- Detect and Handle Mode Change ---
+    # Get the mode from the previous completed script run.
+    # On the very first run, previous_simple_mode_value will be different from current default (False)
+    # if 'simple_mode' was never set, ensuring initialization logic runs.
+    previous_simple_mode_value = ss.get("_internal_previous_simple_mode", "UNSET")
 
     # Ensure simple_mode is initialized on the very first run
     if "simple_mode" not in ss:
         ss.simple_mode = False
-    
-    current_simple_mode = ss.simple_mode
+    current_simple_mode_value = ss.simple_mode
 
-    # If the mode has changed since the last run (or if it's the first run with snapshot unset)
-    if previous_simple_mode is None or previous_simple_mode != current_simple_mode:
-        # This indicates a mode switch just happened (or it's initial load after a switch)
+    needs_state_reset_and_rerun = False
+    if previous_simple_mode_value != current_simple_mode_value:
+        needs_state_reset_and_rerun = True
         # Perform a full reset of all relevant application states
-        config_logic.initialise_session_state(ss, clear_all=True) # Resets config state
+        config_logic.initialise_session_state(ss, clear_all=True)
         
         if "optimisation_module_initialised_v2" in ss:
-            del ss.optimisation_module_initialised_v2 # Signal opt module to re-init
+            del ss.optimisation_module_initialised_v2
         
         if "execution_module_initialised_v1" in ss:
-            del ss.execution_module_initialised_v1 # Signal exec module to re-init
+            del ss.execution_module_initialised_v1
 
-    # Always call these. They will re-initialize if their flags were deleted above,
-    # or do nothing if already initialized and flags are present.
-    config_logic.initialise_session_state(ss) # Initial call without clear_all here
+    # --- Standard Module Initializations ---
+    # These are always called. They will re-initialize IF their init flags were
+    # deleted due to a mode change detected above. Otherwise, they are no-ops.
+    config_logic.initialise_session_state(ss) 
     optimisation_logic.initialise_session_state(ss)
     execution_logic.initialise_session_state(ss)
 
-    # Update the snapshot *after* all state resets and initializations for the current mode
-    ss.simple_mode_snapshot_for_reset = ss.simple_mode
+    # Store the current mode to detect changes in the *next* script run.
+    ss._internal_previous_simple_mode = current_simple_mode_value
+
+    if needs_state_reset_and_rerun:
+        streamlit.rerun() # Rerun *after* state is reset and snapshot updated for next cycle.
 
     _apply_custom_styling(ss)
 
