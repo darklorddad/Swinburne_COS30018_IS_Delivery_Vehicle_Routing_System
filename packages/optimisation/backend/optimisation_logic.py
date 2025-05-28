@@ -3,6 +3,7 @@
 # orchestrates calls to script_lifecycle.py for script operations
 # and parameter_logic.py for parameter editing state.
 
+import os
 from . import script_utils
 from . import parameter_logic
 from . import script_lifecycle
