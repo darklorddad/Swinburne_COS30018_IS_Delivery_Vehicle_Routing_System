@@ -7,6 +7,11 @@ from .edit_view_ui import render_edit_view
 
 # Renders the entire Configuration tab.
 def render_config_tab(ss):
+    # Handle state cleanup if coming from Simple tab
+    if ss.get("simple_config_action_selected") in ('load', 'edit'):
+        reset_simple_config_action(ss)
+        streamlit.rerun()
+
     # Handle pending download if initiated
     if ss.get("initiate_download", False):
         if ss.pending_download_data and ss.pending_download_filename:

@@ -35,7 +35,8 @@ def initialise_session_state(ss, clear_all=False): # Added clear_all
         "config_filename_snapshot": None,
         "processed_file_id_for_buffer": None, # Tracks the file ID of the current buffer content.
         "simple_num_parcels_to_generate": 5, # Default for simple generator
-        "simple_num_agents_to_generate": 2,    # Default for simple generator
+        "simple_num_agents_to_generate": 2, # Default for simple generator
+        "simple_config_action_selected": None, # Controls the view within the Simple tab
         "simple_show_generate_options": False # To control visibility of generate inputs
     }
     if clear_all:
@@ -134,6 +135,14 @@ def clear_config_from_memory(ss):
     ss.fallback_config_state = None
     ss.uploaded_file_buffer = None
     ss.processed_file_id_for_buffer = None
+
+# Resets the simple config action.
+def reset_simple_config_action(ss):
+    ss.simple_config_action_selected = None
+
+# Sets the application to edit action.
+def handle_edit_config_action(ss):
+    ss.simple_config_action_selected = "edit"
     ss.edit_mode = False # Ensures not in edit mode if config is cleared.
     ss.action_selected = None # Resets action.
     return {'type': 'info', 'message': "Configuration cleared from memory"}

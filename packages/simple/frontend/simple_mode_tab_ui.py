@@ -17,6 +17,7 @@ def render_simple_mode_tab(ss):
                     streamlit.warning("Cannot create new configuration while JADE is running")
                 else:
                     config_logic.handle_new_config_action(ss)
+                    config_logic.handle_edit_config_action(ss)
                     streamlit.rerun()
         with col_load:
             if streamlit.button("Load configuration", key="simple_load_btn", use_container_width=True):
@@ -24,16 +25,37 @@ def render_simple_mode_tab(ss):
                     streamlit.warning("Cannot load configuration while JADE is running")
                 else:
                     config_logic.handle_load_config_action(ss)
+                    ss.simple_config_action_selected = "load"
                     streamlit.rerun()
 
-        # Quick Generate Section
-        streamlit.markdown("---")
-        num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_num_parcels")
-        num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_num_agents")
-        if streamlit.button("Generate configuration", key="simple_generate_btn", use_container_width=True):
-            result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
-            display_operation_result(result)
-            streamlit.rerun()
+    # Configuration Action Rendering
+    simple_config_action = ss.get("simple_config_action_selected")
+    if simple_config_action == "edit":
+        render_edit_view(ss)
+    elif simple_config_action == "load":
+        render_load_view(ss)
+    else:
+        with streamlit.expander("Manage current configuration", expanded=True):
+            streamlit.markdown("---")
+            if ss.config_data:
+                streamlit.success(f"{ss.config_filename}")
+                col_load, col_edit, col_clear = streamlit.columns(3)
+                with col_edit:
+                    if streamlit.button("Edit configuration", key="simple_config_edit_btn", use_container_width=True):
+                        ss.simple_config_action_selected = "edit"
+                        ss.edit_mode = True
+                        streamlit.rerun()
+                with col_load:
+                    if streamlit.button("Load configuration", key="simple_config_load_btn", use_container_width=True):
+                        ss.simple_config_action_selected = "load"
+                        streamlit.rerun()
+                with col_clear:
+                    if streamlit.button("Clear configuration", key="simple_config_clear_btn", use_container_width=True):
+                        config_logic.clear_config_from_memory(ss)
+                        config_logic.reset_simple_config_action(ss)
+                        streamlit.rerun()
+            else:
+                streamlit.info("No configuration currently loaded. Create or Load one above.")
 
     # Optimisation Section
     with streamlit.expander("Select Optimisation Method", expanded=True):
