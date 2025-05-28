@@ -134,7 +134,7 @@ def _render_standard_mode_tabs(ss):
         "Visualisation",
         "Settings"
     ]
-    tab_config tab_exec tab_exec tab_exec tab_execution, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
+    tab_config, tab_optimisation, tab_execution, tab_visualisation, tab_settings = streamlit.tabs(tabs_list)
 
     with tab_config:
             if ss.get("jade_platform_running", False):
