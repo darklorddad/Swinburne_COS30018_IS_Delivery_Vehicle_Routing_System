@@ -86,39 +86,41 @@ def render_simple_mode_tab(ss):
             with streamlit.expander("Manage current configuration", expanded=True):
                 streamlit.info("No configuration currently loaded. Create or Load one above.")
 
-    # Optimisation Section
-    with streamlit.expander("Select Optimisation Method", expanded=True):
-        if ss.get("jade_platform_running"):
-            streamlit.warning("Optimisation script cannot be changed while JADE is running")
-        else:
-            if ss.optimisation_script_loaded_successfully:
-                streamlit.success(f"Loaded Script: {ss.optimisation_script_filename}")
-            else:
-                streamlit.info("No optimisation script loaded")
-            if streamlit.button("Load script", key="simple_load_script_btn", use_container_width=True):
-                optimisation_logic.handle_initiate_load_script_action(ss)
-                streamlit.rerun()
+        # Optimisation Section (Only shown in the main simple view, not edit/load)
+        if not simple_config_action:
+            with streamlit.expander("Select Optimisation Method", expanded=True):
+                if ss.get("jade_platform_running"):
+                   isation scriptisation scriptisation scriptisation script cannot be changed while JADE is running")
+                else:
+                    if ss.optimisation_script_loaded_successfully:
+                        streamlit.success(f"Loaded Script: {ss.optimisation_script_filename}")
+                    else:
+                        streamlit.info("No optimisation script loaded")
+                    if streamlit.button("Load script", key="simple_load_script_btn", use_container_width=True):
+                        optimisation_logic.handle_initiate_load_script_action(ss)
+                        streamlit.rerun()
 
-    # Execution Section
-    with streamlit.expander("Run Simulation and View Results", expanded=True):
-        if not ss.get("jade_platform_running"):
-            if streamlit.button("Start JADE Platform", key="simple_start_jade_btn", use_container_width=True, 
-                              disabled=(not ss.config_data or not ss.optimisation_script_loaded_successfully)):
-                execution_logic.handle_start_jade(ss)
-                streamlit.rerun()
-        else:
-            streamlit.success("JADE Platform is Running")
-            if streamlit.button("Run Full Optimisation", key="simple_run_btn", use_container_width=True):
-                execution_logic.handle_trigger_mra_optimisation_cycle(ss)
-                optimisation_logic.run_optimisation_script(ss)
-                execution_logic.handle_send_optimised_routes_to_mra(ss)
-                streamlit.rerun()
+        # Execution Section (Only shown in the main simple view, not edit/load)
+        if not simple_config_action:
+            with streamlit.expander("Run Simulation and View Results", expanded=True):
+                if not ss.get("jade_platform_running"):
+                    if streamlit.button("Start JADE Platform", key="simple_start_jade_btn", use_container_width=True,
+                                      disabled=(not ss.config_data or not ss.optimisation_script_loaded_successfully)):
+                        execution_logic.handle_start_jade(ss)
+                        streamlit.rerun()
+                else:
+                    streamlit.success("JADE Platform is Running")
+                    if streamlit.button("Run Full Optimisation", key="simple_run_btn", use_container_width=True):
+                        execution_logic.handle_trigger_mra_optimisation_cycle(ss)
+                        optimisation_logic.run_optimisation_script(ss)
+                        execution_logic.handle_send_optimised_routes_to_mra(ss)
+                        streamlit.rerun()
 
-        if ss.get("optimisation_run_complete"):
-            render_optimisation_results_display(ss.optimisation_results)
-            render_visualisation_tab(ss)
+                if ss.get("optimisation_run_complete"):
+                    render_optimisation_results_display(ss.optimisation_results)
+                    render_visualisation_tab(ss)
 
-        if ss.get("jade_platform_running"):
-            if streamlit.button("Stop JADE Platform", key="simple_stop_jade_btn", use_container_width=True):
-                execution_logic.handle_stop_jade(ss)
-                streamlit.rerun()
+                if ss.get("jade_platform_running"):
+                    if streamlit.button("Stop JADE Platform", key="simple_stop_jade_btn", use_container_width=True):
+                        execution_logic.handle_stop_jade(ss)
+                        streamlit.rerun()
