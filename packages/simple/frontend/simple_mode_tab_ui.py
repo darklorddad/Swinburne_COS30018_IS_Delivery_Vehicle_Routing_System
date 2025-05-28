@@ -74,22 +74,30 @@ def render_simple_mode_tab(ss):
             with streamlit.expander("Manage Current Configuration", expanded=True):
                 streamlit.markdown("---")
                 streamlit.success(f"Current configuration: {ss.config_filename}")
-                col_manage_edit, col_manage_load, col_manage_clear = streamlit.columns(3)
-                with col_manage_edit:
-                    if streamlit.button("Edit", key="simple_config_edit_current_btn", use_container_width=True):
-                        ss.simple_config_action_selected = "edit"
-                        config_logic.enter_edit_mode(ss)
-                        streamlit.rerun()
-                with col_manage_load:
-                    if streamlit.button("Load Different", key="simple_config_load_another_btn", use_container_width=True):
-                        ss.simple_config_action_selected = "load"
-                        config_logic.handle_load_config_action(ss)
-                        streamlit.rerun()
-                with col_manage_clear:
-                    if streamlit.button("Clear", key="simple_config_clear_current_btn", use_container_width=True):
-                        config_logic.clear_config_from_memory(ss)
-                        config_logic.reset_simple_config_action(ss)
-                        streamlit.rerun()
+                
+                # Show config summary table
+                if "warehouse_coordinates_x_y" in ss.config_data:
+                    wh_coords = ss.config_data["warehouse_coordinates_x_y"]
+                    streamlit.write(f"Warehouse coordinates: X={wh_coords[0]}, Y={wh_coords[1]}")
+                
+                if "parcels" in ss.config_data and ss.config_data["parcels"]:
+                    streamlit.write(f"Parcels: {len(ss.config_data['parcels'])}")
+                    streamlit.dataframe(ss.config_data["parcels"], use_container_width=True)
+                
+                if "delivery_agents" in ss.config_data and ss.config_data["delivery_agents"]:
+                    streamlit.write(f"Delivery Agents: {len(ss.config_data['delivery_agents'])}")
+                    streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)
+                
+                # Buttons stacked vertically
+                if streamlit.button("Edit Configuration", key="simple_config_edit_current_btn", use_container_width=True):
+                    ss.simple_config_action_selected = "edit"
+                    config_logic.enter_edit_mode(ss)
+                    streamlit.rerun()
+                
+                if streamlit.button("Clear Configuration", key="simple_config_clear_current_btn", use_container_width=True):
+                    config_logic.clear_config_from_memory(ss)
+                    config_logic.reset_simple_config_action(ss)
+                    streamlit.rerun()
 
         # Optimisation Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
