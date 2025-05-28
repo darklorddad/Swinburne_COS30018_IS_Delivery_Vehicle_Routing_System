@@ -29,9 +29,6 @@ def render_generate_config_view_simple(ss):
                     ss.simple_config_action_selected = None # Return to main view
                 streamlit.rerun()
         
-        if ss.config_data and ss.config_filename == "generated-quick-config.json": # Check if a generated config exists
-            streamlit.markdown("---")
-            streamlit.info(f"Previously generated: {ss.config_filename}. The 'Generate and Edit' button will overwrite this.")
 
 def render_simple_mode_tab(ss):
     # Configuration Action Rendering
@@ -45,8 +42,8 @@ def render_simple_mode_tab(ss):
         render_generate_config_view_simple(ss)
     else:
         # This is the main view of the simple tab when not editing or loading a config
-        # Configure Section
-        with streamlit.expander("Setup Configuration", expanded=True):
+        # Configuration Management Section
+        with streamlit.expander("Configuration Management", expanded=True):
             if streamlit.button("New configuration", key="simple_create_btn", use_container_width=True):
                 if ss.get("jade_platform_running"):
                     streamlit.warning("Cannot create new configuration while JADE is running")
@@ -73,20 +70,15 @@ def render_simple_mode_tab(ss):
         if ss.config_data:
             with streamlit.expander("Manage Current Configuration", expanded=True):
                 streamlit.markdown("---")
-                streamlit.success(f"Current configuration: {ss.config_filename}")
                 
-                # Show config summary table
-                if "warehouse_coordinates_x_y" in ss.config_data:
-                    wh_coords = ss.config_data["warehouse_coordinates_x_y"]
-                    streamlit.write(f"Warehouse coordinates: X={wh_coords[0]}, Y={wh_coords[1]}")
-                
+                # Show config data tables
                 if "parcels" in ss.config_data and ss.config_data["parcels"]:
-                    streamlit.write(f"Parcels: {len(ss.config_data['parcels'])}")
                     streamlit.dataframe(ss.config_data["parcels"], use_container_width=True)
                 
                 if "delivery_agents" in ss.config_data and ss.config_data["delivery_agents"]:
-                    streamlit.write(f"Delivery Agents: {len(ss.config_data['delivery_agents'])}")
                     streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)
+                
+                streamlit.success(f"{ss.config_filename}")
                 
                 # Buttons stacked vertically
                 if streamlit.button("Edit Configuration", key="simple_config_edit_current_btn", use_container_width=True):
@@ -101,17 +93,27 @@ def render_simple_mode_tab(ss):
 
         # Optimisation Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
-            with streamlit.expander("Select Optimisation Method", expanded=True):
-                if ss.get("jade_platform_running"):
+            with streamlit.expander("Manage Optimisation Script", expanded=True):
+                if not ss.config_data:
+                    streamlit.warning("Please create or load a configuration first")
+                elif ss.get("jade_platform_running"):
                     streamlit.warning("Optimisation script cannot be changed while JADE is running")
                 else:
                     if ss.optimisation_script_loaded_successfully:
-                        streamlit.success(f"Loaded Script: {ss.optimisation_script_filename}")
-                    else:
-                        streamlit.info("No optimisation script loaded")
+                        streamlit.success(f"Loaded: {ss.optimisation_script_filename}")
+                    
+                    # Add script selection dropdown
+                    script_options = ["Select script"]  # Will be populated from pnp/featured
+                    selected_script = streamlit.selectbox(
+                        "Select script",
+                        options=script_options,
+                        key="script_select_box"
+                    )
+                    
                     if streamlit.button("Load script", key="simple_load_script_btn", use_container_width=True):
-                        optimisation_logic.handle_initiate_load_script_action(ss)
-                        streamlit.rerun()
+                        if selected_script != "Select script":
+                            optimisation_logic.handle_initiate_load_script_action(ss)
+                            streamlit.rerun()
 
         # Execution Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
