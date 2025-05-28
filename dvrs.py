@@ -6,7 +6,7 @@ from packages.optimisation.frontend.optimisation_tab_ui import render_optimisati
 from packages.execution.backend import execution_logic 
 from packages.execution.frontend.execution_tab_ui import render_jade_operations_tab 
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab # New import
-from packages.simple.frontend.simple_mode_tab_ui import render_simple_mode_tab # New import
+from packages.simple.frontend.simple_mode_tab_ui import render_simple_mode_tab
 
 
 # Applies custom CSS to the Streamlit app.
