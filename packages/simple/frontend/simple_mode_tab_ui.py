@@ -1,5 +1,7 @@
 import streamlit
 from packages.configuration.backend import config_logic
+from packages.configuration.frontend.edit_view_ui import render_edit_view
+from packages.configuration.frontend.load_view_ui import render_load_view
 from packages.optimisation.backend import optimisation_logic
 from packages.execution.backend import execution_logic
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab
