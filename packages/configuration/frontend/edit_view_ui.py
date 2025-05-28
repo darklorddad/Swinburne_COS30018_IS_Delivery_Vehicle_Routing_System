@@ -7,15 +7,16 @@ from .ui_utils import display_operation_result, handle_ui_action_with_conditiona
 def render_edit_view(ss):
     validation_result = config_logic.validate_edit_mode_preconditions(ss)
     
-    # Quick Generate Section
-    with streamlit.expander("Generate Configuration", expanded=True):
-        streamlit.markdown("---")
-        num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_num_parcels")
-        num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_num_agents")
-        if streamlit.button("Generate configuration", key="simple_generate_btn", use_container_width=True):
-            result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
-            display_operation_result(result)
-            streamlit.rerun()
+    # Quick Generate Section - Only show in simple mode when editing
+    if ss.get("simple_mode"):
+        with streamlit.expander("Generate Configuration", expanded=True):
+            streamlit.markdown("---")
+            num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_num_parcels_in_edit_view")
+            num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_num_agents_in_edit_view")
+            if streamlit.button("Generate and replace current configuration", key="simple_generate_in_edit_view_btn", use_container_width=True):
+                result = simple_logic.generate_quick_config(ss, num_parcels, num_agents)
+                display_operation_result(result)
+                streamlit.rerun() # Rerun to reflect the new generated config in the edit view
 
     if not validation_result['valid']:
         if validation_result.get('message') and validation_result.get('type') == 'warning':
