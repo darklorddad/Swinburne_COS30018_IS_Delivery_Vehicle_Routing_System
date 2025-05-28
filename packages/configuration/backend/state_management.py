@@ -102,7 +102,10 @@ def confirm_load_configuration(ss):
             ss.new_config_saved_to_memory_at_least_once = False # Reset for the newly loaded config.
             
             ss.edit_mode = False
-            ss.action_selected = None
+            if ss.get("simple_mode"):
+                ss.simple_config_action_selected = None
+            else:
+                ss.action_selected = None
             ss.fallback_config_state = None # Clears fallback as load was successful.
             ss.uploaded_file_buffer = None # Clears buffer after successful load.
             # Creates a snapshot of the newly loaded configuration.
@@ -120,7 +123,10 @@ def confirm_load_configuration(ss):
         if ss.config_data and ss.config_filename == ss.uploaded_file_buffer.name and ss.processed_file_id == ss.uploaded_file_buffer.file_id:
             # If already loaded and matches current config, inform user and clear buffer.
             ss.edit_mode = False
-            ss.action_selected = None
+            if ss.get("simple_mode"):
+                ss.simple_config_action_selected = None
+            else:
+                ss.action_selected = None
             ss.uploaded_file_buffer = None
             return {'type': 'info', 'message': f"'{ss.config_filename}' is already loaded. Returning to menu"}
         else:
@@ -245,7 +251,10 @@ def handle_file_uploader_change(ss):
 
 # Handles the cancel action from the load configuration view.
 def handle_cancel_load_action(ss):
-    ss.action_selected = None
+    if ss.get("simple_mode"):
+        ss.simple_config_action_selected = None
+    else:
+        ss.action_selected = None
     ss.uploaded_file_buffer = None
     ss.processed_file_id_for_buffer = None
 
