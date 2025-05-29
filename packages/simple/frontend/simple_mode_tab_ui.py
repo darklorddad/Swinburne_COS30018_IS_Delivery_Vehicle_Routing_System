@@ -217,7 +217,7 @@ def render_simple_mode_tab(ss):
                             streamlit.rerun()
 
         # Execution Section (Only shown in the main simple view, not edit/load)
-        if not simple_config_action:
+        if not simple_config_action and ss.config_data:
             with streamlit.expander("Run Simulation and View Results", expanded=True):
                 if not ss.get("jade_platform_running"):
                     if streamlit.button("Start JADE Platform", key="simple_start_jade_btn", use_container_width=True,
@@ -226,7 +226,7 @@ def render_simple_mode_tab(ss):
                         streamlit.rerun()
                 else:
                     streamlit.success("JADE Platform is Running")
-                    if streamlit.button("Run Full Optimisation", key="simple_run_btn", use_container_width=True):
+                    if streamlit.button("Run Full Optimisation", key="simple_run_ use_container use_container_width=True):
                         execution_logic.handle_trigger_mra_optimisation_cycle(ss)
                         optimisation_logic.run_optimisation_script(ss)
                         execution_logic.handle_send_optimised_routes_to_mra(ss)
