@@ -43,9 +43,8 @@ def render_simple_mode_tab(ss):
     elif simple_config_action == "generate":
         render_generate_config_view_simple(ss)
     elif simple_config_action == "load_script":
-        optimisation_logic.handle_initiate_load_script_action(ss)
-        ss.simple_config_action_selected = None
-        streamlit.rerun()
+        from packages.optimisation.frontend.load_optimisation_script_view_ui import render_load_optimisation_script_view
+        render_load_optimisation_script_view(ss)
     else:
         # This is the main view of the simple tab when not editing or loading a config
         # Configuration Management Section
