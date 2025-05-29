@@ -237,9 +237,10 @@ def render_simple_mode_tab(ss):
                     streamlit.success("JADE Platform is Running")
 
                 # Display messages from the workflow
-                if ss.get("simple_workflow_messages"):
-                    for msg_info in ss.simple_workflow_messages:
-                        display_operation_result(msg_info)
+                if ss.get("simple_workflow_final_status"):
+                    display_operation_result(ss.simple_workflow_final_status)
+                    # Optionally clear the final status after display if it shouldn't persist across reruns without a new workflow trigger
+                    # ss.simple_workflow_final_status = None
 
                 if ss.get("optimisation_run_complete") and ss.get("optimisation_results"):
                     render_optimisation_results_display(ss.optimisation_results)
