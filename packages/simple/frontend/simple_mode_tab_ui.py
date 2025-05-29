@@ -234,25 +234,19 @@ def render_simple_mode_tab(ss):
                         simple_logic.handle_simple_mode_start_workflow(ss)
                         streamlit.rerun()
                 else:
-                    # Only show minimal status - the final status message covers the rest
-                    if ss.get("simple_workflow_final_status"):
-                        display_operation_result(ss.simple_workflow_final_status)
-                    else:
-                        streamlit.success("Processing...")
+                    streamlit.success("JADE Platform is Running")
 
-                # Only show results if we have them
+                # Display messages from the workflow
+                if ss.get("simple_workflow_final_status"):
+                    display_operation_result(ss.simple_workflow_final_status)
+
                 if ss.get("optimisation_run_complete") and ss.get("optimisation_results"):
-                    with streamlit.expander("Optimisation Results", expanded=True):
-                        render_optimisation_results_display(ss.optimisation_results)
+                    render_optimisation_results_display(ss.optimisation_results)
                 
-                # Visualisation is always shown but in its own expander
-                with streamlit.expander("Route Visualisation", expanded=True):
-                    if ss.get("jade_simulated_routes_data") is not None:
-                        render_visualisation_tab(ss)
-                    else:
-                        streamlit.info("No route data available")
+                if ss.get("jade_simulated_routes_data") is not None:
+                    render_visualisation_tab(ss)
 
                 if ss.get("jade_platform_running"):
-                    if streamlit.button("Stop Simulation", key="simple_stop_jade_btn", use_container_width=True):
+                    if streamlit.button("Stop", key="simple_stop_jade_btn", use_container_width=True):
                         execution_logic.handle_stop_jade(ss)
                         streamlit.rerun()
