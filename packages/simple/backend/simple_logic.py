@@ -103,45 +103,52 @@ def handle_simple_mode_start_workflow(ss):
     # --- Step 2: Create Agents ---
     if not ss.get("jade_agents_created", False):
         result_agents = execution_logic.handle_create_agents(ss)
-        ss.simple_workflow_messages.append(result_agents)
+        _log_step("Step 2: Create Agents", result_agents)
         if result_agents.get('type') == 'error':
+            ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow failed at Agent Creation: {result_agents.get('message')}"}
             return
     else:
-        ss.simple_workflow_messages.append({'type': 'info', 'message': "Agents were already marked as created."})
+        _log_step("Step 2: Create Agents", {'type': 'info', 'message': "Agents were already marked as created."})
 
     # --- Step 3: Send Warehouse & Parcel Data to MRA ---
     result_send_config = execution_logic.handle_send_warehouse_parcel_data_to_mra(ss)
-    ss.simple_workflow_messages.append(result_send_config)
+    _log_step("Step 3: Send Config to MRA", result_send_config)
     if result_send_config.get('type') == 'error':
+        ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow failed sending config to MRA: {result_send_config.get('message')}"}
         return
 
     # --- Step 4: Fetch Delivery Agent Statuses (to ensure MRA's cache is up-to-date) ---
     result_fetch_da_statuses = optimisation_logic.fetch_delivery_agent_statuses(ss)
-    ss.simple_workflow_messages.append(result_fetch_da_statuses)
+    _log_step("Step 4: Fetch DA Statuses", result_fetch_da_statuses)
     if result_fetch_da_statuses.get('type') == 'error':
+        ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow failed fetching DA statuses: {result_fetch_da_statuses.get('message')}"}
         return
 
     # --- Step 5: Trigger MRA Optimisation Cycle ---
     result_mra_data_prep = execution_logic.handle_trigger_mra_optimisation_cycle(ss)
-    ss.simple_workflow_messages.append(result_mra_data_prep)
+    _log_step("Step 5: Trigger MRA Data Prep", result_mra_data_prep)
     if result_mra_data_prep.get('type') == 'error':
+        ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow failed at MRA data preparation: {result_mra_data_prep.get('message')}"}
         return
 
     # --- Step 6: Run Python Optimisation Script ---
     result_script_run = optimisation_logic.run_optimisation_script(ss)
-    ss.simple_workflow_messages.append(result_script_run)
+    _log_step("Step 6: Run Optimisation Script", result_script_run)
     if result_script_run.get('type') == 'error' or not ss.get("optimisation_run_complete") or not ss.get("optimisation_results"):
+        er_msg = result_script_run.get('message', 'Script did not complete or return results.')
+        ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow failed at Script Execution: {er_msg}"}
         return
 
     # --- Step 7: Send Optimised Routes to MRA ---
     optimised_routes = ss.optimisation_results.get("optimised_routes")
     if optimised_routes:
         result_send_routes = execution_logic.handle_send_optimised_routes_to_mra(ss)
-        ss.simple_workflow_messages.append(result_send_routes)
+        _log_step("Step 7: Send Routes to MRA", result_send_routes)
         if result_send_routes.get('type') == 'error':
+            ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow failed sending routes to MRA: {result_send_routes.get('message')}"}
             return
     else:
-        ss.simple_workflow_messages.append({'type': 'info', 'message': "No optimised routes to send to MRA."})
+        _log_step("Step 7: Send Routes to MRA", {'type': 'info', 'message': "No optimised routes to send to MRA."})
 
     # --- Step 8: Fetch JADE Simulation Results ---
     if ss.get("routes_sent_to_mra_successfully", False) or not optimised_routes:
