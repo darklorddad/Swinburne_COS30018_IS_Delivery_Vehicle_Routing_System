@@ -385,11 +385,11 @@ def run_optimisation(config_data, params):
         final_unassigned_parcels_details_list = [parcels_map[pid] for pid in final_unassigned_parcels_ids_set if pid in parcels_map]
         
         return {
-            "status": "success" if not final_unassigned_parcels_ids else "warning",
-            "message": f"OpenRouter LLM optimisation completed using {llm_model}. " + (f"{len(final_unassigned_parcels_ids)} parcel(s) unassigned." if final_unassigned_parcels_ids else "All parcels assigned."),
+            "status": "success" if not final_unassigned_parcels_ids_set else "warning",
+            "message": f"OpenRouter LLM optimisation completed using {llm_model}. " + (f"{len(final_unassigned_parcels_ids_set)} parcel(s) unassigned." if final_unassigned_parcels_ids_set else "All parcels assigned."),
             "optimised_routes": optimised_routes_output,
-            "unassigned_parcels": list(final_unassigned_parcels_ids),
-            "unassigned_parcels_details": final_unassigned_parcels_details
+            "unassigned_parcels": list(final_unassigned_parcels_ids_set),
+            "unassigned_parcels_details": final_unassigned_parcels_details_list
         }
 
     except requests.exceptions.RequestException as e:
