@@ -3,7 +3,8 @@ import random
 import copy
 from packages.configuration.backend.state_management import DEFAULT_CONFIG_TEMPLATE, _stash_current_config_as_fallback
 from packages.configuration.backend.config_logic import clear_config_from_memory
-
+from packages.execution.backend import execution_logic
+from packages.optimisation.backend import optimisation_logic
 import os
 
 def _scan_featured_scripts(ss):
