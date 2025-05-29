@@ -223,19 +223,29 @@ def render_simple_mode_tab(ss):
             with streamlit.expander("Run and View Results", expanded=True):
                 
                 if not ss.get("jade_platform_running"):
+                    # Disable button if workflow is already marked as running
+                    disable_start_button = not ss.config_data or \
+                                           not ss.optimisation_script_loaded_successfully or \
+                                           ss.get("simple_workflow_is_running", False)
+
                     if streamlit.button("Start", key="simple_start_workflow_btn", use_container_width=True,
-                                      disabled=(not ss.config_data or not ss.optimisation_script_loaded_successfully)):
-                        # Clear previous workflow messages and results before starting
-                        ss.simple_workflow_messages = []
-                        ss.simple_workflow_final_status = None 
-                        ss.optimisation_results = None
-                        ss.optimisation_run_complete = False
-                        ss.jade_simulated_routes_data = None
-                        simple_logic.handle_simple_mode_start_workflow(ss)
-                        streamlit.rerun()
+                                      disabled=disable_start_button):
+                        ss.simple_workflow_is_running = True # Set flag before starting
+                        streamlit.rerun() # Rerun to show spinner immediately
+
+                if ss.get("simple_workflow_is_running"):
+                    with streamlit.spinner("Executing simplified workflow... Please wait."):
+                        # Call the backend function that does the work
+                        simple_logic.handle_simple_mode_start_workflow(ss) 
+                        ss.simple_workflow_is_running = False # Clear flag when done
+                        streamlit.rerun() # Rerun to remove spinner and show results/final status
+
                 # Only show workflow status message
-                if ss.get("simple_workflow_final_status"):
-                    display_operation_result(ss.simple_workflow_final_status)
+                # Display the final status if it exists, then clear it so it doesn't persist
+                final_status = ss.get("simple_workflow_final_status")
+                if final_status:
+                    display_operation_result(final_status)
+                    ss.simple_workflow_final_status = None # Clear after displaying
 
                 if ss.get("jade_platform_running"):
                     if streamlit.button("Stop Simulation", key="simple_stop_jade_btn", use_container_width=True):
