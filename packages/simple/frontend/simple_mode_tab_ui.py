@@ -151,10 +151,19 @@ def render_simple_mode_tab(ss):
                                          use_container_width=True,
                                          disabled=selected_script == "None"):
                             script_path = os.path.join("pnp", "featured", selected_script)
-                            ss.optimisation_script_filename = script_path
-                            success = optimisation_logic.handle_optimisation_file_upload(ss)
-                            if success:
-                                ss.simple_config_action_selected = None  # Return to menu
+                            try:
+                                with open(script_path, 'r', encoding='utf-8') as f:
+                                    file_content = f.read()
+                                ss.optimisation_script_filename = script_path
+                                ss.optimisation_file_uploader_widget = type('FileObj', (), {
+                                    'name': selected_script,
+                                    'getvalue': lambda: file_content.encode('utf-8')
+                                })()
+                                success = optimisation_logic.handle_optimisation_file_upload(ss)
+                                if success:
+                                    ss.simple_config_action_selected = None  # Return to menu
+                            except Exception as e:
+                                ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
                             streamlit.rerun()
                     
                     if streamlit.button("Load script file...", 
