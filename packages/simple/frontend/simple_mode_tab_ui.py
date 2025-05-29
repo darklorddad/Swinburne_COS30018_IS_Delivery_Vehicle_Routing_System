@@ -110,23 +110,16 @@ def render_simple_mode_tab(ss):
                     if ss.optimisation_script_loaded_successfully:
                         streamlit.success(f"Loaded: {ss.optimisation_script_filename}")
                     
-                    # Use the featured scripts list from session state
-                    if ss.featured_optimisation_scripts:
-                        script_options = [s["name"] for s in ss.featured_optimisation_scripts]
-                        selected_script = streamlit.selectbox(
-                            "Available scripts",
-                            options=script_options,
-                            key="script_select_box"
-                        )
-                        if selected_script:
-                            # Find the selected script's path from featured scripts
-                            selected_script_info = next((s for s in ss.featured_optimisation_scripts if s["name"] == selected_script), None)
-                            if selected_script_info:
-                                ss.optimisation_script_filename = selected_script_info["path"]
+                    demo_script_path = os.path.join("pnp", "featured", "demo-optimiser.py")
+                    if os.path.exists(demo_script_path):
+                        if streamlit.button("Load Demo Optimisation Script", 
+                                         key="load_demo_script_btn",
+                                         use_container_width=True):
+                            ss.optimisation_script_filename = demo_script_path
                             ss.simple_config_action_selected = "load_script"
                             streamlit.rerun()
                     else:
-                        streamlit.warning("No scripts found in pnp/featured directory")
+                        streamlit.warning("Demo optimiser script not found at pnp/featured/demo-optimiser.py")
 
         # Execution Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:

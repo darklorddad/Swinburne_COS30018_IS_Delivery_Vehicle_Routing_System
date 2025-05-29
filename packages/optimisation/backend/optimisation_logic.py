@@ -44,10 +44,6 @@ def initialise_session_state(ss, clear_all_flag_for_other_modules=False): # Adde
         # UI view state
         ss.optimisation_action_selected = None
 
-        # For featured scripts
-        ss.featured_optimisation_scripts = [] # List of dicts {'name': str, 'path': str}
-        ss.selected_featured_script_path = None # Store the path of the chosen featured script
-        ss.featured_optimisation_scripts = discover_featured_scripts() # Discover on init
 
         # Clean up old state variables
         old_keys = [
@@ -59,25 +55,6 @@ def initialise_session_state(ss, clear_all_flag_for_other_modules=False): # Adde
             if key in ss:
                 del ss[key]
 
-def discover_featured_scripts():
-    """Scans the 'featured_scripts' directory and returns a list of script names and paths."""
-    scripts = []
-    try:
-        # Look in pnp/featured directory which is a sibling to packages
-        packages_dir = os.path.dirname(os.path.dirname(__file__))  # Goes up from packages/optimisation/backend
-        scripts_dir = os.path.join(packages_dir, "..", "pnp", "featured")  # Go up to root then into pnp/featured
-        if os.path.isdir(scripts_dir):
-            for filename in os.listdir(scripts_dir):
-                if filename.endswith(".py"):
-                    scripts.append({
-                        "name": filename, 
-                        "path": os.path.join(scripts_dir, filename)
-                    })
-        else:
-            print(f"Warning: Featured scripts directory not found at {os.path.abspath(scripts_dir)}")
-    except Exception as e:
-        print(f"Error discovering featured scripts: {str(e)}")
-    return scripts
 
 # Handles the upload of an optimisation script.
 # Delegates to script_lifecycle.load_and_process_script and updates UI view state.
