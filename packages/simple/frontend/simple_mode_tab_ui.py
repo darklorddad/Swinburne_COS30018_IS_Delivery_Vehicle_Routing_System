@@ -170,6 +170,10 @@ def render_simple_mode_tab(ss):
                                     
                                     if success:
                                         ss.simple_config_action_selected = None
+                                        # Force clear any previous error message
+                                        ss.optimisation_script_error_message = None
+                                        # Explicitly set loaded state
+                                        ss.optimisation_script_loaded_successfully = True
                                         streamlit.rerun()
                                     else:
                                         error_msg = ss.optimisation_script_error_message or "Unknown error loading script"
