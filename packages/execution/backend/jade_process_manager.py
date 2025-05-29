@@ -21,7 +21,7 @@ def _stream_reader_thread(stream, stop_event, prefix=""):
             except Exception as e_close:
                 print(f"Exception closing stream in reader thread ({prefix}): {e_close}", flush=True)
 
-def start_jade_platform(jade_jar_path, py4j_jar_path, json_jar_path, compiled_classes_path):
+def start_jade_platform(jade_jar_path, py4j_jar_path, json_jar_path, compiled_classes_path, hide_gui: bool = False):
     print(f"Attempting to start JADE. JADE JAR expected at: {jade_jar_path}")
     if not os.path.exists(jade_jar_path):
         return False, f"JADE JAR not found at {jade_jar_path}. Please check the path", None, None
@@ -36,15 +36,20 @@ def start_jade_platform(jade_jar_path, py4j_jar_path, json_jar_path, compiled_cl
 
     runtime_classpath = classpath_separator.join(runtime_classpath_list)
 
-    cmd = [
+    base_cmd = [
         "java", 
         "-cp", 
         runtime_classpath, 
-        "jade.Boot", 
-        "-gui", 
+        "jade.Boot"
+    ]
+    if not hide_gui:
+        base_cmd.append("-gui")
+    
+    base_cmd.extend([
         "-port", "1099",
         "py4jgw:Py4jGatewayAgent;dvrSniffer:jade.tools.sniffer.Sniffer(*)"
-    ]
+    ])
+    cmd = base_cmd
 
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, 

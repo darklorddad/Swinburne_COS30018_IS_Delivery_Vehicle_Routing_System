@@ -37,7 +37,7 @@ def _stream_reader_thread(stream, stop_event, prefix=""):
                 print(f"Exception closing stream in reader thread ({prefix}): {e_close}", flush=True)
         # print(f"Stream reader thread ({prefix}) finished.", flush=True)
 
-def start_jade_platform():
+def start_jade_platform(hide_gui: bool = False):
     # Compile Java agents first
     compile_success, compile_message = compile_java_agents()
     if not compile_success:
@@ -48,7 +48,8 @@ def start_jade_platform():
         JADE_JAR_PATH,
         PY4J_JAR_PATH,
         JSON_JAR_PATH,
-        COMPILED_CLASSES_PATH
+        COMPILED_CLASSES_PATH,
+        hide_gui=hide_gui
     )
     
     # Connect to Py4J gateway if process started successfully

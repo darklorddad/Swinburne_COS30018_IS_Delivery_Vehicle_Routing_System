@@ -25,11 +25,11 @@ def _render_settings_content(ss):
         def simple_mode_toggle_callback():
             # This callback now ONLY flips the mode.
             # State clearing and UI update will be handled by the main script flow detecting this change.
-            ss.simple_mode = not ss.get("simple_mode", False)
+            ss.simple_mode = not ss.get("simple_mode", True)
 
         streamlit.toggle(
             "Simple Mode",
-            value=ss.get("simple_mode", False), # Display current mode
+            value=ss.get("simple_mode", True), # Display current mode, default to True
             key="simple_mode_toggle_widget",
             on_change=simple_mode_toggle_callback,
             help="Switch to a streamlined user interface with fewer tabs and guided steps."
@@ -175,7 +175,7 @@ def main():
 
     # Ensure simple_mode is initialized on the very first run
     if "simple_mode" not in ss:
-        ss.simple_mode = False
+        ss.simple_mode = True # Set Simple Mode to True by default
     current_simple_mode_value = ss.simple_mode
 
     needs_state_reset_and_rerun = False

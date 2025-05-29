@@ -56,7 +56,8 @@ def handle_start_jade(ss):
 
     # If compilation was successful, proceed with starting JADE.
     # start_jade_platform now returns: success, message, process_obj, gateway_obj, log_stop_event_obj
-    success, message, process_obj, gateway_obj, log_stop_event = jade_controller.start_jade_platform()
+    is_simple_mode = ss.get("simple_mode", True) # Default to True to align with new app default
+    success, message, process_obj, gateway_obj, log_stop_event = jade_controller.start_jade_platform(hide_gui=is_simple_mode)
     
     ss.jade_platform_status_message = message # Store the detailed message from start_jade_platform
 
