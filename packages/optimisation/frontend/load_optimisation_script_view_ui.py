@@ -38,5 +38,8 @@ def render_load_optimisation_script_view(ss):
                     ss.simple_config_action_selected = None  # Clear the action to return to main simple view
                 else:
                     ss.optimisation_action_selected = None  # Clear the action for standard mode
+                # Clear the file uploader widget to reset the UI for next time
+                if 'optimisation_file_uploader_widget' in ss:
+                    del ss.optimisation_file_uploader_widget
             # Rerun to reflect state changes (either error message or transition to initial view)
             streamlit.rerun()
