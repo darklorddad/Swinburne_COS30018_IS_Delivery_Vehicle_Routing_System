@@ -4,6 +4,8 @@ import copy
 from packages.configuration.backend.state_management import DEFAULT_CONFIG_TEMPLATE, _stash_current_config_as_fallback
 from packages.configuration.backend.config_logic import clear_config_from_memory
 
+import os
+
 def _scan_featured_scripts(ss):
     """Scans pnp/featured directory for Python scripts and stores them in session state"""
     featured_dir = os.path.join("pnp", "featured")
