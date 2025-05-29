@@ -158,20 +158,25 @@ def render_simple_mode_tab(ss):
                                 with open(script_path, 'r', encoding='utf-8') as f:
                                     file_content = f.read()
                                 
-                                # Set the file object in session state first
-                                ss.optimisation_file_uploader_widget = type('FileObj', (), {
-                                    'name': selected_script,
-                                    'getvalue': lambda: file_content.encode('utf-8'),
-                                    'file_id': hash(file_content)  # Add unique file_id
-                                })
-                                # Then call the handler with just session state
-                                success = optimisation_logic.handle_optimisation_file_upload(ss)
-                                
-                                if success:
-                                    ss.simple_config_action_selected = None
-                                    streamlit.rerun()
-                                else:
-                                    streamlit.error(f"Failed to load script: {ss.optimisation_script_error_message}")
+                                try:
+                                    # Set the file object in session state first
+                                    ss.optimisation_file_uploader_widget = type('FileObj', (), {
+                                        'name': selected_script,
+                                        'getvalue': lambda: file_content.encode('utf-8'),
+                                        'file_id': hash(file_content)  # Add unique file_id
+                                    })
+                                    # Then call the handler with just session state
+                                    success = optimisation_logic.handle_optimisation_file_upload(ss)
+                                    
+                                    if success:
+                                        ss.simple_config_action_selected = None
+                                        streamlit.rerun()
+                                    else:
+                                        error_msg = ss.optimisation_script_error_message or "Unknown error loading script"
+                                        streamlit.error(f"Failed to load script: {error_msg}")
+                                except Exception as e:
+                                    ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
+                                    streamlit.error(ss.optimisation_script_error_message)
                             except Exception as e:
                                 ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
                                 streamlit.error(ss.optimisation_script_error_message)
