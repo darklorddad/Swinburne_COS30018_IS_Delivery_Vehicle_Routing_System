@@ -62,7 +62,7 @@ public class Py4jGatewayAgent extends Agent {
         System.out.println("Py4jGatewayAgent " + getAID().getName() + " terminating.");
     }
 
-    public String getAndClearJadeSimulatedRoutes() {
+    public String getJadeSimulatedRoutes() {
         System.out.println("Py4jGatewayAgent: Python requested JADE simulated routes log.");
         JSONArray routesArray = new JSONArray();
         synchronized (completedRoutesLog) {
@@ -77,8 +77,7 @@ public class Py4jGatewayAgent extends Agent {
                      System.err.println("Py4jGatewayAgent: Could not parse stored route string to JSON: " + routeJsonString + " Error: " + e.getMessage());
                 }
             }
-            completedRoutesLog.clear();
-            System.out.println("Py4jGatewayAgent: Returned " + routesArray.length() + " simulated routes and cleared log.");
+            System.out.println("Py4jGatewayAgent: Returned " + routesArray.length() + " simulated routes.");
         }
         return routesArray.toString(); // Return as a JSON array string
     }

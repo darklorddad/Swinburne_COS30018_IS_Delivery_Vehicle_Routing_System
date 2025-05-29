@@ -115,7 +115,7 @@ def get_jade_simulated_routes_data(gateway):
         return None, "Py4J Gateway not available"
     try:
         # This method in Java returns a JSON string representing an array of route objects
-        json_array_string = gateway.entry_point.getAndClearJadeSimulatedRoutes()
+        json_array_string = gateway.entry_point.getJadeSimulatedRoutes()
         # Attempt to parse it here to catch errors early and return Python objects
         # If Java returns null or an empty string that is not valid JSON, json.loads will fail.
         if json_array_string is None: # Handle case where Java might return null
