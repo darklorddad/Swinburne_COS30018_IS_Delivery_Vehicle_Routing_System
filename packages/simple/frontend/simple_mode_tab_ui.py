@@ -233,20 +233,11 @@ def render_simple_mode_tab(ss):
                         ss.jade_simulated_routes_data = None
                         simple_logic.handle_simple_mode_start_workflow(ss)
                         streamlit.rerun()
-                else:
-                    streamlit.success("JADE Platform is Running")
-
-                # Display messages from the workflow
+                # Only show workflow status message
                 if ss.get("simple_workflow_final_status"):
                     display_operation_result(ss.simple_workflow_final_status)
 
-                if ss.get("optimisation_run_complete") and ss.get("optimisation_results"):
-                    render_optimisation_results_display(ss.optimisation_results)
-                
-                if ss.get("jade_simulated_routes_data") is not None:
-                    render_visualisation_tab(ss)
-
                 if ss.get("jade_platform_running"):
-                    if streamlit.button("Stop", key="simple_stop_jade_btn", use_container_width=True):
+                    if streamlit.button("Stop Simulation", key="simple_stop_jade_btn", use_container_width=True):
                         execution_logic.handle_stop_jade(ss)
                         streamlit.rerun()
