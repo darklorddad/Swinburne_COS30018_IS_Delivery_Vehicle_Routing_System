@@ -136,7 +136,7 @@ def render_simple_mode_tab(ss):
                                 streamlit.info("No configurable parameters defined in this script")
                         
                         streamlit.markdown("---")  # Separator after parameters
-                        streamlit.success(f"Current script: {ss.optimisation_script_filename}")
+                        streamlit.success(f"{ss.optimisation_script_filename}")
                     
                     # Featured scripts dropdown
                     if ss.get("featured_optimisation_scripts"):
@@ -179,6 +179,8 @@ def render_simple_mode_tab(ss):
                                     error_msg = ss.optimisation_script_error_message or "Unknown error loading script"
                                     ss.optimisation_script_error_message = error_msg
                             
+                                # Reset dropdown and return to main view
+                                ss.selected_featured_script = "None"
                                 # Always rerun to update UI immediately
                                 streamlit.rerun()
                             
@@ -186,6 +188,7 @@ def render_simple_mode_tab(ss):
                                 ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
                                 streamlit.rerun()
                     
+                    streamlit.markdown("---")  # Separator between featured scripts and file loader
                     if streamlit.button("Load script file...", 
                                      key="load_script_menu_btn",
                                      use_container_width=True):
