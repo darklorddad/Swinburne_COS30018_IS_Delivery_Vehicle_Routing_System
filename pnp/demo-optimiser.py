@@ -109,6 +109,7 @@ def run_optimisation(config_data, params):
                 "parcels_assigned_ids": [p["id"] for p in agent_route_parcels],
                 "parcels_assigned_details": agent_route_parcels, # Full details
                 "route_stop_ids": agent_route_stop_ids,
+                "route_stop_coordinates": agent_route_stops_coords,
                 "total_weight": sum(p["weight"] for p in agent_route_parcels),
                 "capacity_weight": agent["capacity_weight"],
                 "total_distance": round(total_distance, 2),

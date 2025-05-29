@@ -68,14 +68,13 @@ public class Py4jGatewayAgent extends Agent {
         synchronized (completedRoutesLog) {
             if (completedRoutesLog.isEmpty()) {
                 System.out.println("Py4jGatewayAgent: Completed routes log is empty.");
-                return "[]"; // Return empty JSON array string
+                return "[]";
             }
             for (String routeJsonString : completedRoutesLog) {
                 try {
                     routesArray.put(new JSONObject(routeJsonString)); // Add each route object to the array
                 } catch (Exception e) {
                      System.err.println("Py4jGatewayAgent: Could not parse stored route string to JSON: " + routeJsonString + " Error: " + e.getMessage());
-                     // Optionally add an error object to the array or skip
                 }
             }
             completedRoutesLog.clear();

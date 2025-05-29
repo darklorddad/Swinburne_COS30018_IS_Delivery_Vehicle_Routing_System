@@ -92,7 +92,7 @@ def render_jade_operations_tab(ss):
                     for da_config in ss.config_data["delivery_agents"]:
                         agents_to_create_data.append({
                             "id": da_config.get("id", "N/A"),
-                            "capacity_weight": da_config.get("capacity_weight", "N/A"),
+                            "capacity_weight": str(da_config.get("capacity_weight", "N/A")),
                             "agent_class": execution_logic.DEFAULT_DA_CLASS
                         })
                 if agents_to_create_data:
@@ -179,7 +179,7 @@ def render_jade_operations_tab(ss):
                     for da_status in da_statuses:
                         status_df_data.append({
                             "id": da_status.get("id", "N/A"),
-                            "capacity_weight": da_status.get("capacity_weight", "N/A"),
+                            "capacity_weight": str(da_status.get("capacity_weight", "N/A")),
                             "operational_status": da_status.get("operational_status", "N/A")
                         })
                     df_da_statuses = pd.DataFrame(status_df_data)
