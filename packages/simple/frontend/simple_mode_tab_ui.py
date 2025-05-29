@@ -17,17 +17,17 @@ def render_generate_config_view_simple(ss):
         config_name = streamlit.text_input("Configuration name", value="generated-config", key="simple_gen_config_name")
         num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
         num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
-        
-        if streamlit.button("Generate", key="simple_generate_btn", use_container_width=True):
-            result = simple_logic.generate_quick_config(ss, num_parcels, num_agents, config_name)
-            display_operation_result(result)
-            if result.get('type') == 'success':
-                ss.simple_config_action_selected = None # Return to main view
-            streamlit.rerun()
-        
-        if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
-            ss.simple_config_action_selected = None # Go back to main simple view
-            streamlit.rerun()
+    
+    if streamlit.button("Generate", key="simple_generate_btn", use_container_width=True):
+        result = simple_logic.generate_quick_config(ss, num_parcels, num_agents, config_name)
+        display_operation_result(result)
+        if result.get('type') == 'success':
+            ss.simple_config_action_selected = None # Return to main view
+        streamlit.rerun()
+    
+    if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
+        ss.simple_config_action_selected = None # Go back to main simple view
+        streamlit.rerun()
         
 
 def render_simple_mode_tab(ss):
