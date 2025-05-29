@@ -226,7 +226,7 @@ def render_simple_mode_tab(ss):
                         streamlit.rerun()
                 else:
                     streamlit.success("JADE Platform is Running")
-                    if streamlit.button("Run Full Optimisation", key="simple_run_ use_container use_container_width=True):
+                    if streamlit.button("Run Full Optimisation", key="simple_run_btn", use_container_width=True):
                         execution_logic.handle_trigger_mra_optimisation_cycle(ss)
                         optimisation_logic.run_optimisation_script(ss)
                         execution_logic.handle_send_optimised_routes_to_mra(ss)
