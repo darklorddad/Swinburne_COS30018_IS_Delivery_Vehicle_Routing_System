@@ -158,9 +158,11 @@ def handle_simple_mode_start_workflow(ss):
     # --- Step 9: Stop JADE Platform ---
     if ss.get("jade_platform_running", False):
         result_stop = execution_logic.handle_stop_jade(ss)
+        if result_stop is None:
+            result_stop = {'type': 'error', 'message': 'Failed to stop JADE (no result returned)'}
         _log_step("Step 9: Stop JADE", result_stop)
         if result_stop.get('type') == 'error':
-            ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow completed but failed to stop JADE: {result_stop.get('message')}"}
+            ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow completed but failed to stop JADE: {result_stop.get('message', 'Unknown error')}"}
             return
 
     ss.simple_workflow_final_status = {'type': 'success', 'message': "Workflow completed successfully and JADE stopped."}
