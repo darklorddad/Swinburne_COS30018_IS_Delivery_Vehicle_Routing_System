@@ -227,6 +227,7 @@ def render_simple_mode_tab(ss):
                                       disabled=(not ss.config_data or not ss.optimisation_script_loaded_successfully)):
                         # Clear previous workflow messages and results before starting
                         ss.simple_workflow_messages = []
+                        ss.simple_workflow_final_status = None 
                         ss.optimisation_results = None
                         ss.optimisation_run_complete = False
                         ss.jade_simulated_routes_data = None

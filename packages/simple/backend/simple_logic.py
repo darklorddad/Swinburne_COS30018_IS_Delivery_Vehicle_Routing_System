@@ -80,16 +80,25 @@ def handle_simple_mode_start_workflow(ss):
     Start JADE, create agents, send config, run optimisation, send routes, get sim results.
     """
     ss.simple_workflow_messages = [] # To store messages from each step
+    ss.simple_workflow_final_status = None # For the single final UI message
+
+    def _log_step(step_name, result_dict):
+        if result_dict and isinstance(result_dict, dict) and 'message' in result_dict:
+            print(f"Simple Workflow - {step_name}: {result_dict.get('type','info').upper()} - {result_dict['message']}")
+        elif isinstance(result_dict, str): # Fallback if a string is somehow passed
+            print(f"Simple Workflow - {step_name}: INFO - {result_dict}")
 
     # --- Step 1: Start JADE Platform ---
     if not ss.get("jade_platform_running", False):
         execution_logic.handle_start_jade(ss)
         if not ss.get("jade_platform_running"):
-            ss.simple_workflow_messages.append({'type': 'error', 'message': f"Failed to start JADE platform: {ss.get('jade_platform_status_message', 'Unknown error')}"})
+            msg = f"Failed to start JADE platform: {ss.get('jade_platform_status_message', 'Unknown error')}"
+            print(f"Simple Workflow - Step 1 ERROR: {msg}")
+            ss.simple_workflow_final_status = {'type': 'error', 'message': msg}
             return
-        ss.simple_workflow_messages.append({'type': 'success', 'message': "JADE platform started successfully."})
+        _log_step("Step 1: Start JADE", {'type': 'success', 'message': "JADE platform started successfully."})
     else:
-        ss.simple_workflow_messages.append({'type': 'info', 'message': "JADE platform already running."})
+        _log_step("Step 1: Start JADE", {'type': 'info', 'message': "JADE platform already running."})
 
     # --- Step 2: Create Agents ---
     if not ss.get("jade_agents_created", False):
@@ -137,9 +146,7 @@ def handle_simple_mode_start_workflow(ss):
     # --- Step 8: Fetch JADE Simulation Results ---
     if ss.get("routes_sent_to_mra_successfully", False) or not optimised_routes:
         result_fetch_sim = execution_logic.handle_get_simulated_routes_from_jade(ss)
-        if result_fetch_sim and result_fetch_sim.get('message'):
-             ss.simple_workflow_messages.append(result_fetch_sim)
-        elif not result_fetch_sim:
-            ss.simple_workflow_messages.append({'type': 'warning', 'message': "Fetching simulation results returned no explicit status."})
+        _log_step("Step 8: Fetch Simulation Results", result_fetch_sim if result_fetch_sim else "No explicit status from fetch.")
 
-    ss.simple_workflow_messages.append({'type': 'success', 'message': "Automated workflow completed."})
+    ss.simple_workflow_final_status = {'type': 'success', 'message': "Workflow completed successfully."}
+    print("Simple Workflow: All steps completed successfully.")
