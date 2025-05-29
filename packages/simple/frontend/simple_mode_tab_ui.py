@@ -102,6 +102,8 @@ def render_simple_mode_tab(ss):
         # Optimisation Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
             with streamlit.expander("Manage Optimisation Script", expanded=True):
+                streamlit.markdown("---")  # Separator below expander title
+                
                 if not ss.config_data:
                     streamlit.warning("Please create or load a configuration first")
                 elif ss.get("jade_platform_running"):
@@ -118,12 +120,20 @@ def render_simple_mode_tab(ss):
                             key="selected_featured_script"
                         )
                         
-                        if selected_script != "None":
-                            if streamlit.button("Load selected script", 
-                                             key="load_featured_script_btn",
-                                             use_container_width=True):
+                        col_select, col_load = streamlit.columns(2)
+                        with col_select:
+                            if streamlit.button("Select script", 
+                                             key="select_featured_script_btn",
+                                             use_container_width=True,
+                                             disabled=selected_script == "None"):
                                 script_path = os.path.join("pnp", "featured", selected_script)
                                 ss.optimisation_script_filename = script_path
+                                streamlit.rerun()
+                        
+                        with col_load:
+                            if streamlit.button("Load script", 
+                                             key="load_script_menu_btn",
+                                             use_container_width=True):
                                 ss.simple_config_action_selected = "load_script"
                                 streamlit.rerun()
                     else:
