@@ -17,18 +17,16 @@ def render_generate_config_view_simple(ss):
         num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
         num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
         
-        col1, col2 = streamlit.columns(2)
-        with col1:
-            if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
-                ss.simple_config_action_selected = None # Go back to main simple view
-                streamlit.rerun()
-        with col2:
-            if streamlit.button("Generate", key="simple_generate_btn", use_container_width=True):
-                result = simple_logic.generate_quick_config(ss, num_parcels, num_agents, config_name)
-                display_operation_result(result)
-                if result.get('type') == 'success':
-                    ss.simple_config_action_selected = None # Return to main view
-                streamlit.rerun()
+        if streamlit.button("Generate", key="simple_generate_btn", use_container_width=True):
+            result = simple_logic.generate_quick_config(ss, num_parcels, num_agents, config_name)
+            display_operation_result(result)
+            if result.get('type') == 'success':
+                ss.simple_config_action_selected = None # Return to main view
+            streamlit.rerun()
+        
+        if streamlit.button("Cancel", key="simple_cancel_generate_btn", use_container_width=True):
+            ss.simple_config_action_selected = None # Go back to main simple view
+            streamlit.rerun()
         
 
 def render_simple_mode_tab(ss):
@@ -87,12 +85,12 @@ def render_simple_mode_tab(ss):
                 streamlit.success(f"{ss.config_filename}")
                 
                 # Buttons stacked vertically
-                if streamlit.button("Edit Configuration", key="simple_config_edit_current_btn", use_container_width=True):
+                if streamlit.button("Edit configuration", key="simple_config_edit_current_btn", use_container_width=True):
                     ss.simple_config_action_selected = "edit"
                     config_logic.enter_edit_mode(ss)
                     streamlit.rerun()
                 
-                if streamlit.button("Clear Configuration", key="simple_config_clear_current_btn", use_container_width=True):
+                if streamlit.button("Clear configuration", key="simple_config_clear_current_btn", use_container_width=True):
                     config_logic.clear_config_from_memory(ss)
                     config_logic.reset_simple_config_action(ss)
                     streamlit.rerun()
@@ -108,14 +106,9 @@ def render_simple_mode_tab(ss):
                     if ss.optimisation_script_loaded_successfully:
                         streamlit.success(f"Loaded: {ss.optimisation_script_filename}")
                     
-                    # Add script selection dropdown
-                    import os
-                    script_dir = os.path.join("System", "Swinburne_COS30018_IS_Delivery_Vehicle_Routing_System", "pnp", "featured")
-                    script_options = []
-                    if os.path.exists(script_dir):
-                        script_options = [f for f in os.listdir(script_dir) if f.endswith('.py')]
-                    
-                    if script_options:
+                    # Use the featured scripts list from session state
+                    if ss.featured_optimisation_scripts:
+                        script_options = [s["name"] for s in ss.featured_optimisation_scripts]
                         selected_script = streamlit.selectbox(
                             "Available scripts",
                             options=script_options,

@@ -129,6 +129,10 @@ def render_edit_view(ss):
         if streamlit.button("Save", key = "save_edits_btn", use_container_width = True):
             result = config_logic.handle_save_edits(ss)
             display_operation_result(result) # Display success message
+            if ss.get("simple_mode"):
+                ss.simple_config_action_selected = None
+            else:
+                ss.action_selected = None
             streamlit.rerun()
     
     with col_save_download_action:
