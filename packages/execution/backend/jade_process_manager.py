@@ -36,20 +36,25 @@ def start_jade_platform(jade_jar_path, py4j_jar_path, json_jar_path, compiled_cl
 
     runtime_classpath = classpath_separator.join(runtime_classpath_list)
 
-    base_cmd = [
+    cmd_core = [
         "java", 
         "-cp", 
         runtime_classpath, 
         "jade.Boot"
     ]
+
     if not hide_gui:
-        base_cmd.append("-gui")
+        cmd_core.append("-gui")
     
-    base_cmd.extend([
+    cmd_core.extend([
         "-port", "1099",
-        "py4jgw:Py4jGatewayAgent;dvrSniffer:jade.tools.sniffer.Sniffer(*)"
     ])
-    cmd = base_cmd
+
+    agent_spec = "py4jgw:Py4jGatewayAgent"
+    if not hide_gui:
+        agent_spec += ";dvrSniffer:jade.tools.sniffer.Sniffer(*)"
+    cmd_core.append(agent_spec)
+    cmd = cmd_core
 
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, 
