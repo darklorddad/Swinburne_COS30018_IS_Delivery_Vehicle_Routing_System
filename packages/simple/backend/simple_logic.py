@@ -106,19 +106,25 @@ def handle_simple_mode_start_workflow(ss):
     if result_send_config.get('type') == 'error':
         return
 
-    # --- Step 4: Trigger MRA Optimisation Cycle ---
+    # --- Step 4: Fetch Delivery Agent Statuses (to ensure MRA's cache is up-to-date) ---
+    result_fetch_da_statuses = optimisation_logic.fetch_delivery_agent_statuses(ss)
+    ss.simple_workflow_messages.append(result_fetch_da_statuses)
+    if result_fetch_da_statuses.get('type') == 'error':
+        return
+
+    # --- Step 5: Trigger MRA Optimisation Cycle ---
     result_mra_data_prep = execution_logic.handle_trigger_mra_optimisation_cycle(ss)
     ss.simple_workflow_messages.append(result_mra_data_prep)
     if result_mra_data_prep.get('type') == 'error':
         return
 
-    # --- Step 5: Run Python Optimisation Script ---
+    # --- Step 6: Run Python Optimisation Script ---
     result_script_run = optimisation_logic.run_optimisation_script(ss)
     ss.simple_workflow_messages.append(result_script_run)
     if result_script_run.get('type') == 'error' or not ss.get("optimisation_run_complete") or not ss.get("optimisation_results"):
         return
 
-    # --- Step 6: Send Optimised Routes to MRA ---
+    # --- Step 7: Send Optimised Routes to MRA ---
     optimised_routes = ss.optimisation_results.get("optimised_routes")
     if optimised_routes:
         result_send_routes = execution_logic.handle_send_optimised_routes_to_mra(ss)
@@ -128,7 +134,7 @@ def handle_simple_mode_start_workflow(ss):
     else:
         ss.simple_workflow_messages.append({'type': 'info', 'message': "No optimised routes to send to MRA."})
 
-    # --- Step 7: Fetch JADE Simulation Results ---
+    # --- Step 8: Fetch JADE Simulation Results ---
     if ss.get("routes_sent_to_mra_successfully", False) or not optimised_routes:
         result_fetch_sim = execution_logic.handle_get_simulated_routes_from_jade(ss)
         if result_fetch_sim and result_fetch_sim.get('message'):
