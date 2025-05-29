@@ -179,12 +179,13 @@ def render_simple_mode_tab(ss):
                                     if 'optimisation_file_uploader_widget' in ss:
                                         del ss.optimisation_file_uploader_widget
                                     ss.simple_config_action_selected = None
+                                    # Force immediate UI update
+                                    streamlit.rerun()
                                 else:
                                     # Use explicit error if available
                                     error_msg = ss.optimisation_script_error_message or "Unknown error loading script"
                                     ss.optimisation_script_error_message = error_msg
-                            
-                                streamlit.rerun()
+                                    streamlit.rerun()
                             
                             except Exception as e:
                                 ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
