@@ -37,7 +37,8 @@ def initialise_session_state(ss, clear_all=False): # Added clear_all
         "simple_num_parcels_to_generate": 5, # Default for simple generator
         "simple_num_agents_to_generate": 2, # Default for simple generator
         "simple_config_action_selected": None, # Controls the view within the Simple tab
-        "simple_show_generate_options": False # To control visibility of generate inputs
+        "simple_show_generate_options": False, # To control visibility of generate inputs
+        "simple_workflow_is_running": False # Flag for spinner in simple mode workflow
     }
     if clear_all:
         # Set all config-specific session state keys to their defaults

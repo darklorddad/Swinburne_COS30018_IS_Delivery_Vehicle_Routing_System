@@ -81,7 +81,11 @@ def handle_simple_mode_start_workflow(ss):
     Start JADE, create agents, send config, run optimisation, send routes, get sim results.
     """
     ss.simple_workflow_messages = [] # To store messages from each step
-    ss.simple_workflow_final_status = None # For the single final UI message
+    # Clear previous workflow messages and results before starting
+    ss.simple_workflow_final_status = None 
+    ss.optimisation_results = None
+    ss.optimisation_run_complete = False
+    ss.jade_simulated_routes_data = None
 
     def _log_step(step_name, result_dict):
         if result_dict and isinstance(result_dict, dict) and 'message' in result_dict:
