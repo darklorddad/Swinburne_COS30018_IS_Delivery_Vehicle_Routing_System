@@ -220,25 +220,36 @@ def render_simple_mode_tab(ss):
 
         # Execution Section (Only shown in the view, view, not edit/load)
         if not simple_config_action and ss.config_data and ss.get("optimisation_script_loaded_successfully", False):
-            with streamlit.expander("Run and View Results", expanded=True): # Renamed expander
+            with streamlit.expander("Run and View Results", expanded=True):
+                
                 if not ss.get("jade_platform_running"):
-                    if streamlit.button("Start JADE Platform", key="simple_start_jade_btn", use_container_width=True,
+                    if streamlit.button("Start", key="simple_start_workflow_btn", use_container_width=True,
                                       disabled=(not ss.config_data or not ss.optimisation_script_loaded_successfully)):
-                        execution_logic.handle_start_jade(ss)
+                        # Clear previous workflow messages and results before starting
+                        ss.simple_workflow_messages = []
+                        ss.optimisation_results = None
+                        ss.optimisation_run_complete = False
+                        ss.jade_simulated_routes_data = None
+                        simple_logic.handle_simple_mode_start_workflow(ss)
                         streamlit.rerun()
                 else:
                     streamlit.success("JADE Platform is Running")
-                    if streamlit.button("Run Full Optimisation", key="simple_run_btn", use_container_width=True):
-                        execution_logic.handle_trigger_mra_optimisation_cycle(ss)
-                        optimisation_logic.run_optimisation_script(ss)
-                        execution_logic.handle_send_optimised_routes_to_mra(ss)
-                        streamlit.rerun()
 
-                if ss.get("optimisation_run_complete"):
+                # Display messages from the workflow
+                if ss.get("simple_workflow_messages"):
+                    for msg_info in ss.simple_workflow_messages:
+                        display_operation_result(msg_info)
+
+                if ss.get("optimisation_run_complete") and ss.get("optimisation_results"):
                     render_optimisation_results_display(ss.optimisation_results)
+                
+                # Separator between results/buttons and visualisation
+                streamlit.markdown("---")
+
+                if ss.get("jade_simulated_routes_data") is not None:
                     render_visualisation_tab(ss)
 
                 if ss.get("jade_platform_running"):
-                    if streamlit.button("Stop JADE Platform", key="simple_stop_jade_btn", use_container_width=True):
+                    if streamlit.button("Stop", key="simple_stop_jade_btn", use_container_width=True):
                         execution_logic.handle_stop_jade(ss)
                         streamlit.rerun()
