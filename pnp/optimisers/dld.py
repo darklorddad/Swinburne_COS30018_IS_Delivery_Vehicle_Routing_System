@@ -244,8 +244,11 @@ def run_optimisation(config_data, params):
         "stream": False # Ensure we get the full response at once
     }
 
-    optimised_routes = []
-    llm_assigned_parcels_ids = set()
+    # Initialize tracking structures
+    final_routes_map = {agent_id: [] for agent_id in agents_map.keys()}
+    final_routes_weights = {agent_id: 0 for agent_id in agents_map.keys()}
+    script_confirmed_assigned_parcel_ids = set()
+    optimised_routes_output = []
     
     try:
         response = requests.post(
@@ -384,7 +387,7 @@ def run_optimisation(config_data, params):
         return {
             "status": "success" if not final_unassigned_parcels_ids else "warning",
             "message": f"OpenRouter LLM optimisation completed using {llm_model}. " + (f"{len(final_unassigned_parcels_ids)} parcel(s) unassigned." if final_unassigned_parcels_ids else "All parcels assigned."),
-            "optimised_routes": optimised_routes,
+            "optimised_routes": optimised_routes_output,
             "unassigned_parcels": list(final_unassigned_parcels_ids),
             "unassigned_parcels_details": final_unassigned_parcels_details
         }
