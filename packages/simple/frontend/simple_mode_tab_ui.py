@@ -150,25 +150,32 @@ def render_simple_mode_tab(ss):
                                          key="select_featured_script_btn",
                                          use_container_width=True,
                                          disabled=selected_script == "None"):
-                            script_path = os.path.join("pnp", "featured", selected_script)
                             try:
+                                script_path = os.path.join("pnp", "featured", selected_script)
+                                if not os.path.exists(script_path):
+                                    raise FileNotFoundError(f"Script file not found at: {script_path}")
+                                
                                 with open(script_path, 'r', encoding='utf-8') as f:
                                     file_content = f.read()
-                                ss.optimisation_script_filename = script_path
-                                ss.optimisation_file_uploader_widget = type('FileObj', (), {
-                                    'name': selected_script,
-                                    'getvalue': lambda: file_content.encode('utf-8')
-                                })()
-                                success = optimisation_logic.handle_optimisation_file_upload(ss)
+                                
+                                # Properly trigger the file upload handler
+                                success = optimisation_logic.handle_optimisation_file_upload(
+                                    ss,
+                                    type('FileObj', (), {
+                                        'name': selected_script,
+                                        'getvalue': lambda: file_content.encode('utf-8'),
+                                        'file_id': hash(file_content)  # Add unique file_id
+                                    })
+                                )
+                                
                                 if success:
-                                    ss.simple_config_action_selected = None  # Return to menu
-                                    streamlit.success(f"Successfully loaded script: {selected_script}")
+                                    ss.simple_config_action_selected = None
+                                    streamlit.rerun()
                                 else:
                                     streamlit.error(f"Failed to load script: {ss.optimisation_script_error_message}")
                             except Exception as e:
                                 ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
                                 streamlit.error(ss.optimisation_script_error_message)
-                            streamlit.rerun()
                     
                     if streamlit.button("Load script file...", 
                                      key="load_script_menu_btn",
