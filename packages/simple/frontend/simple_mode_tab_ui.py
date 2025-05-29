@@ -172,20 +172,18 @@ def render_simple_mode_tab(ss):
                                 success = optimisation_logic.handle_optimisation_file_upload(ss)
                             
                                 if success:
-                                    ss.simple_config_action_selected = None
                                     ss.optimisation_script_loaded_successfully = True
+                                    # Clear all relevant state to return to main view
+                                    if 'selected_featured_script' in ss:
+                                        del ss.selected_featured_script
+                                    if 'optimisation_file_uploader_widget' in ss:
+                                        del ss.optimisation_file_uploader_widget
+                                    ss.simple_config_action_selected = None
                                 else:
                                     # Use explicit error if available
                                     error_msg = ss.optimisation_script_error_message or "Unknown error loading script"
                                     ss.optimisation_script_error_message = error_msg
                             
-                                # Reset dropdown by deleting the session state variable
-                                if 'selected_featured_script' in ss:
-                                    del ss.selected_featured_script
-                                # Clear the file uploader widget and return to main view
-                                if 'optimisation_file_uploader_widget' in ss:
-                                    del ss.optimisation_file_uploader_widget
-                                ss.simple_config_action_selected = None
                                 streamlit.rerun()
                             
                             except Exception as e:
