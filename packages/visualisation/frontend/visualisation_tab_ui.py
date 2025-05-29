@@ -18,7 +18,7 @@ def render_visualisation_tab(ss):
 
     # Check if the routes exist
     if simulated_jade_routes is None:
-        streamlit.warning("JADE simulated routes data is not available. Please fetch data from JADE first using the 'Execution' tab.")
+        streamlit.warning("JADE simulated routes data is not available. Please fetch data from JADE first.")
         if ss.get("jade_simulated_routes_message"):
             streamlit.info(f"Details: {ss.jade_simulated_routes_message}")
         return

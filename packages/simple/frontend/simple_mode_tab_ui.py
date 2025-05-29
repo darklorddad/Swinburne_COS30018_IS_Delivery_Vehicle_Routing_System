@@ -241,3 +241,7 @@ def render_simple_mode_tab(ss):
                     if streamlit.button("Stop Simulation", key="simple_stop_jade_btn", use_container_width=True):
                         execution_logic.handle_stop_jade(ss)
                         streamlit.rerun()
+
+            if ss.get("optimisation_run_complete") and not ss.get("jade_platform_running"):
+                with streamlit.expander("Visualise Simulated Routes", expanded=True):
+                    render_visualisation_tab(ss)

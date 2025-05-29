@@ -294,17 +294,3 @@ def render_jade_operations_tab(ss):
                 msg_str = ss.jade_dispatch_status_message
                 streamlit.info(msg_str)  # Always show as blue info alert
                 ss.jade_dispatch_status_message = None # Clear after display
-
-            streamlit.markdown("---")
-            streamlit.markdown("Visualise Vehicle Routes")
-
-            fetch_sim_disabled = not (ss.get("routes_sent_to_mra_successfully", False) and \
-                                      ss.get("jade_agents_created", False) and \
-                                      ss.get("jade_platform_running", False))
-            if streamlit.button("Fetch JADE Simulation Results",
-                                key="fetch_jade_simulation_results_btn", 
-                                use_container_width=True,
-                                disabled=fetch_sim_disabled
-                                ):
-                execution_logic.handle_get_simulated_routes_from_jade(ss)
-                streamlit.rerun()

@@ -1,5 +1,6 @@
 from . import jade_controller 
 from . import py4j_gateway
+import time
 
 # Default JADE agent names and classes
 DEFAULT_MRA_NAME = "MRA"
@@ -222,6 +223,11 @@ def handle_send_optimised_routes_to_mra(ss): # Renamed from handle_trigger_mra_p
     if success:
         ss.jade_dispatch_status_message = message or "Optimised routes sent to MRA for dispatch"
         ss.routes_sent_to_mra_successfully = True
+
+        print("INFO: Routes sent to MRA. Automatically attempting to fetch JADE simulation results...")
+        time.sleep(1)
+        handle_get_simulated_routes_from_jade(ss)
+
         return {'type': 'info', 'message': ss.jade_dispatch_status_message}
     else:
         ss.jade_dispatch_status_message = message or "Failed to send optimised routes to MRA"
