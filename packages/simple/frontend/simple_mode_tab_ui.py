@@ -16,8 +16,8 @@ def render_generate_config_view_simple(ss):
     with streamlit.expander("Generate Configuration", expanded=True):
         streamlit.markdown("---")
         config_name = streamlit.text_input("Configuration name", value="generated-config", key="simple_gen_config_name")
-        num_parcels = streamlit.number_input("Number of Parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
-        num_agents = streamlit.number_input("Number of Delivery Agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
+        num_parcels = streamlit.number_input("Number of parcels", min_value=0, value=ss.get("simple_num_parcels_to_generate", 5), key="simple_gen_num_parcels")
+        num_agents = streamlit.number_input("Number of delivery agents", min_value=0, value=ss.get("simple_num_agents_to_generate", 2), key="simple_gen_num_agents")
     
     col_cancel, col_generate = streamlit.columns(2)
     with col_cancel:

@@ -4,31 +4,7 @@ import math
 def get_params_schema():
     return {
         "parameters": [
-            {
-                "name": "sort_parcels",
-                "label": "Sort parcels by",
-                "type": "selectbox",
-                "default": "none",
-                "options": ["none", "weight_asc", "weight_desc"],
-                "help": "Initial sorting of parcels before assignment"
-            },
-            {
-                "name": "return_to_warehouse",
-                "label": "Return to warehouse",
-                "type": "boolean",
-                "default": True,
-                "help": "Whether vehicles must return to warehouse after deliveries"
-            },
-            {
-                "name": "distance_weight",
-                "label": "Distance weight",
-                "type": "float",
-                "default": 1.0,
-                "min": 0.1,
-                "max": 5.0,
-                "step": 0.1,
-                "help": "Weight given to distance vs capacity utilization"
-            }
+
         ]
     }
 
@@ -109,7 +85,6 @@ def run_optimisation(config_data, params):
                 "parcels_assigned_ids": [p["id"] for p in agent_route_parcels],
                 "parcels_assigned_details": agent_route_parcels, # Full details
                 "route_stop_ids": agent_route_stop_ids,
-                "route_stop_coordinates": agent_route_stops_coords,
                 "total_weight": sum(p["weight"] for p in agent_route_parcels),
                 "capacity_weight": agent["capacity_weight"],
                 "total_distance": round(total_distance, 2),
