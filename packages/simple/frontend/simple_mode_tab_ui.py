@@ -101,7 +101,7 @@ def render_simple_mode_tab(ss):
 
         # Optimisation Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
-            with streamlit.expander("Manage Optimisation Script", expanded=True):
+            with streamlit.expander("Optimisation Script", expanded=True):
                 streamlit.markdown("---")  # Separator below expander title
                 
                 if not ss.config_data:
@@ -109,35 +109,51 @@ def render_simple_mode_tab(ss):
                 elif ss.get("jade_platform_running"):
                     streamlit.warning("Optimisation script cannot be changed while JADE is running")
                 else:
+                    # Current script status
                     if ss.optimisation_script_loaded_successfully:
-                        streamlit.success(f"Loaded: {ss.optimisation_script_filename}")
+                        streamlit.success(f"Current script: {ss.optimisation_script_filename}")
+                        if ss.optimisation_script_param_schema and "parameters" in ss.optimisation_script_param_schema:
+                            streamlit.caption(f"Parameters: {len(ss.optimisation_script_param_schema['parameters'])} configurable")
                     
-                    # Show dropdown of available featured scripts
-                    if ss.get("featured_optimisation_scripts"):
-                        selected_script = streamlit.selectbox(
-                            "Select featured optimisation script",
-                            options=["None"] + ss.featured_optimisation_scripts,
-                            key="selected_featured_script"
-                        )
+                    # Script selection section
+                    with streamlit.container():
+                        streamlit.subheader("Load Script", divider='gray')
                         
-                        col_select, col_load = streamlit.columns(2)
-                        with col_select:
-                            if streamlit.button("Select script", 
-                                             key="select_featured_script_btn",
+                        # Featured scripts dropdown
+                        if ss.get("featured_optimisation_scripts"):
+                            selected_script = streamlit.selectbox(
+                                "Featured scripts",
+                                options=["None"] + ss.featured_optimisation_scripts,
+                                key="selected_featured_script"
+                            )
+                            
+                            col_select, col_load = streamlit.columns(2)
+                            with col_select:
+                                if streamlit.button("Use selected script", 
+                                                 key="select_featured_script_btn",
+                                                 use_container_width=True,
+                                                 disabled=selected_script == "None"):
+                                    script_path = os.path.join("pnp", "featured", selected_script)
+                                    ss.optimisation_script_filename = script_path
+                                    streamlit.rerun()
+                            
+                            with col_load:
+                                if streamlit.button("Load script file...", 
+                                                 key="load_script_menu_btn",
+                                                 use_container_width=True):
+                                    optimisation_logic.handle_initiate_load_script_action(ss)
+                                    streamlit.rerun()
+                        else:
+                            streamlit.warning("No featured scripts found in pnp/featured")
+                        
+                        # Clear current script button
+                        if ss.optimisation_script_loaded_successfully:
+                            if streamlit.button("Clear current script",
+                                             key="clear_script_btn",
                                              use_container_width=True,
-                                             disabled=selected_script == "None"):
-                                script_path = os.path.join("pnp", "featured", selected_script)
-                                ss.optimisation_script_filename = script_path
+                                             type="primary"):
+                                optimisation_logic.clear_optimisation_script(ss)
                                 streamlit.rerun()
-                        
-                        with col_load:
-                            if streamlit.button("Load script", 
-                                             key="load_script_menu_btn",
-                                             use_container_width=True):
-                                optimisation_logic.handle_initiate_load_script_action(ss)
-                                streamlit.rerun()
-                    else:
-                        streamlit.warning("No featured optimisation scripts found in pnp/featured")
 
         # Execution Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
