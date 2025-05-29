@@ -179,8 +179,9 @@ def render_simple_mode_tab(ss):
                                     error_msg = ss.optimisation_script_error_message or "Unknown error loading script"
                                     ss.optimisation_script_error_message = error_msg
                             
-                                # Reset dropdown and return to main view
-                                ss.selected_featured_script = "None"
+                                # Reset dropdown by deleting the session state variable
+                                if 'selected_featured_script' in ss:
+                                    del ss.selected_featured_script
                                 # Always rerun to update UI immediately
                                 streamlit.rerun()
                             
