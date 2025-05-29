@@ -182,7 +182,10 @@ def render_simple_mode_tab(ss):
                                 # Reset dropdown by deleting the session state variable
                                 if 'selected_featured_script' in ss:
                                     del ss.selected_featured_script
-                                # Always rerun to update UI immediately
+                                # Clear the file uploader widget and return to main view
+                                if 'optimisation_file_uploader_widget' in ss:
+                                    del ss.optimisation_file_uploader_widget
+                                ss.simple_config_action_selected = None
                                 streamlit.rerun()
                             
                             except Exception as e:
@@ -194,7 +197,6 @@ def render_simple_mode_tab(ss):
                                      key="load_script_menu_btn",
                                      use_container_width=True):
                         ss.simple_config_action_selected = "load_script"
-                        optimisation_logic.handle_initiate_load_script_action(ss)
                         streamlit.rerun()
                     
                     # Edit parameters button
