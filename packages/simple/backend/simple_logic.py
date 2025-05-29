@@ -72,3 +72,67 @@ def generate_quick_config(ss, num_parcels, num_agents, config_name="generated-co
     ss.processed_file_id_for_buffer = None
 
     return {'type': 'success', 'message': f"Successfully generated and loaded configuration '{ss.config_filename}' with {num_parcels} parcels and {num_agents} agents."}
+
+def handle_simple_mode_start_workflow(ss):
+    """
+    Handles the full automated workflow for simple mode:
+    Start JADE, create agents, send config, run optimisation, send routes, get sim results.
+    """
+    ss.simple_workflow_messages = [] # To store messages from each step
+
+    # --- Step 1: Start JADE Platform ---
+    if not ss.get("jade_platform_running", False):
+        execution_logic.handle_start_jade(ss)
+        if not ss.get("jade_platform_running"):
+            ss.simple_workflow_messages.append({'type': 'error', 'message': f"Failed to start JADE platform: {ss.get('jade_platform_status_message', 'Unknown error')}"})
+            return
+        ss.simple_workflow_messages.append({'type': 'success', 'message': "JADE platform started successfully."})
+    else:
+        ss.simple_workflow_messages.append({'type': 'info', 'message': "JADE platform already running."})
+
+    # --- Step 2: Create Agents ---
+    if not ss.get("jade_agents_created", False):
+        result_agents = execution_logic.handle_create_agents(ss)
+        ss.simple_workflow_messages.append(result_agents)
+        if result_agents.get('type') == 'error':
+            return
+    else:
+        ss.simple_workflow_messages.append({'type': 'info', 'message': "Agents were already marked as created."})
+
+    # --- Step 3: Send Warehouse & Parcel Data to MRA ---
+    result_send_config = execution_logic.handle_send_warehouse_parcel_data_to_mra(ss)
+    ss.simple_workflow_messages.append(result_send_config)
+    if result_send_config.get('type') == 'error':
+        return
+
+    # --- Step 4: Trigger MRA Optimisation Cycle ---
+    result_mra_data_prep = execution_logic.handle_trigger_mra_optimisation_cycle(ss)
+    ss.simple_workflow_messages.append(result_mra_data_prep)
+    if result_mra_data_prep.get('type') == 'error':
+        return
+
+    # --- Step 5: Run Python Optimisation Script ---
+    result_script_run = optimisation_logic.run_optimisation_script(ss)
+    ss.simple_workflow_messages.append(result_script_run)
+    if result_script_run.get('type') == 'error' or not ss.get("optimisation_run_complete") or not ss.get("optimisation_results"):
+        return
+
+    # --- Step 6: Send Optimised Routes to MRA ---
+    optimised_routes = ss.optimisation_results.get("optimised_routes")
+    if optimised_routes:
+        result_send_routes = execution_logic.handle_send_optimised_routes_to_mra(ss)
+        ss.simple_workflow_messages.append(result_send_routes)
+        if result_send_routes.get('type') == 'error':
+            return
+    else:
+        ss.simple_workflow_messages.append({'type': 'info', 'message': "No optimised routes to send to MRA."})
+
+    # --- Step 7: Fetch JADE Simulation Results ---
+    if ss.get("routes_sent_to_mra_successfully", False) or not optimised_routes:
+        result_fetch_sim = execution_logic.handle_get_simulated_routes_from_jade(ss)
+        if result_fetch_sim and result_fetch_sim.get('message'):
+             ss.simple_workflow_messages.append(result_fetch_sim)
+        elif not result_fetch_sim:
+            ss.simple_workflow_messages.append({'type': 'warning', 'message': "Fetching simulation results returned no explicit status."})
+
+    ss.simple_workflow_messages.append({'type': 'success', 'message': "Automated workflow completed."})
