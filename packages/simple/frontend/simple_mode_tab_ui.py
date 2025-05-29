@@ -141,6 +141,7 @@ def render_simple_mode_tab(ss):
                                 if streamlit.button("Load script file...", 
                                                  key="load_script_menu_btn",
                                                  use_container_width=True):
+                                    ss.simple_config_action_selected = "load_script"
                                     optimisation_logic.handle_initiate_load_script_action(ss)
                                     streamlit.rerun()
                         else:
