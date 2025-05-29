@@ -154,36 +154,37 @@ def render_simple_mode_tab(ss):
                                 script_path = os.path.join("pnp", "featured", selected_script)
                                 if not os.path.exists(script_path):
                                     raise FileNotFoundError(f"Script file not found at: {script_path}")
-                                
+                            
                                 with open(script_path, 'r', encoding='utf-8') as f:
                                     file_content = f.read()
-                                
-                                try:
-                                    # Set the file object in session state first
-                                    ss.optimisation_file_uploader_widget = type('FileObj', (), {
-                                        'name': selected_script,
-                                        'getvalue': lambda: file_content.encode('utf-8'),
-                                        'file_id': hash(file_content)  # Add unique file_id
-                                    })
-                                    # Then call the handler with just session state
-                                    success = optimisation_logic.handle_optimisation_file_upload(ss)
-                                    
-                                    if success:
-                                        ss.simple_config_action_selected = None
-                                        # Force clear any previous error message
-                                        ss.optimisation_script_error_message = None
-                                        # Explicitly set loaded state
-                                        ss.optimisation_script_loaded_successfully = True
-                                        streamlit.rerun()
-                                    else:
-                                        error_msg = ss.optimisation_script_error_message or "Unknown error loading script"
-                                        streamlit.error(f"Failed to load script: {error_msg}")
-                                except Exception as e:
-                                    ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
-                                    streamlit.error(ss.optimisation_script_error_message)
+                            
+                                # Reset error state before loading
+                                ss.optimisation_script_error_message = None
+                            
+                                # Create file-like object
+                                ss.optimisation_file_uploader_widget = type('FileObj', (), {
+                                    'name': selected_script,
+                                    'getvalue': lambda: file_content.encode('utf-8'),
+                                    'file_id': hash(file_content)  # Add unique file_id
+                                })
+                            
+                                # Process the script
+                                success = optimisation_logic.handle_optimisation_file_upload(ss)
+                            
+                                if success:
+                                    ss.simple_config_action_selected = None
+                                    ss.optimisation_script_loaded_successfully = True
+                                else:
+                                    # Use explicit error if available
+                                    error_msg = ss.optimisation_script_error_message or "Unknown error loading script"
+                                    ss.optimisation_script_error_message = error_msg
+                            
+                                # Always rerun to update UI immediately
+                                streamlit.rerun()
+                            
                             except Exception as e:
                                 ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
-                                streamlit.error(ss.optimisation_script_error_message)
+                                streamlit.rerun()
                     
                     if streamlit.button("Load script file...", 
                                      key="load_script_menu_btn",
