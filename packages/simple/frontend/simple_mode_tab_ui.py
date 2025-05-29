@@ -1,4 +1,5 @@
 import streamlit
+import os
 from packages.configuration.backend import config_logic
 from packages.configuration.frontend.edit_view_ui import render_edit_view
 from packages.configuration.frontend.load_view_ui import render_load_view
@@ -115,7 +116,10 @@ def render_simple_mode_tab(ss):
                             key="script_select_box"
                         )
                         if selected_script:
-                            ss.optimisation_script_filename = os.path.join(script_dir, selected_script)
+                            # Find the selected script's path from featured scripts
+                            selected_script_info = next((s for s in ss.featured_optimisation_scripts if s["name"] == selected_script), None)
+                            if selected_script_info:
+                                ss.optimisation_script_filename = selected_script_info["path"]
                             ss.simple_config_action_selected = "load_script"
                             streamlit.rerun()
                     else:
