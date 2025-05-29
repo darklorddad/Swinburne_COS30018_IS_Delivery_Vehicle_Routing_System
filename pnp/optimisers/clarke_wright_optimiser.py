@@ -284,6 +284,7 @@ def run_optimisation(config_data, params):
             "parcels_assigned_ids": [p["id"] for p in route_parcels],
             "parcels_assigned_details": route_parcels,
             "route_stop_ids": route_stop_ids,
+            "route_stop_coordinates": [warehouse_coords] + [p["coordinates_x_y"] for p in route_parcels] + ([warehouse_coords] if return_to_warehouse else []),
             "total_weight": sum(p["weight"] for p in route_parcels),
             "capacity_weight": delivery_agents[agent_idx]["capacity_weight"],
             "total_distance": round(total_distance, 2),
