@@ -176,8 +176,7 @@ def render_simple_mode_tab(ss):
                     if ss.optimisation_script_loaded_successfully:
                         if streamlit.button("Clear script",
                                          key="clear_script_btn",
-                                         use_container_width=True,
-                                         type="primary"):
+                                         use_container_width=True):
                             optimisation_logic.clear_optimisation_script(ss)
                             streamlit.rerun()
 
