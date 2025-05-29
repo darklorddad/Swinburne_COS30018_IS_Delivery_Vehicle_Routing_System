@@ -108,35 +108,34 @@ def render_simple_mode_tab(ss):
                 elif ss.get("jade_platform_running"):
                     streamlit.warning("Optimisation script cannot be changed while JADE is running")
                 else:
-                    # Show current parameters if script is loaded
-                    if ss.optimisation_script_loaded_successfully and ss.optimisation_script_param_schema and "parameters" in ss.optimisation_script_param_schema:
-                        params_list = ss.optimisation_script_param_schema["parameters"]
-                        if params_list:
-                            table_data = []
-                            for param in params_list:
-                                table_data.append({
-                                    "Parameter": param.get("label", param.get("name", "")),
-                                    "Type": param.get("type", ""),
-                                    "Value": str(ss.optimisation_script_user_values.get(param["name"], "")),
-                                    "Description": param.get("help", "")
-                                })
-                            streamlit.dataframe(
-                                table_data,
-                                use_container_width=True,
-                                column_config={
-                                    "Parameter": "Parameter",
-                                    "Type": "Type",
-                                    "Value": "Current Value", 
-                                    "Description": "Description"
-                                }
-                            )
-                        else:
-                            streamlit.info("No configurable parameters defined in this script")
-                    
-                    streamlit.markdown("---")  # Separator after parameters
-                    
-                    # Current script status
+                    # Current script status and parameters
                     if ss.optimisation_script_loaded_successfully:
+                        # Show parameters if available
+                        if ss.optimisation_script_param_schema and "parameters" in ss.optimisation_script_param_schema:
+                            params_list = ss.optimisation_script_param_schema["parameters"]
+                            if params_list:
+                                table_data = []
+                                for param in params_list:
+                                    table_data.append({
+                                        "Parameter": param.get("label", param.get("name", "")),
+                                        "Type": param.get("type", ""),
+                                        "Value": str(ss.optimisation_script_user_values.get(param["name"], "")),
+                                        "Description": param.get("help", "")
+                                    })
+                                streamlit.dataframe(
+                                    table_data,
+                                    use_container_width=True,
+                                    column_config={
+                                        "Parameter": "Parameter",
+                                        "Type": "Type",
+                                        "Value": "Current Value", 
+                                        "Description": "Description"
+                                    }
+                                )
+                            else:
+                                streamlit.info("No configurable parameters defined in this script")
+                        
+                        streamlit.markdown("---")  # Separator after parameters
                         streamlit.success(f"Current script: {ss.optimisation_script_filename}")
                     
                     # Featured scripts dropdown
@@ -153,6 +152,9 @@ def render_simple_mode_tab(ss):
                                          disabled=selected_script == "None"):
                             script_path = os.path.join("pnp", "featured", selected_script)
                             ss.optimisation_script_filename = script_path
+                            success = optimisation_logic.handle_optimisation_file_upload(ss)
+                            if success:
+                                ss.simple_config_action_selected = None  # Return to menu
                             streamlit.rerun()
                     
                     if streamlit.button("Load script file...", 
