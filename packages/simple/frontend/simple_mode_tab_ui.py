@@ -102,13 +102,11 @@ def render_simple_mode_tab(ss):
                     streamlit.rerun()
 
         # Optimisation Section (Only shown in the main simple view, not edit/load)
-        if not simple_config_action:
+        if not simple_config_action and ss.config_data:
             with streamlit.expander("Manage Optimisation Script", expanded=True):
                 streamlit.markdown("---")  # Separator below expander title
                 
-                if not ss.config_data:
-                    streamlit.warning("Please create or load a configuration first")
-                elif ss.get("jade_platform_running"):
+                if ss.get("jade_platform_running"):
                     streamlit.warning("Optimisation script cannot be changed while JADE is running")
                 else:
                     # Current script status and parameters
