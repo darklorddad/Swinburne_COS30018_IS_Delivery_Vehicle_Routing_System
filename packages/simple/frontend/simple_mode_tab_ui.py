@@ -4,6 +4,7 @@ from packages.configuration.backend import config_logic
 from packages.configuration.frontend.edit_view_ui import render_edit_view
 from packages.configuration.frontend.load_view_ui import render_load_view
 from packages.optimisation.backend import optimisation_logic
+from packages.optimisation.frontend.edit_optimisation_parameters_view_ui import render_edit_optimisation_parameters_view
 from packages.execution.backend import execution_logic
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab
 from packages.optimisation.frontend.optimisation_ui_utils import render_optimisation_results_display
@@ -45,6 +46,8 @@ def render_simple_mode_tab(ss):
     elif simple_config_action == "load_script":
         from packages.optimisation.frontend.load_optimisation_script_view_ui import render_load_optimisation_script_view
         render_load_optimisation_script_view(ss)
+    elif simple_config_action == "edit_script_params":
+        render_edit_optimisation_parameters_view(ss)
     else:
         # This is the main view of the simple tab when not editing or loading a config
         # Configuration Management Section
@@ -201,9 +204,10 @@ def render_simple_mode_tab(ss):
                     # Edit parameters button
                     if ss.optimisation_script_loaded_successfully and ss.optimisation_script_param_schema and "parameters" in ss.optimisation_script_param_schema:
                         if streamlit.button("Edit parameters",
-                                         key="edit_parameters_btn",
+                                         key="edit_parameters_btn_simple",
                                          use_container_width=True):
                             optimisation_logic.handle_edit_parameters_action(ss)
+                            ss.simple_config_action_selected = "edit_script_params"
                             streamlit.rerun()
                     
                     # Clear script button

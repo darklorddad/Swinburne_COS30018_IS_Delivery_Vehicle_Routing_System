@@ -267,9 +267,13 @@ def handle_save_parameters_action(ss):
     # Delegate committing changes (like clearing snapshot) to parameter_logic.
     result = parameter_logic.commit_parameter_changes(ss)
     ss.optimisation_action_selected = None # Return to initial view
+    if ss.get("simple_mode", False):
+        ss.simple_config_action_selected = None
     return result
 
 # Cancels parameter editing, reverting values to their state before editing, and returns to the initial view.
 def handle_cancel_edit_parameters_action(ss):
     parameter_logic.revert_parameter_changes(ss)
     ss.optimisation_action_selected = None # Return to initial view
+    if ss.get("simple_mode", False):
+        ss.simple_config_action_selected = None
