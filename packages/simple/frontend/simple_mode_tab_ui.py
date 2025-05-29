@@ -252,6 +252,7 @@ def render_simple_mode_tab(ss):
                         execution_logic.handle_stop_jade(ss)
                         streamlit.rerun()
 
-            if ss.get("optimisation_run_complete") and not ss.get("jade_platform_running"):
-                with streamlit.expander("Visualise Simulated Routes", expanded=True):
+                # Visualisation section
+                if ss.get("optimisation_run_complete") and not ss.get("jade_platform_running"):
+                    streamlit.markdown("---") # Separator above visualisation
                     render_visualisation_tab(ss)
