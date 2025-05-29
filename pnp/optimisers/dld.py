@@ -2,6 +2,8 @@
 import math
 import copy
 import json
+import random
+import re
 import requests # Ensure 'requests' library is installed (pip install requests)
 
 def get_params_schema():
@@ -103,13 +105,14 @@ def _calculate_route_weight(route_parcels):
     return sum(parcel["weight"] for parcel in route_parcels)
 
 # --- LLM Specific Helper Functions ---
-def _build_llm_prompt(warehouse_coords, parcels, delivery_agents, return_to_warehouse_flag):
-    """Constructs the prompt for the LLM."""
+def _build_llm_prompt(warehouse_coords, parcels, delivery_agents, return_to_warehouse_flag, additional_notes=None):
+    """Constructs the prompt for the LLM, including any pre-computation notes."""
     prompt_lines = [
-        "You are a vehicle routing problem (VRP) solver. Your task is to assign parcels to delivery agents to form optimal delivery routes.",
+        "You are an expert vehicle routing problem (VRP) solver. Your task is to assign parcels to delivery agents to form optimal delivery routes, ensuring all constraints are met.",
+        "Key Objective: Assign AS MANY PARCELS AS POSSIBLE while adhering to all constraints. If a parcel cannot be assigned, it should be explicitly listed as unassigned.",
+        "",
         "Constraints:",
-        "- Each agent has a maximum weight capacity.",
-        "- The total weight of parcels assigned to an agent must not exceed its capacity.",
+        "- Each agent has a maximum weight capacity. The total weight of parcels assigned to an agent MUST NOT exceed this capacity.",
         "- Each parcel should be delivered by at most one agent.",
         f"- All routes start at the warehouse located at {warehouse_coords}.",
     ]
@@ -118,8 +121,14 @@ def _build_llm_prompt(warehouse_coords, parcels, delivery_agents, return_to_ware
     else:
         prompt_lines.append("- Routes end at the last delivered parcel's location.")
     
+    if additional_notes:
+        prompt_lines.append("\nImportant Notes Based on Pre-analysis:")
+        for note in additional_notes:
+            prompt_lines.append(f"- {note}")
+        prompt_lines.append("")
+
     prompt_lines.extend([
-        "Input Data:",
+        "Input Data:", 
         f"Warehouse Coordinates: {warehouse_coords}",
         "Parcels (ID, Coordinates [x,y], Weight):"
     ])
@@ -206,15 +215,22 @@ def run_optimisation(config_data, params):
     parcels_map = {p["id"]: p for p in all_parcels_list}
     agents_map = {a["id"]: a for a in delivery_agents_list}
 
-    # Build the prompt
-    prompt_content = _build_llm_prompt(warehouse_coords, all_parcels_list, delivery_agents_list, return_to_warehouse)
+    # --- Pre-LLM checks and prompt notes ---
+    prompt_notes = []
+    total_parcel_weight = sum(p['weight'] for p in all_parcels_list)
+    total_agent_capacity = sum(a['capacity_weight'] for a in delivery_agents_list)
 
-    print(prompt_content)
+    if total_parcel_weight > total_agent_capacity:
+        prompt_notes.append(f"Warning: Total parcel weight ({total_parcel_weight}) exceeds total available agent capacity ({total_agent_capacity}). It will be impossible to assign all parcels.")
+    
+    max_single_agent_capacity = max(a['capacity_weight'] for a in delivery_agents_list) if delivery_agents_list else 0
+    for p_check in all_parcels_list:
+        if p_check['weight'] > max_single_agent_capacity:
+            prompt_notes.append(f"Warning: Parcel {p_check['id']} (weight {p_check['weight']}) is heavier than any single agent's maximum capacity ({max_single_agent_capacity}) and cannot be assigned by any single agent.")
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
+    prompt_content = _build_llm_prompt(warehouse_coords, all_parcels_list, delivery_agents_list, return_to_warehouse, prompt_notes)
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     if http_referer:
         headers["HTTP-Referer"] = http_referer
     if x_title:
@@ -247,15 +263,25 @@ def run_optimisation(config_data, params):
 
         llm_output_str = response_data["choices"][0]["message"]["content"]
         
-        # Try to parse the LLM string output as JSON
+        json_str_to_parse = ""
+        # Try to extract JSON robustly
+        json_match_multiline = re.search(r"```json\s*(\{.*?\})\s*```", llm_output_str, re.DOTALL)
+        json_match_inline = re.search(r"```json\s*(\{.*\})\s*```", llm_output_str) # for single line JSON within backticks
+        
+        if json_match_multiline:
+            json_str_to_parse = json_match_multiline.group(1)
+        elif json_match_inline:
+            json_str_to_parse = json_match_inline.group(1)
+        else:
+            first_brace = llm_output_str.find('{')
+            last_brace = llm_output_str.rfind('}')
+            if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+                json_str_to_parse = llm_output_str[first_brace : last_brace+1]
+            else:
+                raise ValueError(f"Could not isolate a JSON block from LLM response. Raw: '{llm_output_str}'")
+        
         try:
-            # The LLM might sometimes wrap the JSON in backticks or add other text
-            if llm_output_str.startswith("```json"):
-                llm_output_str = llm_output_str[len("```json"):].strip()
-            if llm_output_str.endswith("```"):
-                llm_output_str = llm_output_str[:-len("```")].strip()
-            
-            llm_solution = json.loads(llm_output_str)
+            llm_solution = json.loads(json_str_to_parse)
         except json.JSONDecodeError as e:
             error_msg = f"Failed to parse LLM JSON response: {e}. Raw response: '{llm_output_str}'"
             return {
@@ -264,80 +290,96 @@ def run_optimisation(config_data, params):
                 "unassigned_parcels_details": all_parcels_list
             }
 
-        llm_assignments = llm_solution.get("assignments", [])
-        
-        for assignment in llm_assignments:
+        # --- Pass 1: Process and Validate LLM's assignments ---
+        llm_proposed_assignments = llm_solution.get("assignments", [])
+        llm_temp_assigned_ids_this_pass = set() # Track PIDs assigned by LLM in this pass to detect LLM self-duplication
+
+        for assignment in llm_proposed_assignments:
             agent_id = assignment.get("agent_id")
-            parcel_ids_in_order = assignment.get("parcels_in_route_order", [])
+            parcel_ids_llm_order = assignment.get("parcels_in_route_order", [])
 
-            if not agent_id or agent_id not in agents_map:
-                # LLM provided an invalid agent_id, skip this assignment
-                continue 
+            if not agent_id or agent_id not in agents_map: continue # Invalid agent_id
+
+            current_agent_route_parcels_temp = []
+            current_agent_route_weight_temp = 0
+            is_current_llm_route_valid = True
+
+            for p_id_llm in parcel_ids_llm_order:
+                if p_id_llm not in parcels_map: is_current_llm_route_valid = False; break # Invalid parcel_id
+                if p_id_llm in llm_temp_assigned_ids_this_pass: is_current_llm_route_valid = False; break # LLM assigned same parcel twice
+
+                parcel_obj = parcels_map[p_id_llm]
+                current_agent_route_parcels_temp.append(parcel_obj)
+                current_agent_route_weight_temp += parcel_obj["weight"]
+                llm_temp_assigned_ids_this_pass.add(p_id_llm)
             
-            agent_config = agents_map[agent_id]
-            current_route_parcels_details = []
-            current_route_total_weight = 0
-            valid_assignment = True
+            if not is_current_llm_route_valid: # Problem with this route, revert any temp PIDs
+                for p_obj_revert in current_agent_route_parcels_temp:
+                    llm_temp_assigned_ids_this_pass.discard(p_obj_revert["id"])
+                continue
 
-            for parcel_id in parcel_ids_in_order:
-                if parcel_id not in parcels_map:
-                    # LLM provided an invalid parcel_id, this part of route is problematic
-                    # For simplicity, we might skip the whole agent assignment or just this parcel
-                    valid_assignment = False; break 
-                
-                parcel_obj = parcels_map[parcel_id]
-                if parcel_id in llm_assigned_parcels_ids: # Parcel already assigned by LLM to another route
-                    valid_assignment = False; break
-
-                current_route_parcels_details.append(copy.deepcopy(parcel_obj))
-                current_route_total_weight += parcel_obj["weight"]
+            if current_agent_route_weight_temp > agents_map[agent_id]["capacity_weight"]: # LLM violated capacity
+                for p_obj_revert in current_agent_route_parcels_temp:
+                     llm_temp_assigned_ids_this_pass.discard(p_obj_revert["id"])
+                continue
             
-            if not valid_assignment: continue # Skip this agent if any parcel was invalid/re-assigned
+            # LLM's route for this agent is valid: commit it
+            final_routes_map[agent_id] = [copy.deepcopy(p) for p in current_agent_route_parcels_temp]
+            final_routes_weights[agent_id] = current_agent_route_weight_temp
+            for p_obj_commit in current_agent_route_parcels_temp:
+                script_confirmed_assigned_parcel_ids.add(p_obj_commit["id"])
+        
+        # --- Pass 2: Greedy Repair for remaining unassigned parcels ---
+        parcels_needing_repair = [p for p in all_parcels_list if p["id"] not in script_confirmed_assigned_parcel_ids]
+        parcels_needing_repair.sort(key=lambda p: p["weight"], reverse=True) # Try to fit heavier ones first
 
-            # Check capacity constraint (LLM might make mistakes)
-            if current_route_total_weight > agent_config["capacity_weight"]:
-                # LLM violated capacity. These parcels become unassigned.
-                # (Alternative: try to partially assign, but simpler to mark all as unassigned from this LLM route)
-                continue # Skip this agent's assignment
+        for parcel_to_repair in parcels_needing_repair:
+            agent_ids_for_repair = list(agents_map.keys())
+            random.shuffle(agent_ids_for_repair) # Try agents in random order for this parcel
 
-            # If valid and within capacity
-            for p_detail in current_route_parcels_details:
-                 llm_assigned_parcels_ids.add(p_detail["id"])
+            for agent_id_repair in agent_ids_for_repair:
+                agent_cap = agents_map[agent_id_repair]["capacity_weight"]
+                if final_routes_weights[agent_id_repair] + parcel_to_repair["weight"] <= agent_cap:
+                    final_routes_map[agent_id_repair].append(copy.deepcopy(parcel_to_repair))
+                    final_routes_weights[agent_id_repair] += parcel_to_repair["weight"]
+                    script_confirmed_assigned_parcel_ids.add(parcel_to_repair["id"])
+                    break # Parcel assigned in repair
 
-            route_stop_ids = ["Warehouse"] + [p["id"] for p in current_route_parcels_details]
-            route_stop_coordinates = [list(warehouse_coords)] + [list(p["coordinates_x_y"]) for p in current_route_parcels_details]
+        # --- Construct final output ---
+        optimised_routes_output = []
+        for agent_id_out, route_parcels_list_out in final_routes_map.items():
+            agent_detail_out = agents_map[agent_id_out]
+            parcels_assigned_ids_out = [p["id"] for p in route_parcels_list_out]
+            
+            route_stop_ids_out = ["Warehouse"]
+            route_stop_coords_out = [list(warehouse_coords)]
 
-            if return_to_warehouse and current_route_parcels_details: # only add if parcels exist
-                route_stop_ids.append("Warehouse")
-                route_stop_coordinates.append(list(warehouse_coords))
-            elif not current_route_parcels_details and return_to_warehouse: # Empty route, but returns
-                route_stop_ids.append("Warehouse")
-                route_stop_coordinates.append(list(warehouse_coords))
+            if route_parcels_list_out: # If agent has parcels
+                route_stop_ids_out.extend(parcels_assigned_ids_out)
+                route_stop_coords_out.extend([list(p["coordinates_x_y"]) for p in route_parcels_list_out])
+            
+            if return_to_warehouse: # Always add warehouse at end if true, even for empty routes
+                route_stop_ids_out.append("Warehouse")
+                route_stop_coords_out.append(list(warehouse_coords))
+            elif not route_parcels_list_out and not return_to_warehouse: # Empty, no return -> just warehouse
+                pass # Already ["Warehouse"]
 
+            total_dist_out = _calculate_route_distance(route_parcels_list_out, warehouse_coords, return_to_warehouse)
 
-            total_dist = _calculate_route_distance(current_route_parcels_details, warehouse_coords, return_to_warehouse)
-
-            optimised_routes.append({
-                "agent_id": agent_id,
-                "parcels_assigned_ids": [p["id"] for p in current_route_parcels_details],
-                "parcels_assigned_details": current_route_parcels_details,
-                "route_stop_ids": route_stop_ids,
-                "route_stop_coordinates": route_stop_coordinates,
-                "total_weight": current_route_total_weight,
-                "capacity_weight": agent_config["capacity_weight"],
-                "total_distance": round(total_dist, 2),
+            optimised_routes_output.append({
+                "agent_id": agent_id_out,
+                "parcels_assigned_ids": parcels_assigned_ids_out,
+                "parcels_assigned_details": route_parcels_list_out,
+                "route_stop_ids": route_stop_ids_out,
+                "route_stop_coordinates": route_stop_coords_out,
+                "total_weight": final_routes_weights[agent_id_out],
+                "capacity_weight": agent_detail_out["capacity_weight"],
+                "total_distance": round(total_dist_out, 2),
             })
         
-        # Identify unassigned parcels based on LLM's explicit list and our validation
-        final_unassigned_parcels_ids = set(p["id"] for p in all_parcels_list) - llm_assigned_parcels_ids
-        # Also add parcels LLM explicitly said were unassigned, if not already caught
-        if "unassigned_parcel_ids" in llm_solution:
-            for pid in llm_solution["unassigned_parcel_ids"]:
-                if pid in parcels_map: # ensure it's a valid parcel id
-                     final_unassigned_parcels_ids.add(pid)
-
-
-        final_unassigned_parcels_details = [parcels_map[pid] for pid in final_unassigned_parcels_ids if pid in parcels_map]
+        final_unassigned_parcels_ids_set = set(p["id"] for p in all_parcels_list) - script_confirmed_assigned_parcel_ids
+        
+        final_unassigned_parcels_details_list = [parcels_map[pid] for pid in final_unassigned_parcels_ids_set if pid in parcels_map]
         
         return {
             "status": "success" if not final_unassigned_parcels_ids else "warning",
