@@ -31,18 +31,27 @@ def render_load_optimisation_script_view(ss):
                             key = "load_optimisation_script_button", 
                             use_container_width = True, 
                             disabled = load_script_button_disabled):
-            # handle_optimisation_file_upload will set error messages or transition state
+            # handle_optimisation_file_upload will set error messages,
+            # set ss.optimisation_action_selected = None on success (for standard mode nav),
+            # and return success status.
             success = optimisation_logic.handle_optimisation_file_upload(ss)
             if success:
+                # For standard mode, ss.optimisation_action_selected = None (set by backend)
+                # will correctly navigate back to the initial optimisation view.
+
                 if ss.get("simple_mode"):
-                    ss.simple_config_action_selected = None  # Clear the action to return to main simple view
-                else:
-                    ss.optimisation_action_selected = None  # Clear the action for standard mode
-                # Clear the file uploader widget to reset the UI for next time
+                    # For simple mode, we also need to ensure its specific action state is cleared
+                    # to return to the main simple view.
+                    ss.simple_config_action_selected = None  
+                
+                # Clear the file uploader widget after successful processing in both modes
                 if 'optimisation_file_uploader_widget' in ss:
                     del ss.optimisation_file_uploader_widget
-                # Force immediate UI update
+                
+                # Rerun to reflect changes 
+                # (navigation in standard mode, navigation in simple mode, or cleared widget)
                 streamlit.rerun()
             else:
-                # Show error and stay in load view
+                # If not successful, an error message is set in ss.
+                # Rerun to display the error and stay on the load script page.
                 streamlit.rerun()

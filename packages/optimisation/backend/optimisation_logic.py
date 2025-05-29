@@ -73,6 +73,7 @@ def handle_optimisation_file_upload(ss):
         # The user remains in the "load_script" view to see the error.
         # If uploaded_file was None, load_and_process_script also sets an error message.
         pass
+    return success
 
 # Handles loading a selected featured optimisation script.
 def handle_load_featured_script(ss):
