@@ -196,6 +196,11 @@ def main():
     config_logic.initialise_session_state(ss) 
     optimisation_logic.initialise_session_state(ss)
     execution_logic.initialise_session_state(ss)
+    
+    # Scan featured scripts on first run
+    if "featured_optimisation_scripts" not in ss:
+        from packages.simple.backend.simple_logic import _scan_featured_scripts
+        _scan_featured_scripts(ss)
 
     # Store the current mode to detect changes in the *next* script run.
     ss._internal_previous_simple_mode = current_simple_mode_value

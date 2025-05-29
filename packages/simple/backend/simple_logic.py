@@ -4,6 +4,23 @@ import copy
 from packages.configuration.backend.state_management import DEFAULT_CONFIG_TEMPLATE, _stash_current_config_as_fallback
 from packages.configuration.backend.config_logic import clear_config_from_memory
 
+def _scan_featured_scripts(ss):
+    """Scans pnp/featured directory for Python scripts and stores them in session state"""
+    featured_dir = os.path.join("pnp", "featured")
+    if not os.path.exists(featured_dir):
+        ss.featured_optimisation_scripts = []
+        return
+    
+    try:
+        files = os.listdir(featured_dir)
+        ss.featured_optimisation_scripts = [
+            f for f in files 
+            if f.endswith('.py') and os.path.isfile(os.path.join(featured_dir, f))
+        ]
+    except Exception as e:
+        print(f"Error scanning featured scripts: {e}")
+        ss.featured_optimisation_scripts = []
+
 def generate_quick_config(ss, num_parcels, num_agents, config_name="generated-config"):
     """
     Generates a new configuration with the specified number of parcels and delivery agents,

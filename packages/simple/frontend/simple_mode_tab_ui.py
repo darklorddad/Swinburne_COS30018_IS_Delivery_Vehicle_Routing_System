@@ -110,16 +110,24 @@ def render_simple_mode_tab(ss):
                     if ss.optimisation_script_loaded_successfully:
                         streamlit.success(f"Loaded: {ss.optimisation_script_filename}")
                     
-                    demo_script_path = os.path.join("pnp", "featured", "demo-optimiser.py")
-                    if os.path.exists(demo_script_path):
-                        if streamlit.button("Load Demo Optimisation Script", 
-                                         key="load_demo_script_btn",
-                                         use_container_width=True):
-                            ss.optimisation_script_filename = demo_script_path
-                            ss.simple_config_action_selected = "load_script"
-                            streamlit.rerun()
+                    # Show dropdown of available featured scripts
+                    if ss.get("featured_optimisation_scripts"):
+                        selected_script = streamlit.selectbox(
+                            "Select featured optimisation script",
+                            options=["None"] + ss.featured_optimisation_scripts,
+                            key="selected_featured_script"
+                        )
+                        
+                        if selected_script != "None":
+                            if streamlit.button("Load selected script", 
+                                             key="load_featured_script_btn",
+                                             use_container_width=True):
+                                script_path = os.path.join("pnp", "featured", selected_script)
+                                ss.optimisation_script_filename = script_path
+                                ss.simple_config_action_selected = "load_script"
+                                streamlit.rerun()
                     else:
-                        streamlit.warning("Demo optimiser script not found at pnp/featured/demo-optimiser.py")
+                        streamlit.warning("No featured optimisation scripts found in pnp/featured")
 
         # Execution Section (Only shown in the main simple view, not edit/load)
         if not simple_config_action:
