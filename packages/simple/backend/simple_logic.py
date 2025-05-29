@@ -155,5 +155,13 @@ def handle_simple_mode_start_workflow(ss):
         result_fetch_sim = execution_logic.handle_get_simulated_routes_from_jade(ss)
         _log_step("Step 8: Fetch Simulation Results", result_fetch_sim if result_fetch_sim else "No explicit status from fetch.")
 
-    ss.simple_workflow_final_status = {'type': 'success', 'message': "Workflow completed successfully."}
-    print("Simple Workflow: All steps completed successfully.")
+    # --- Step 9: Stop JADE Platform ---
+    if ss.get("jade_platform_running", False):
+        result_stop = execution_logic.handle_stop_jade(ss)
+        _log_step("Step 9: Stop JADE", result_stop)
+        if result_stop.get('type') == 'error':
+            ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow completed but failed to stop JADE: {result_stop.get('message')}"}
+            return
+
+    ss.simple_workflow_final_status = {'type': 'success', 'message': "Workflow completed successfully and JADE stopped."}
+    print("Simple Workflow: All steps completed successfully and JADE stopped.")
