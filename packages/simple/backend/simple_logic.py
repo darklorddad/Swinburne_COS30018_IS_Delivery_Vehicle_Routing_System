@@ -171,5 +171,5 @@ def handle_simple_mode_start_workflow(ss):
             ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow completed but failed to stop JADE: {result_stop.get('message', 'Unknown error')}"}
             return
 
-    ss.simple_workflow_final_status = {'type': 'success', 'message': "Workflow completed successfully and JADE stopped."}
-    print("Simple Workflow: All steps completed successfully and JADE stopped.")
+    ss.simple_workflow_final_status = {'type': 'success', 'message': "Workflow completed successfully"}
+    print("Simple Workflow: All steps completed successfully.")
