@@ -87,8 +87,9 @@ def render_simple_mode_tab(ss):
                 if "delivery_agents" in ss.config_data and ss.config_data["delivery_agents"]:
                     streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)
                 
-                streamlit.markdown("---")  # Add separator between tables and filename
+                # Moved filename above the separator
                 streamlit.success(f"{ss.config_filename}")
+                streamlit.markdown("---")  # Separator before buttons
                 
                 # Buttons stacked vertically
                 if streamlit.button("Edit configuration", key="simple_config_edit_current_btn", use_container_width=True):
@@ -136,13 +137,14 @@ def render_simple_mode_tab(ss):
                             else:
                                 streamlit.info("No configurable parameters defined in this script")
                         
-                        streamlit.markdown("---")  # Separator after parameters
+                        # Moved filename above the separator
                         streamlit.success(f"{ss.optimisation_script_filename}")
+                        streamlit.markdown("---")  # Separator after parameters and filename
                     
                     # Featured scripts dropdown
                     if ss.get("featured_optimisation_scripts"):
                         selected_script = streamlit.selectbox(
-                            "Select featured optimisation script",
+                            "Select optimisation script", # Renamed label
                             options=["None"] + ss.featured_optimisation_scripts,
                             key="selected_featured_script"
                         )
@@ -193,8 +195,8 @@ def render_simple_mode_tab(ss):
                                 streamlit.rerun()
                     
                     streamlit.markdown("---")  # Separator between featured scripts and file loader
-                    if streamlit.button("Load script file...", 
-                                     key="load_script_menu_btn",
+                    if streamlit.button("Load script",  # Renamed button
+                                     key="load_script_menu_btn_simple", # Adjusted key for clarity
                                      use_container_width=True):
                         ss.simple_config_action_selected = "load_script"
                         streamlit.rerun()
@@ -216,9 +218,9 @@ def render_simple_mode_tab(ss):
                             optimisation_logic.clear_optimisation_script(ss)
                             streamlit.rerun()
 
-        # Execution Section (Only shown in the main simple view, not edit/load)
-        if not simple_config_action and ss.config_data:
-            with streamlit.expander("Run Simulation and View Results", expanded=True):
+        # Execution Section (Only shown in the view, view, not edit/load)
+        if not simple_config_action and ss.config_data and ss.get("optimisation_script_loaded_successfully", False):
+            with streamlit.expander("Run and View Results", expanded=True): # Renamed expander
                 if not ss.get("jade_platform_running"):
                     if streamlit.button("Start JADE Platform", key="simple_start_jade_btn", use_container_width=True,
                                       disabled=(not ss.config_data or not ss.optimisation_script_loaded_successfully)):
