@@ -221,6 +221,7 @@ def render_simple_mode_tab(ss):
         # Execution Section (Only shown in the view, view, not edit/load)
         if not simple_config_action and ss.config_data and ss.get("optimisation_script_loaded_successfully", False):
             with streamlit.expander("Run and View Results", expanded=True):
+                streamlit.markdown("---") # Separator below expander title
                 
                 if not ss.get("jade_platform_running"):
                     # Disable button if workflow is already marked as running
@@ -252,6 +253,7 @@ def render_simple_mode_tab(ss):
                         execution_logic.handle_stop_jade(ss)
                         streamlit.rerun()
 
+                # Visualisation section
                 # Visualisation section
                 if ss.get("optimisation_run_complete") and not ss.get("jade_platform_running"):
                     streamlit.markdown("---") # Separator above visualisation
