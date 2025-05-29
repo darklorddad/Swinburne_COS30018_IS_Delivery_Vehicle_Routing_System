@@ -158,15 +158,14 @@ def render_simple_mode_tab(ss):
                                 with open(script_path, 'r', encoding='utf-8') as f:
                                     file_content = f.read()
                                 
-                                # Properly trigger the file upload handler
-                                success = optimisation_logic.handle_optimisation_file_upload(
-                                    ss,
-                                    type('FileObj', (), {
-                                        'name': selected_script,
-                                        'getvalue': lambda: file_content.encode('utf-8'),
-                                        'file_id': hash(file_content)  # Add unique file_id
-                                    })
-                                )
+                                # Set the file object in session state first
+                                ss.optimisation_file_uploader_widget = type('FileObj', (), {
+                                    'name': selected_script,
+                                    'getvalue': lambda: file_content.encode('utf-8'),
+                                    'file_id': hash(file_content)  # Add unique file_id
+                                })
+                                # Then call the handler with just session state
+                                success = optimisation_logic.handle_optimisation_file_upload(ss)
                                 
                                 if success:
                                     ss.simple_config_action_selected = None
