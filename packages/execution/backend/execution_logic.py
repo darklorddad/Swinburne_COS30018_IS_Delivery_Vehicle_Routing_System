@@ -85,7 +85,7 @@ def handle_start_jade(ss):
 def handle_stop_jade(ss):
     if not ss.get("jade_platform_running", False):
         ss.jade_platform_status_message = "JADE is not running"
-        return
+        return {'type': 'info', 'message': ss.jade_platform_status_message}
 
     success, message = jade_controller.stop_jade_platform(
         ss.get("jade_process_info"), 
@@ -98,11 +98,12 @@ def handle_stop_jade(ss):
         ss.py4j_gateway_object = None
         ss.jade_log_stop_event = None # Clear stop event
         ss.jade_platform_status_message = message or "JADE stopped successfully"
+        return {'type': 'success', 'message': ss.jade_platform_status_message}
     else:
         # If stop fails, the platform might still be considered running or in an indeterminate state.
         # For execution, we'll assume it failed to stop and remains "running" to reflect the error.
         ss.jade_platform_status_message = message or "Failed to stop JADE"
-    
+        return {'type': 'error', 'message': ss.jade_platform_status_message}
     # Reset downstream states
     ss.jade_agents_created = False
     ss.jade_agent_creation_status_message = None
