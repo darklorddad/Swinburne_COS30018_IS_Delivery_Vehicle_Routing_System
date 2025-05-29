@@ -63,7 +63,7 @@ def handle_optimisation_file_upload(ss):
 
     # script_lifecycle.load_and_process_script will update ss with content, schema, errors etc.
     # and will also handle clearing previous script data if uploaded_file is None.
-    success = script_lifecycle.load_and_process_script_from_uploaded_file(ss, uploaded_file)
+    success = script_lifecycle.load_and_process_script(ss, uploaded_file)
 
     if success:
         ss.optimisation_action_selected = None # Return to initial view on successful load
