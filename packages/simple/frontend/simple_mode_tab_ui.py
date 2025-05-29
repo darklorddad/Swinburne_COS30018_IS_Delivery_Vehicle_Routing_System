@@ -162,8 +162,12 @@ def render_simple_mode_tab(ss):
                                 success = optimisation_logic.handle_optimisation_file_upload(ss)
                                 if success:
                                     ss.simple_config_action_selected = None  # Return to menu
+                                    streamlit.success(f"Successfully loaded script: {selected_script}")
+                                else:
+                                    streamlit.error(f"Failed to load script: {ss.optimisation_script_error_message}")
                             except Exception as e:
                                 ss.optimisation_script_error_message = f"Error loading script: {str(e)}"
+                                streamlit.error(ss.optimisation_script_error_message)
                             streamlit.rerun()
                     
                     if streamlit.button("Load script file...", 
