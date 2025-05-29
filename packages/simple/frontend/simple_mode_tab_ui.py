@@ -85,6 +85,7 @@ def render_simple_mode_tab(ss):
                 if "delivery_agents" in ss.config_data and ss.config_data["delivery_agents"]:
                     streamlit.dataframe(ss.config_data["delivery_agents"], use_container_width=True)
                 
+                streamlit.markdown("---")  # Add separator between tables and filename
                 streamlit.success(f"{ss.config_filename}")
                 
                 # Buttons stacked vertically
