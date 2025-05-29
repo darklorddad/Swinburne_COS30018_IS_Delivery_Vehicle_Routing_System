@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Collections;
 
 public class DeliveryAgent extends Agent {
-    private static final long TIME_PER_DISTANCE_UNIT_MS = 1000; // 1 second per distance unit
+    private static final long TIME_PER_DISTANCE_UNIT_MS = 0;
     private String agentInitialConfigJsonString; // Field to store config
 
     protected void setup() {

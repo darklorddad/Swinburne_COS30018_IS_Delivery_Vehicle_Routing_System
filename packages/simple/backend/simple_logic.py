@@ -6,6 +6,7 @@ from packages.configuration.backend.config_logic import clear_config_from_memory
 from packages.execution.backend import execution_logic
 from packages.optimisation.backend import optimisation_logic
 import os
+import time
 
 def _scan_featured_scripts(ss):
     """Scans pnp/featured directory for Python scripts and stores them in session state"""
@@ -144,6 +145,7 @@ def handle_simple_mode_start_workflow(ss):
     if optimised_routes:
         result_send_routes = execution_logic.handle_send_optimised_routes_to_mra(ss)
         _log_step("Step 7: Send Routes to MRA", result_send_routes)
+        time.sleep(1)
         if result_send_routes.get('type') == 'error':
             ss.simple_workflow_final_status = {'type': 'error', 'message': f"Workflow failed sending routes to MRA: {result_send_routes.get('message')}"}
             return
