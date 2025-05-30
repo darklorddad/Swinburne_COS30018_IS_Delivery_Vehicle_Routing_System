@@ -184,10 +184,10 @@ def handle_simple_mode_start_workflow(ss):
     if max_simulated_duration_minutes > 0:
         # SIMULATION_TIME_SCALE_DIVISOR from DeliveryAgent.java is 600
         # 1 simulated minute = (60000 ms / 600) = 100 ms = 0.1 real seconds
-        python_time_scale_divisor = 600  # Must match DeliveryAgent.SIMULATION_TIME_SCALE_DIVISOR
+        python_time_scale_divisor = 6000  # Must match DeliveryAgent.SIMULATION_TIME_SCALE_DIVISOR
         calculated_real_wait_seconds = (max_simulated_duration_minutes * 60 * 1000) / python_time_scale_divisor / 1000
         
-        wait_buffer_seconds = 15  # Add buffer for JADE processing
+        wait_buffer_seconds = 1  # Add buffer for JADE processing
         simulated_wait_time_seconds = int(calculated_real_wait_seconds + wait_buffer_seconds)
         _log_step(f"Step 7.5: Adaptive Wait", {
             'type': 'info',
