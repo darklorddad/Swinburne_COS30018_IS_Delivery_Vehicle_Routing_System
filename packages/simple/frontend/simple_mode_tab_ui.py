@@ -271,18 +271,17 @@ def render_simple_mode_tab(ss):
                             streamlit.error(f"Metrics Calculation Error: {metrics['error']}")
                         else:
                             streamlit.subheader("Run Summary & Metrics")
-                            # Use 2 or 3 columns for st.metric, adjust as needed
-                            cols_metrics_row1 = streamlit.columns(4)
-                            cols_metrics_row2 = streamlit.columns(4)
-                            
-                            all_metrics_keys = list(metrics.keys())
-                            
-                            for i, key in enumerate(all_metrics_keys):
+                            # Prepare data for table display
+                            metrics_table_data = []
+                            for key, value in metrics.items():
+                                # Nicer looking labels for the table
                                 label = key.replace("_", " ").title()
-                                value = metrics[key]
-                                current_col_set = cols_metrics_row1 if i < 4 else cols_metrics_row2
-                                with current_col_set[i % 4]:
-                                    streamlit.metric(label=label, value=value)
+                                metrics_table_data.append({"Metric": label, "Value": value})
+                        
+                            if metrics_table_data:
+                                streamlit.dataframe(metrics_table_data, 
+                                                 use_container_width=True, 
+                                                 hide_index=True)
                     
                     streamlit.markdown("---") # Separator above visualisation
                     render_visualisation_tab(ss)
