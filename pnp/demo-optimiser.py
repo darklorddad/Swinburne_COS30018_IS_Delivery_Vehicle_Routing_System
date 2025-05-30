@@ -75,6 +75,7 @@ def run_optimisation(config_data, params):
         agent_route_stop_ids = ["Warehouse"] # List of IDs for display
         agent_arrival_times = [current_time] # Arrival at warehouse is op_start_time
         agent_departure_times = [current_time] # Departure from warehouse is also op_start_time initially
+        current_time = agent_op_start_time  # Reset to ensure clean start
 
         while True:
             best_parcel_candidate = None
@@ -115,6 +116,7 @@ def run_optimisation(config_data, params):
                         best_parcel_idx = i
                         candidate_arrival_time = service_start_time
                         candidate_departure_time = service_end_time
+                        current_time = service_end_time  # Update time after service
             
             if best_parcel_candidate:
                 # Assign the best found parcel
@@ -124,6 +126,8 @@ def run_optimisation(config_data, params):
                 agent_route_parcels.append(assigned_parcel)
                 agent_route_stops_coords.append(list(assigned_parcel["coordinates_x_y"]))
                 agent_route_stop_ids.append(assigned_parcel["id"])
+                agent_arrival_times.append(round(candidate_arrival_time))
+                agent_departure_times.append(round(candidate_departure_time))
                 
                 current_capacity -= assigned_parcel["weight"]
                 current_location = list(assigned_parcel["coordinates_x_y"])
