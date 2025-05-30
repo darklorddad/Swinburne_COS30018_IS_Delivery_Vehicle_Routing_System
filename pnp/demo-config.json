@@ -3,53 +3,52 @@
   "parcels": [
     {
       "id": "P001",
-      "coordinates_x_y": [
-        2,
-        3
-      ],
-      "weight": 1
+      "coordinates_x_y": [2, 3],
+      "weight": 1,
+      "earliest_delivery": "08:00",
+      "latest_delivery": "10:00"
     },
     {
       "id": "P002",
-      "coordinates_x_y": [
-        -1,
-        4
-      ],
-      "weight": 1
+      "coordinates_x_y": [-1, 4],
+      "weight": 1,
+      "earliest_delivery": "09:00",
+      "latest_delivery": "11:00"
     },
     {
       "id": "P003",
-      "coordinates_x_y": [
-        5,
-        -2
-      ],
-      "weight": 1
+      "coordinates_x_y": [5, -2],
+      "weight": 1,
+      "earliest_delivery": "10:00",
+      "latest_delivery": "12:00"
     },
     {
       "id": "P004",
-      "coordinates_x_y": [
-        -3,
-        -1
-      ],
-      "weight": 1
+      "coordinates_x_y": [-3, -1],
+      "weight": 1,
+      "earliest_delivery": "07:30",
+      "latest_delivery": "09:30"
     },
     {
       "id": "P005",
-      "coordinates_x_y": [
-        1,
-        1
-      ],
-      "weight": 1
+      "coordinates_x_y": [1, 1],
+      "weight": 1,
+      "earliest_delivery": "08:30",
+      "latest_delivery": "10:30"
     }
   ],
   "delivery_agents": [
     {
       "id": "DA01",
-      "capacity_weight": 3
+      "capacity_weight": 3,
+      "shift_start": "07:00",
+      "shift_end": "13:00"
     },
     {
       "id": "DA02",
-      "capacity_weight": 2
+      "capacity_weight": 2,
+      "shift_start": "08:00",
+      "shift_end": "14:00"
     }
   ]
 }
