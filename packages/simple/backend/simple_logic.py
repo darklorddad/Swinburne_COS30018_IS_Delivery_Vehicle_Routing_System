@@ -167,6 +167,15 @@ def handle_simple_mode_start_workflow(ss):
     else:
         _log_step("Step 7: Send Routes to MRA", {'type': 'info', 'message': "No optimised routes to send to MRA."})
 
+    # --- Allow time for JADE simulation to run ---
+    # Max simulated time could be around 800-1000 minutes.
+    # With SIMULATION_TIME_SCALE_DIVISOR=600, 1 sim minute = 100ms real time.
+    # So 1000 sim minutes = 100 real seconds.
+    simulated_wait_time_seconds = 120 # Add buffer time
+    _log_step("Step 7.5: Wait for Simulation", 
+             {'type': 'info', 'message': f"Waiting {simulated_wait_time_seconds}s for simulation to complete..."})
+    time.sleep(simulated_wait_time_seconds)
+
     # --- Step 8: Fetch JADE Simulation Results ---
     if ss.get("routes_sent_to_mra_successfully", False) or not optimised_routes:
         result_fetch_sim = execution_logic.handle_get_simulated_routes_from_jade(ss)
