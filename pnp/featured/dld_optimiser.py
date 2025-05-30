@@ -7,18 +7,18 @@ def get_params_schema():
     return {
         "parameters": [
             {
-                "name": "chutes_api_token",
-                "label": "Chutes API Token",
-                "type": "string", # Password-like input might be better if Streamlit supports it
-                "default": "YOUR_CHUTES_API_TOKEN_HERE",
-                "help": "API Token for llm.chutes.ai. DO NOT COMMIT ACTUAL TOKENS."
+                "name": "openrouter_api_key",
+                "label": "OpenRouter API Key",
+                "type": "string",
+                "default": "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",
+                "help": "API Key for OpenRouter.ai. DO NOT COMMIT ACTUAL KEYS."
             },
             {
-                "name": "llm_model_name",
+                "name": "llm_model_name", 
                 "label": "LLM Model Name",
                 "type": "string",
-                "default": "deepseek-ai/DeepSeek-V3-0324",
-                "help": "The LLM model to use (e.g., deepseek-ai/DeepSeek-V3-0324)."
+                "default": "deepseek/deepseek-chat-v3-0324:free",
+                "help": "The LLM model to use on OpenRouter (e.g., deepseek/deepseek-chat-v3-0324:free)."
             },
             {
                 "name": "llm_max_tokens_response",
@@ -121,27 +121,28 @@ def _build_llm_prompt(warehouse_coords, parcels, delivery_agents):
     return prompt
 
 def _invoke_llm_sync(api_token, model_name, prompt_content, max_tokens, temperature):
-    if not api_token or api_token == "cpk_cea12043a4874e8e97a74f9f1458ea8f.986b31f04b5056388f96ddf6cbf9f8fe.k73iK5rnIC8bftx5uujaLWdavfaXbFGx":
-        return {"error": "API token is missing or placeholder. Please configure it in parameters."}
+    if not api_token:
+        return {"error": "OpenRouter API key is missing. Please configure it in parameters."}
 
     headers = {
-        "Authorization": "Bearer " + api_token,
-        "Content-Type": "application/json"
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com/dld-laptop/dummy-ref",
+        "X-Title": "DVRS Optimiser"
     }
     body = {
         "model": model_name,
         "messages": [{"role": "user", "content": prompt_content}],
-        "stream": False, # Request non-streamed response for simpler JSON handling
         "max_tokens": max_tokens,
         "temperature": temperature
     }
 
     try:
         response = requests.post(
-            "https://llm.chutes.ai/v1/chat/completions",
+            "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
             json=body,
-            timeout=180  # Increased timeout to 3 minutes for potentially long LLM generation
+            timeout=180
         )
         response.raise_for_status()
         response_data = response.json()
