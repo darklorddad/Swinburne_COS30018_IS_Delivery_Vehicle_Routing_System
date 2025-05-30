@@ -1,5 +1,6 @@
 # DVRS Optimisation Script: Greedy Nearest Neighbour
 import math
+import datetime
 
 def get_params_schema():
     return {
@@ -28,9 +29,40 @@ def get_params_schema():
                 "max": 5.0,
                 "step": 0.1,
                 "help": "Weight given to distance vs capacity utilization"
+            },
+            {
+                "name": "service_time_per_stop_minutes",
+                "label": "Service Time (mins)",
+                "type": "integer",
+                "default": 10,
+                "min": 0,
+                "help": "Fixed time spent at each delivery location"
+            },
+            {
+                "name": "time_per_distance_unit_minutes",
+                "label": "Time per Distance Unit (mins)",
+                "type": "float",
+                "default": 5.0,
+                "min": 0.1,
+                "help": "Time taken to travel one unit of distance"
             }
         ]
     }
+
+def time_str_to_datetime(time_str, date_obj=None):
+    """Converts HH:MM string to a datetime.datetime object."""
+    if not time_str: return None
+    if not date_obj:
+        date_obj = datetime.date.today()
+    try:
+        t = datetime.datetime.strptime(time_str, "%H:%M").time()
+        return datetime.datetime.combine(date_obj, t)
+    except (ValueError, TypeError):
+        return None
+
+def datetime_to_time_str(dt_obj):
+    """Converts datetime.datetime or datetime.time object to HH:MM string."""
+    return dt_obj.strftime("%H:%M") if dt_obj else "N/A"
 
 def _calculate_distance(coord1, coord2):
     # Calculates Euclidean distance between two points.
@@ -40,6 +72,10 @@ def run_optimisation(config_data, params):
     warehouse_coords = config_data.get("warehouse_coordinates_x_y", [0,0])
     unassigned_parcels = [dict(p) for p in config_data.get("parcels", [])]
     delivery_agents = config_data.get("delivery_agents", [])
+    
+    # Get time parameters
+    service_time_minutes = params.get("service_time_per_stop_minutes", 10)
+    time_per_dist_unit_minutes = params.get("time_per_distance_unit_minutes", 5.0)
     
     # Apply sorting if specified in parameters
     if params.get("sort_parcels", "none") != "none":
@@ -52,7 +88,16 @@ def run_optimisation(config_data, params):
 
     for agent in delivery_agents:
         current_capacity = agent["capacity_weight"]
-        current_location = list(warehouse_coords) # Use a mutable copy
+        current_location = list(warehouse_coords)
+        
+        # Initialize agent's start time
+        agent_shift_start_str = agent.get("shift_start", "00:00")
+        current_agent_time = time_str_to_datetime(agent_shift_start_str)
+        if not current_agent_time:
+            current_agent_time = time_str_to_datetime("00:00")
+        
+        # Create parcel lookup map
+        all_parcels_map = {p["id"]: p for p in config_data.get("parcels", [])}
         agent_route_parcels = [] # List of parcel objects for this agent
         agent_route_stops_coords = [list(warehouse_coords)] # List of coordinates for distance calculation
         agent_route_stop_ids = ["Warehouse"] # List of IDs for display
@@ -82,6 +127,22 @@ def run_optimisation(config_data, params):
                 # Assign the best found parcel
                 assigned_parcel = unassigned_parcels.pop(best_parcel_idx) # Remove from unassigned
                 parcels_assigned_globally.add(assigned_parcel["id"])
+
+                # Calculate travel time and handle delivery time windows
+                travel_distance = _calculate_distance(current_location, assigned_parcel["coordinates_x_y"])
+                travel_duration = travel_distance * time_per_dist_unit_minutes
+                current_agent_time += datetime.timedelta(minutes=travel_duration)
+                
+                # Check earliest delivery time constraint
+                parcel_data = all_parcels_map.get(assigned_parcel["id"], {})
+                earliest_delivery = time_str_to_datetime(parcel_data.get("earliest_delivery"))
+                if earliest_delivery and current_agent_time < earliest_delivery:
+                    current_agent_time = earliest_delivery
+                
+                # Set arrival and departure times
+                assigned_parcel["arrival_time"] = datetime_to_time_str(current_agent_time)
+                current_agent_time += datetime.timedelta(minutes=service_time_minutes)
+                assigned_parcel["departure_time"] = datetime_to_time_str(current_agent_time)
 
                 agent_route_parcels.append(assigned_parcel)
                 agent_route_stops_coords.append(list(assigned_parcel["coordinates_x_y"]))
