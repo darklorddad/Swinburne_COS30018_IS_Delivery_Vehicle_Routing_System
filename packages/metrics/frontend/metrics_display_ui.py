@@ -25,7 +25,7 @@ def render_metrics_display(ss, final_status):
             # Add all calculated metrics    
             for key, value in metrics.items():
                 label = key.replace("_", " ").title()
-                metrics_table_data.append({"Metric": label, "Value": value})
+                metrics_table_data.append({"Metric": label, "Value": str(value)}) # Ensure value is string
         
             if metrics_table_data:
                 streamlit.dataframe(
