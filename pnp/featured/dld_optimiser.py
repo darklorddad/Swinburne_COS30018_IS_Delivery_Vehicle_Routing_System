@@ -317,13 +317,27 @@ def run_optimisation(config_data, params):
         }
 
     # --- Post-process LLM Output ---
+    # Extract and validate routes from LLM response
     llm_proposed_routes = llm_response_data.get("optimised_routes", [])
     llm_unassigned_ids = llm_response_data.get("unassigned_parcels_ids", [])
     
+    # If LLM response is empty or invalid structure
+    if not llm_response_data or not isinstance(llm_response_data, dict):
+        return {
+            "status": "error",
+            "message": "LLM returned empty or invalid response format",
+            "optimised_routes": [],
+            "unassigned_parcels": [p["id"] for p in parcels_cfg],
+            "unassigned_parcels_details": copy.deepcopy(parcels_cfg)
+        }
+
+    # If routes are missing or not in expected format
     if not isinstance(llm_proposed_routes, list) or not all(isinstance(r, dict) for r in llm_proposed_routes):
-         return {
-            "status": "error", "message": "LLM output 'optimised_routes' was not a list of route objects.",
-            "optimised_routes": [], "unassigned_parcels": [p["id"] for p in parcels_cfg],
+        return {
+            "status": "error",
+            "message": "LLM output 'optimised_routes' was missing or not a list of route objects",
+            "optimised_routes": [],
+            "unassigned_parcels": [p["id"] for p in parcels_cfg],
             "unassigned_parcels_details": copy.deepcopy(parcels_cfg)
         }
 
@@ -400,12 +414,20 @@ def run_optimisation(config_data, params):
     final_unassigned_ids_list = sorted(list(final_unassigned_ids_set))
     final_unassigned_details = [copy.deepcopy(parcel_map[pid]) for pid in final_unassigned_ids_list if pid in parcel_map]
     
-    message = f"LLM-based optimisation completed. LLM proposed assignments, Python validated and scheduled."
-    if final_unassigned_ids_list:
-        message += f" {len(final_unassigned_ids_list)} parcel(s) remain unassigned after full processing."
+    # Build final output message with more detailed status
+    if not final_optimised_routes:
+        message = "LLM optimisation failed - no valid routes could be constructed"
+        status = "error"
+    else:
+        message = f"LLM-based optimisation completed successfully with {len(final_optimised_routes)} routes"
+        if final_unassigned_ids_list:
+            message += f" ({len(final_unassigned_ids_list)} parcels unassigned)"
+            status = "warning" 
+        else:
+            status = "success"
     
     return {
-        "status": "success" if not final_unassigned_ids_list else "warning",
+        "status": status,
         "message": message,
         "optimised_routes": final_optimised_routes,
         "unassigned_parcels": final_unassigned_ids_list,
