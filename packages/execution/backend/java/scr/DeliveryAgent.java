@@ -18,7 +18,7 @@ import java.util.Collections;
 
 public class DeliveryAgent extends Agent {
     private String agentInitialConfigJsonString;
-    private static final long SIMULATION_TIME_SCALE_DIVISOR = 10; // 1 simulated minute = 100ms real time
+    private static final long SIMULATION_TIME_SCALE_DIVISOR = 3000L; // 1 simulated minute = 20ms real time
 
     private String formatTime(long minutesFromMidnight) {
         long hours = minutesFromMidnight / 60;
@@ -136,7 +136,7 @@ public class DeliveryAgent extends Agent {
                         long departureTimeFromPrevious = departureTimes.getLong(currentStopIndex - 1);
                         long arrivalTimeAtCurrent = arrivalTimes.getLong(currentStopIndex);
                         long travelDurationMinutes = arrivalTimeAtCurrent - departureTimeFromPrevious;
-                        long travelDurationMs = (travelDurationMinutes * 1000) / SIMULATION_TIME_SCALE_DIVISOR;
+                        long travelDurationMs = (travelDurationMinutes * 60L * 1000L) / SIMULATION_TIME_SCALE_DIVISOR;
 
                         addSubBehaviour(new WakerBehaviour(myAgent, travelDurationMs) {
                             protected void onWake() {
@@ -150,7 +150,7 @@ public class DeliveryAgent extends Agent {
                     long arrivalTimeAtCurrentStop = arrivalTimes.getLong(currentStopIndex);
                     long departureTimeFromCurrentStop = departureTimes.getLong(currentStopIndex);
                     long serviceAndWaitingDurationMinutes = departureTimeFromCurrentStop - arrivalTimeAtCurrentStop;
-                    long serviceAndWaitingDurationMs = (serviceAndWaitingDurationMinutes * 1000) / SIMULATION_TIME_SCALE_DIVISOR;
+                    long serviceAndWaitingDurationMs = (serviceAndWaitingDurationMinutes * 60L * 1000L) / SIMULATION_TIME_SCALE_DIVISOR;
 
                     if (serviceAndWaitingDurationMs > 0) {
                         addSubBehaviour(new WakerBehaviour(myAgent, serviceAndWaitingDurationMs) {
