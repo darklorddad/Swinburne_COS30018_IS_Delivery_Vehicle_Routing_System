@@ -167,13 +167,39 @@ def handle_simple_mode_start_workflow(ss):
     else:
         _log_step("Step 7: Send Routes to MRA", {'type': 'info', 'message': "No optimised routes to send to MRA."})
 
-    # --- Allow time for JADE simulation to run ---
-    # Max simulated time could be around 800-1000 minutes.
-    # With SIMULATION_TIME_SCALE_DIVISOR=600, 1 sim minute = 100ms real time.
-    # So 1000 sim minutes = 100 real seconds.
-    simulated_wait_time_seconds = 120 # Add buffer time
-    _log_step("Step 7.5: Wait for Simulation", 
-             {'type': 'info', 'message': f"Waiting {simulated_wait_time_seconds}s for simulation to complete..."})
+    # --- Dynamically calculate wait time for JADE simulation ---
+    max_simulated_duration_minutes = 0
+    if ss.get("optimisation_run_complete") and ss.get("optimisation_results") and ss.optimisation_results.get("optimised_routes"):
+        for route in ss.optimisation_results["optimised_routes"]:
+            if route.get("departure_times"):
+                # The last departure time is the end of the route for that agent
+                route_duration = route["departure_times"][-1]
+                if route_duration > max_simulated_duration_minutes:
+                    max_simulated_duration_minutes = route_duration
+            elif route.get("arrival_times"): # Fallback if departure_times isn't there
+                route_duration = route["arrival_times"][-1]
+                if route_duration > max_simulated_duration_minutes:
+                    max_simulated_duration_minutes = route_duration
+
+    if max_simulated_duration_minutes > 0:
+        # SIMULATION_TIME_SCALE_DIVISOR from DeliveryAgent.java is 600
+        # 1 simulated minute = (60000 ms / 600) = 100 ms = 0.1 real seconds
+        python_time_scale_divisor = 600  # Must match DeliveryAgent.SIMULATION_TIME_SCALE_DIVISOR
+        calculated_real_wait_seconds = (max_simulated_duration_minutes * 60 * 1000) / python_time_scale_divisor / 1000
+        
+        wait_buffer_seconds = 15  # Add buffer for JADE processing
+        simulated_wait_time_seconds = int(calculated_real_wait_seconds + wait_buffer_seconds)
+        _log_step(f"Step 7.5: Adaptive Wait", {
+            'type': 'info',
+            'message': f"Max simulated route duration: {max_simulated_duration_minutes} mins. Calculated wait with buffer: {simulated_wait_time_seconds}s."
+        })
+    else:
+        simulated_wait_time_seconds = 30  # Default wait if no routes
+        _log_step("Step 7.5: Default Wait", {
+            'type': 'warning', 
+            'message': f"Could not determine route durations. Defaulting to {simulated_wait_time_seconds}s wait."
+        })
+
     time.sleep(simulated_wait_time_seconds)
 
     # --- Step 8: Fetch JADE Simulation Results ---
