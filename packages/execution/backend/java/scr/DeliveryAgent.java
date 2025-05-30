@@ -136,13 +136,9 @@ public class DeliveryAgent extends Agent {
                         long departureTimeFromPrevious = departureTimes.getLong(currentStopIndex - 1);
                         long arrivalTimeAtCurrent = arrivalTimes.getLong(currentStopIndex);
                         long travelDurationMinutes = arrivalTimeAtCurrent - departureTimeFromPrevious;
-                        if (travelDurationMinutes < 0) {
-                            System.err.println("DA " + myAgent.getLocalName() + ": Negative travel time to " + currentStopId + ". Setting to 0.");
-                            travelDurationMinutes = 0;
-                        }
-                        long travelDurationMsScaled = (travelDurationMinutes * 1000) / SIMULATION_TIME_SCALE_DIVISOR;
+                        long travelDurationMs = (travelDurationMinutes * 1000) / SIMULATION_TIME_SCALE_DIVISOR;
 
-                        addSubBehaviour(new WakerBehaviour(myAgent, travelDurationMsScaled) {
+                        addSubBehaviour(new WakerBehaviour(myAgent, travelDurationMs) {
                             protected void onWake() {
                                 System.out.println("DA " + myAgent.getLocalName() + ": Arrived at stop " + (currentStopIndex + 1) + "/" + stopIds.length() +
                                                    ": " + currentStopId + " at (simulated) " + formatTime(arrivalTimes.getLong(currentStopIndex)));
@@ -154,36 +150,14 @@ public class DeliveryAgent extends Agent {
                     long arrivalTimeAtCurrentStop = arrivalTimes.getLong(currentStopIndex);
                     long departureTimeFromCurrentStop = departureTimes.getLong(currentStopIndex);
                     long serviceAndWaitingDurationMinutes = departureTimeFromCurrentStop - arrivalTimeAtCurrentStop;
+                    long serviceAndWaitingDurationMs = (serviceAndWaitingDurationMinutes * 1000) / SIMULATION_TIME_SCALE_DIVISOR;
 
-                    if (serviceAndWaitingDurationMinutes < 0) {
-                        System.err.println("DA " + myAgent.getLocalName() + ": Negative service/wait time at " + currentStopId + ". Setting to 0.");
-                        serviceAndWaitingDurationMinutes = 0;
-                    }
-                    long serviceAndWaitingDurationMsScaled = (serviceAndWaitingDurationMinutes * 1000) / SIMULATION_TIME_SCALE_DIVISOR;
-
-                    // Log service/wait status
-                    addSubBehaviour(new OneShotBehaviour(myAgent) {
-                        public void action() {
-                            if (currentStopIndex == 0 && serviceAndWaitingDurationMinutes > 0) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Initial waiting/loading at " + currentStopId +
-                                                  " for " + serviceAndWaitingDurationMinutes + " min. Scheduled departure: " 
-                                                  + formatTime(departureTimes.getLong(currentStopIndex)));
-                            } else if (!currentStopId.equalsIgnoreCase("Warehouse")) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Servicing/waiting at " + currentStopId +
-                                                  " from (simulated) " + formatTime(arrivalTimes.getLong(currentStopIndex)) +
-                                                  " for " + serviceAndWaitingDurationMinutes + " min. Scheduled departure: " 
-                                                  + formatTime(departureTimes.getLong(currentStopIndex)));
-                            }
-                        }
-                    });
-
-                    // Add wait behavior if needed
-                    if (serviceAndWaitingDurationMsScaled > 0) {
-                        addSubBehaviour(new WakerBehaviour(myAgent, serviceAndWaitingDurationMsScaled) {
+                    if (serviceAndWaitingDurationMs > 0) {
+                        addSubBehaviour(new WakerBehaviour(myAgent, serviceAndWaitingDurationMs) {
                             protected void onWake() {
-                                if (currentStopId.equalsIgnoreCase("Warehouse") && currentStopIndex == stopIds.length() - 1) {
-                                    System.out.println("DA " + myAgent.getLocalName() + ": Completed route at " + currentStopId +
-                                                      " at (simulated) " + formatTime(departureTimes.getLong(currentStopIndex)));
+                                if (!currentStopId.equalsIgnoreCase("Warehouse")) {
+                                    System.out.println("DA " + myAgent.getLocalName() + ": Finished service at " + currentStopId +
+                                                       " at (simulated) " + formatTime(departureTimes.getLong(currentStopIndex)));
                                 }
                             }
                         });
