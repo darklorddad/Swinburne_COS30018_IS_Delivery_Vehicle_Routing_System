@@ -18,7 +18,7 @@ import java.util.Collections;
 
 public class DeliveryAgent extends Agent {
     private String agentInitialConfigJsonString;
-    private static final long SIMULATION_TIME_SCALE_DIVISOR = 3000L; // 1 simulated minute = 20ms real time
+    private static final long SIMULATION_TIME_SCALE_DIVISOR = 60000L; // 1 simulated minute = 1ms real time
 
     private String formatTime(long minutesFromMidnight) {
         long hours = minutesFromMidnight / 60;
