@@ -114,9 +114,36 @@ public class Py4jGatewayAgent extends Agent {
             msg.setOntology("FullVRPResults"); 
             msg.setLanguage("JSON");
 
+            String conversationId = "vrp-results-" + System.currentTimeMillis();
+            msg.setConversationId(conversationId);
+            msg.setReplyWith(conversationId + "-reply");
+
             send(msg);
-            System.out.println("Py4jGatewayAgent: Full optimisation results forwarded to MRA '" + mraName + "' successfully.");
-            return "Full optimisation results forwarded to MRA '" + mraName + "' successfully.";
+            System.out.println("Py4jGatewayAgent: Full optimisation results (REQUEST) forwarded to MRA '" + mraName + 
+                             "' with ConvID: " + conversationId + ". Waiting for MRA's confirmation...");
+
+            MessageTemplate mtReply = MessageTemplate.and(
+                MessageTemplate.MatchConversationId(conversationId),
+                MessageTemplate.MatchInReplyTo(msg.getReplyWith())
+            );
+            
+            ACLMessage mraReply = blockingReceive(mtReply, 15000);
+
+            if (mraReply != null) {
+                System.out.println("Py4jGatewayAgent: Received reply from MRA regarding FullVRPResults. Performative: " + 
+                                 ACLMessage.getPerformative(mraReply.getPerformative()) + ". Content: " + mraReply.getContent());
+                if (mraReply.getPerformative() == ACLMessage.INFORM) {
+                    return "MRA successfully processed FullVRPResults: " + mraReply.getContent();
+                } else if (mraReply.getPerformative() == ACLMessage.FAILURE) {
+                    return "MRA failed to process FullVRPResults: " + mraReply.getContent();
+                } else {
+                    return "MRA responded to FullVRPResults with unexpected performative (" + 
+                           ACLMessage.getPerformative(mraReply.getPerformative()) + "): " + mraReply.getContent();
+                }
+            } else {
+                System.err.println("Py4jGatewayAgent: No reply from MRA '" + mraName + "' for FullVRPResults forwarding within timeout (ConvID: " + conversationId + ").");
+                return "Error: Timeout. MRA '" + mraName + "' did not reply to FullVRPResults forwarding.";
+            }
         } catch (Exception e) {
             System.err.println("Py4jGatewayAgent: Error forwarding results to MRA " + mraName + ": " + e.getMessage());
             e.printStackTrace();

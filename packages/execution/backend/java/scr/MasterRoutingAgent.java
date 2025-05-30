@@ -190,10 +190,13 @@ public class MasterRoutingAgent extends Agent {
                 MessageTemplate mt = MessageTemplate.MatchOntology("FullVRPResults");
                 ACLMessage msg = myAgent.receive(mt);
                 if (msg != null) {
-                    System.out.println("MRA " + myAgent.getLocalName() + ": Received FullVRPResults from " + msg.getSender().getName());
+                    System.out.println("MRA " + myAgent.getLocalName() + ": Received FullVRPResults from " + msg.getSender().getName() +
+                                     " with ConvID: " + msg.getConversationId());
                     String fullResultsJson = msg.getContent();
                     System.out.println("MRA: Full Results JSON: " + fullResultsJson);
 
+                    ACLMessage reply = msg.createReply();
+                    
                     try {
                         JSONObject resultsObject = new JSONObject(fullResultsJson);
                         JSONArray optimisedRoutes = resultsObject.getJSONArray("optimised_routes");
@@ -211,11 +214,20 @@ public class MasterRoutingAgent extends Agent {
                             myAgent.send(routeMsgToDA);
                             System.out.println("MRA: Dispatched route to DA '" + daName + "'.");
                         }
-                        // Optionally, send a confirmation back to Py4jGatewayAgent or log completion
+                        reply.setPerformative(ACLMessage.INFORM);
+                        reply.setOntology("FullVRPResultsConfirmation");
+                        reply.setContent("FullVRPResults processed and routes dispatched successfully by MRA.");
+                        System.out.println("MRA: Successfully processed FullVRPResults. Sending INFORM confirmation.");
                     } catch (Exception e) {
                         System.err.println("MRA: Error parsing FullVRPResults JSON or dispatching to DAs: " + e.getMessage());
                         e.printStackTrace();
+                        
+                        reply.setPerformative(ACLMessage.FAILURE);
+                        reply.setOntology("FullVRPResultsConfirmation");
+                        reply.setContent("MRA failed to process FullVRPResults: " + e.getMessage());
+                        System.err.println("MRA: Failed to process FullVRPResults. Sending FAILURE reply.");
                     }
+                    myAgent.send(reply);
                 } else {
                     block(); 
                 }

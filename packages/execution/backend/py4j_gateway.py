@@ -52,11 +52,18 @@ def send_optimisation_results(gateway, mra_name, results):
 
     try:
         results_json = json.dumps(results)
-        response = gateway.entry_point.forwardOptimisationResultsToMRA(mra_name, results_json)
+        response_from_java = gateway.entry_point.forwardOptimisationResultsToMRA(mra_name, results_json)
         
-        if "error" in response.lower() or "fail" in response.lower():
-            return False, f"JADE reported error: {response}"
-        return True, response
+        response_lower = response_from_java.lower()
+        if "mra successfully processed" in response_lower:
+            return True, response_from_java
+        elif "mra failed" in response_lower or \
+             "error: timeout" in response_lower or \
+             "error forwarding" in response_lower or \
+             "unexpected performative" in response_lower:
+            return False, f"JADE/MRA reported issue: {response_from_java}"
+        else:
+            return False, f"Unexpected response from JADE/MRA: {response_from_java}"
     except Py4JNetworkError as e:
         return False, f"Network error sending results: {str(e)}"
     except Exception as e:
