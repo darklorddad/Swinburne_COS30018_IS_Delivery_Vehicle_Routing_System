@@ -260,9 +260,8 @@ def render_simple_mode_tab(ss):
                 # Visualisation section
                 # Visualisation section
                 if ss.get("optimisation_run_complete") and not ss.get("jade_platform_running"):
-                    # Display workflow duration metric if available
-                    if ss.get("simple_workflow_duration") is not None and final_status and final_status.get('type') == 'success':
-                        streamlit.metric(label="Total Workflow Duration", value=f"{ss.simple_workflow_duration} seconds")
+                    # Display metrics separator
+                    streamlit.markdown("---")
                     
                     # Display calculated performance metrics if available and workflow was successful
                     if ss.get("performance_metrics") and final_status and final_status.get('type') == 'success':
@@ -270,9 +269,13 @@ def render_simple_mode_tab(ss):
                         if "error" in metrics:
                             streamlit.error(f"Metrics Calculation Error: {metrics['error']}")
                         else:
-                            streamlit.subheader("Run Summary & Metrics")
-                            # Prepare data for table display
+                            # Prepare data for table display including duration
                             metrics_table_data = []
+                            if ss.get("simple_workflow_duration"):
+                                metrics_table_data.append({
+                                    "Metric": "Total Workflow Duration",
+                                    "Value": f"{ss.simple_workflow_duration} seconds"
+                                })
                             for key, value in metrics.items():
                                 # Nicer looking labels for the table
                                 label = key.replace("_", " ").title()
@@ -283,5 +286,4 @@ def render_simple_mode_tab(ss):
                                                  use_container_width=True, 
                                                  hide_index=True)
                     
-                    streamlit.markdown("---") # Separator above visualisation
                     render_visualisation_tab(ss)
