@@ -50,8 +50,10 @@ def run_optimisation(config_data, params):
     unassigned_parcels = [dict(p) for p in config_data.get("parcels", [])]
     delivery_agents = config_data.get("delivery_agents", [])
     
-    # Apply sorting if specified in parameters
-    if params.get("sort_parcels", "none") != "none":
+    # Sort parcels based on time window opening if not already sorted
+    if params.get("sort_parcels", "none") == "none":
+        unassigned_parcels.sort(key=lambda x: x.get("time_window_open", 0))
+    elif params["sort_parcels"] != "none":
         reverse_sort = params["sort_parcels"] == "weight_desc"
         unassigned_parcels.sort(key=lambda x: x["weight"], reverse=reverse_sort)
 
@@ -61,6 +63,13 @@ def run_optimisation(config_data, params):
     default_service_time = params.get("default_service_time", 10)
     return_to_warehouse_flag = params.get("return_to_warehouse", True)
     sort_parcels_option = params.get("sort_parcels", "none")
+
+    # Ensure all parcels have required fields
+    for p in unassigned_parcels:
+        if "time_window_open" not in p:
+            p["time_window_open"] = 0
+        if "time_window_close" not in p:
+            p["time_window_close"] = 1439  # 23:59
 
     for agent in delivery_agents:
         current_capacity = agent["capacity_weight"]
@@ -122,13 +131,17 @@ def run_optimisation(config_data, params):
                         }
             
             if best_parcel_idx != -1: # Check if a best parcel was found
-                # Assign the best found parcel
-                assigned_parcel_data = unassigned_parcels.pop(best_parcel_idx) # Remove from unassigned
-                parcels_assigned_globally.add(assigned_parcel_data["id"])
+                try:
+                    # Assign the best found parcel
+                    assigned_parcel_data = unassigned_parcels.pop(best_parcel_idx) # Remove from unassigned
+                    parcels_assigned_globally.add(assigned_parcel_data["id"])
 
-                agent_route_parcels.append(assigned_parcel_data)
-                agent_route_stops_coords.append(list(assigned_parcel_data["coordinates_x_y"]))
-                agent_route_stop_ids.append(assigned_parcel_data["id"])
+                    agent_route_parcels.append(assigned_parcel_data)
+                    agent_route_stops_coords.append(list(assigned_parcel_data["coordinates_x_y"]))
+                    agent_route_stop_ids.append(assigned_parcel_data["id"])
+                except (KeyError, IndexError) as e:
+                    print(f"Error assigning parcel: {e}")
+                    continue  # Skip this parcel if any issues
                 
                 # Append calculated times for the selected parcel
                 agent_arrival_times.append(round(best_parcel_candidate_details["physical_arrival"]))
