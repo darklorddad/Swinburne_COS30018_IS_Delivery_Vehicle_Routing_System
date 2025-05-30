@@ -17,7 +17,13 @@ import java.util.List;
 import java.util.Collections;
 
 public class DeliveryAgent extends Agent {
-    private String agentInitialConfigJsonString; // Field to store config
+    private String agentInitialConfigJsonString;
+
+    private String formatTime(long minutesFromMidnight) {
+        long hours = minutesFromMidnight / 60;
+        long minutes = minutesFromMidnight % 60;
+        return String.format("%02d:%02d", hours, minutes);
+    }
 
     protected void setup() {
         System.out.println("DeliveryAgent " + getAID().getName() + " is ready and waiting for routes.");
@@ -95,10 +101,11 @@ public class DeliveryAgent extends Agent {
             super(a);
             try {
                 JSONObject route = new JSONObject(routeJson);
-                JSONArray stopIds = route.getJSONArray("route_stop_ids"); // e.g., ["Warehouse", "P001", "P002", "Warehouse"]
+                JSONArray stopIds = route.getJSONArray("route_stop_ids");
                 JSONArray stopCoords = route.getJSONArray("route_stop_coordinates");
+                JSONArray arrivalTimes = route.getJSONArray("arrival_times");
+                JSONArray departureTimes = route.getJSONArray("departure_times");
 
-                // Convert JSONArray to list of coordinates
                 List<double[]> coordinates = new ArrayList<>();
                 for (int i = 0; i < stopCoords.length(); i++) {
                     JSONArray coord = stopCoords.getJSONArray(i);
@@ -118,24 +125,33 @@ public class DeliveryAgent extends Agent {
                 });
 
                 for (int i = 0; i < stopIds.length() - 1; i++) {
-                    final int segmentIndex = i;
-                    double[] fromCoord = coordinates.get(i);
-                    double[] toCoord = coordinates.get(i+1);
+                    final int currentStop = i;
+                    final int nextStop = i + 1;
                     
-                    // Calculate segment distance and time
-                    double distance = Math.sqrt(Math.pow(fromCoord[0] - toCoord[0], 2) 
-                                    + Math.pow(fromCoord[1] - toCoord[1], 2));
-                    long travelTime = (long)(distance * TIME_PER_DISTANCE_UNIT_MS);
+                    long departureTime = departureTimes.getLong(currentStop);
+                    long arrivalTime = arrivalTimes.getLong(nextStop);
+                    long travelDurationMs = (arrivalTime - departureTime) * 60000;
+                    
+                    if (travelDurationMs < 0) {
+                        System.err.println("Negative travel time calculated. Setting to 0");
+                        travelDurationMs = 0;
+                    }
 
-                    addSubBehaviour(new WakerBehaviour(myAgent, travelTime) {
+                    addSubBehaviour(new WakerBehaviour(myAgent, travelDurationMs) {
                         protected void onWake() {
-                            String stopId = stopIds.getString(segmentIndex+1);
-                            System.out.println("DA " + myAgent.getLocalName() + ": Arrived at stop " + (segmentIndex+2) + "/" + stopIds.length() + ": " + stopId);
+                            String stopId = stopIds.getString(nextStop);
+                            long arrivedAt = arrivalTimes.getLong(nextStop);
+                            long departAt = departureTimes.getLong(nextStop);
                             
-                            if (!stopId.equals("Warehouse")) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Servicing stop " + stopId + ".");
-                            } else if (segmentIndex+1 == stopIds.length()-1) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Returned to Warehouse.");
+                            System.out.println("DA " + myAgent.getLocalName() + ": Arrived at stop " + (nextStop+1) + "/" + stopIds.length() + 
+                                               ": " + stopId + " at " + formatTime(arrivedAt));
+                            
+                            if (!stopId.equalsIgnoreCase("Warehouse")) {
+                                long serviceDuration = departAt - arrivedAt;
+                                System.out.println("DA " + myAgent.getLocalName() + ": Servicing for " + serviceDuration + 
+                                                  " mins. Departs at " + formatTime(departAt));
+                            } else if (nextStop == stopIds.length()-1) {
+                                System.out.println("DA " + myAgent.getLocalName() + ": Returned to Warehouse at " + formatTime(arrivedAt));
                             }
                         }
                     });
