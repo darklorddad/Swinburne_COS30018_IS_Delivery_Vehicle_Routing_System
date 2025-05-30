@@ -125,19 +125,29 @@ public class DeliveryAgent extends Agent {
                     System.out.println("DA " + myAgent.getLocalName() + ": No specific parcel assignments with timings found in the route.");
                 } else {
                     DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_TIME; // Initialize formatter
-                    LocalTime now = LocalTime.now(); // Cache current time
+                    // Agent's simulated time starts from its shift_start or a default if not specified
+                    LocalTime agentCurrentSimulatedTime;
+                    try {
+                        JSONObject agentInitialConfig = new JSONObject(agentInitialConfigJsonString);
+                        String shiftStartStr = agentInitialConfig.optString("shift_start", "00:00"); // Default to midnight if not present
+                        agentCurrentSimulatedTime = LocalTime.parse(shiftStartStr, formatter);
+                        System.out.println("DA " + myAgent.getLocalName() + ": PerformDeliveryBehaviour - Initialising agent simulated time from shift_start: " + agentCurrentSimulatedTime.toString());
+                    } catch (Exception e_shift_parse) {
+                        System.err.println("DA " + myAgent.getLocalName() + ": Error parsing shift_start from config. Defaulting to 00:00. Error: " + e_shift_parse.getMessage());
+                        agentCurrentSimulatedTime = LocalTime.parse("00:00", formatter); // Safe default
+                    }
 
                     for (int i = 0; i < assignments.length(); i++) {
                         JSONObject stop = assignments.getJSONObject(i);
                         final String parcelId = stop.getString("id"); // Corrected from "parcel_id"
-                        final String arrivalTimeStr = stop.getString("arrival_time");
-                        final String departureTimeStr = stop.getString("departure_time");
 
                         try {
+                            final String arrivalTimeStr = stop.getString("arrival_time"); 
+                            final String departureTimeStr = stop.getString("departure_time");
                             LocalTime arrivalTime = LocalTime.parse(arrivalTimeStr, formatter);
                             LocalTime departureTime = LocalTime.parse(departureTimeStr, formatter);
 
-                            long waitUntilArrivalMillis = Duration.between(now, arrivalTime).toMillis();
+                            long waitUntilArrivalMillis = Duration.between(agentCurrentSimulatedTime, arrivalTime).toMillis();
                             if (waitUntilArrivalMillis < 0) {
                                 System.out.println("DA " + myAgent.getLocalName() + ": Scheduled arrival for " + parcelId + " at " + arrivalTimeStr + " is in the past. Arriving immediately.");
                                 waitUntilArrivalMillis = 0;
@@ -164,7 +174,8 @@ public class DeliveryAgent extends Agent {
                                 }
                             });
                             // Update 'now' for the next iteration to be relative to current stop's departure
-                            now = departureTime; 
+                            agentCurrentSimulatedTime = departureTime;
+                            System.out.println("DA " + myAgent.getLocalName() + ": Updated simulated time to " + agentCurrentSimulatedTime + " after leaving " + parcelId);
 
                         } catch (DateTimeParseException e_parse) {
                             System.err.println("DA " + myAgent.getLocalName() + ": Error parsing time for parcel " + parcelId + 
