@@ -1,5 +1,6 @@
 import streamlit
 import os
+import time
 from packages.configuration.backend import config_logic
 from packages.configuration.frontend.edit_view_ui import render_edit_view
 from packages.configuration.frontend.load_view_ui import render_load_view
@@ -236,8 +237,11 @@ def render_simple_mode_tab(ss):
 
                 if ss.get("simple_workflow_is_running"):
                     with streamlit.spinner("Executing simplified workflow... Please wait."):
+                        start_time = time.time()
                         # Call the backend function that does the work
                         simple_logic.handle_simple_mode_start_workflow(ss) 
+                        end_time = time.time()
+                        ss.simple_workflow_duration = round(end_time - start_time, 2)
                         ss.simple_workflow_is_running = False # Clear flag when done
                         streamlit.rerun() # Rerun to remove spinner and show results/final status
 
@@ -256,5 +260,29 @@ def render_simple_mode_tab(ss):
                 # Visualisation section
                 # Visualisation section
                 if ss.get("optimisation_run_complete") and not ss.get("jade_platform_running"):
+                    # Display workflow duration metric if available
+                    if ss.get("simple_workflow_duration") is not None and final_status and final_status.get('type') == 'success':
+                        streamlit.metric(label="Total Workflow Duration", value=f"{ss.simple_workflow_duration} seconds")
+                    
+                    # Display calculated performance metrics if available and workflow was successful
+                    if ss.get("performance_metrics") and final_status and final_status.get('type') == 'success':
+                        metrics = ss.performance_metrics
+                        if "error" in metrics:
+                            streamlit.error(f"Metrics Calculation Error: {metrics['error']}")
+                        else:
+                            streamlit.subheader("Run Summary & Metrics")
+                            # Use 2 or 3 columns for st.metric, adjust as needed
+                            cols_metrics_row1 = streamlit.columns(4)
+                            cols_metrics_row2 = streamlit.columns(4)
+                            
+                            all_metrics_keys = list(metrics.keys())
+                            
+                            for i, key in enumerate(all_metrics_keys):
+                                label = key.replace("_", " ").title()
+                                value = metrics[key]
+                                current_col_set = cols_metrics_row1 if i < 4 else cols_metrics_row2
+                                with current_col_set[i % 4]:
+                                    streamlit.metric(label=label, value=value)
+                    
                     streamlit.markdown("---") # Separator above visualisation
                     render_visualisation_tab(ss)
