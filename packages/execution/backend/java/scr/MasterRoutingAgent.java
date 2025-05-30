@@ -32,7 +32,6 @@ public class MasterRoutingAgent extends Agent {
                 System.out.println("MRA " + mraName + " received a non-empty string argument, but will wait for explicit config subset.");
                 initialConfigData = null;
                 System.out.println("MRA " + mraName + ": setup() - initialConfigData explicitly set to NULL.");
-                System.out.println("MRA " + mraName + ": setup() - initialConfigData explicitly set to NULL.");
             }
         } else {
             System.out.println("MRA: No arguments provided for initial setup.");
