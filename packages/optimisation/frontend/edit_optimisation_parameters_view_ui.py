@@ -43,12 +43,16 @@ def render_edit_optimisation_parameters_view(ss):
 
             if ptype == "integer":
                 val = current_value if isinstance(current_value, int) else param_info.get("default", 0)
+                min_val = int(param_info.get("min", 0)) if "min" in param_info else None
+                max_val = int(param_info.get("max")) if "max" in param_info else None
+                step_val = int(param_info.get("step", 1))
                 temp_val = streamlit.number_input(
                     label, value=int(val),
-                    min_value=param_info.get("min"), max_value=param_info.get("max"),
-                    step=param_info.get("step", 1), help=help_text, key=widget_key
+                    min_value=min_val, max_value=max_val,
+                    step=step_val, help=help_text, key=widget_key,
+                    format="%d"  # Force integer formatting
                 )
-                ss.optimisation_script_user_values[name] = temp_val
+                ss.optimisation_script_user_values[name] = int(temp_val)
             elif ptype == "float":
                 val = current_value if isinstance(current_value, (float, int)) else param_info.get("default", 0.0)
                 step = param_info.get("step", 0.01)
