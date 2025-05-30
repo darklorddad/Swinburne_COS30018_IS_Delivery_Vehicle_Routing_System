@@ -4,6 +4,7 @@
 # and parameter_logic.py for parameter editing state.
 
 import os
+import json
 from . import script_utils
 from . import parameter_logic
 from . import script_lifecycle
@@ -183,7 +184,30 @@ def run_optimisation_script(ss):
         ss.optimisation_execution_tab_run_status_message = msg
         return {'type': 'error', 'message': msg}
 
-    import json
+    # Merge operating hours from config data with live agent statuses
+    if ss.config_data and "delivery_agents" in ss.config_data and \
+       isinstance(input_data_from_mra["delivery_agents"], list):
+        
+        # Create lookup of full agent configs
+        full_agent_configs = {
+            agent_cfg["id"]: agent_cfg for agent_cfg in ss.config_data["delivery_agents"]
+        }
+
+        # Enrich MRA agent data with operating hours
+        enriched_agents = []
+        for agent_status in input_data_from_mra["delivery_agents"]:
+            agent_id = agent_status.get("id")
+            if agent_id in full_agent_configs:
+                enriched_agent = agent_status.copy()
+                enriched_agent.update({
+                    "operating_hours_start": full_agent_configs[agent_id].get("operating_hours_start"),
+                    "operating_hours_end": full_agent_configs[agent_id].get("operating_hours_end")
+                })
+                enriched_agents.append(enriched_agent)
+            else:
+                enriched_agents.append(agent_status)
+        
+        input_data_from_mra["delivery_agents"] = enriched_agents
     try:
         current_input_data_json_str = json.dumps(input_data_from_mra)
     except Exception as e_json:
