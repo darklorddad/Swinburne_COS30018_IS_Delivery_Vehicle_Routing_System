@@ -78,9 +78,9 @@ def run_optimisation(config_data, params):
         current_time = agent_op_start_time  # Reset to ensure clean start
 
         while True:
-            best_parcel_candidate = None
             best_parcel_idx = -1
             min_dist_candidate = float('inf')
+            best_parcel_candidate_details = None
 
             # Find the nearest, eligible, unassigned parcel
             for i, parcel_data in enumerate(unassigned_parcels):
@@ -89,48 +89,55 @@ def run_optimisation(config_data, params):
                     dist_to_parcel = _calculate_distance(current_location, parcel_coords)
                     travel_time = dist_to_parcel * time_per_dist_unit
 
-                    arrival_at_parcel = current_time + travel_time
+                    # Timing for this specific candidate parcel
+                    candidate_physical_arrival = current_time + travel_time # current_time is departure from previous stop
                     parcel_tw_open = parcel_data.get("time_window_open", 0)
                     parcel_tw_close = parcel_data.get("time_window_close", 1439)
                     parcel_service_time = parcel_data.get("service_time", default_service_time)
 
-                    service_start_time = max(arrival_at_parcel, parcel_tw_open)
-                    service_end_time = service_start_time + parcel_service_time
+                    candidate_service_start_time = max(candidate_physical_arrival, parcel_tw_open)
+                    candidate_service_end_time = candidate_service_start_time + parcel_service_time
 
                     feasible = True
-                    if service_end_time > parcel_tw_close:
+                    if candidate_service_end_time > parcel_tw_close:
                         feasible = False
-                    if service_end_time > agent_op_end_time:
+                    if candidate_service_end_time > agent_op_end_time: # Agent cannot finish service within op hours
                         feasible = False
                     
                     if return_to_warehouse_flag:
                         dist_from_parcel_to_wh = _calculate_distance(parcel_coords, warehouse_coords)
                         travel_time_to_wh = dist_from_parcel_to_wh * time_per_dist_unit
-                        arrival_at_wh_after_parcel = service_end_time + travel_time_to_wh
+                        arrival_at_wh_after_parcel = candidate_service_end_time + travel_time_to_wh
                         if arrival_at_wh_after_parcel > agent_op_end_time:
                             feasible = False
 
                     if feasible and dist_to_parcel < min_dist_candidate:
                         min_dist_candidate = dist_to_parcel
-                        best_parcel_candidate = parcel_data
                         best_parcel_idx = i
-                        candidate_arrival_time = service_start_time
-                        candidate_departure_time = service_end_time
-                        current_time = service_end_time  # Update time after service
+                        # Store all necessary details for the best candidate found so far
+                        best_parcel_candidate_details = {
+                            "parcel_data": parcel_data, # Keep the data object
+                            "physical_arrival": candidate_physical_arrival,
+                            "service_end": candidate_service_end_time
+                        }
             
-            if best_parcel_candidate:
+            if best_parcel_idx != -1: # Check if a best parcel was found
                 # Assign the best found parcel
-                assigned_parcel = unassigned_parcels.pop(best_parcel_idx) # Remove from unassigned
-                parcels_assigned_globally.add(assigned_parcel["id"])
+                assigned_parcel_data = unassigned_parcels.pop(best_parcel_idx) # Remove from unassigned
+                parcels_assigned_globally.add(assigned_parcel_data["id"])
 
-                agent_route_parcels.append(assigned_parcel)
-                agent_route_stops_coords.append(list(assigned_parcel["coordinates_x_y"]))
-                agent_route_stop_ids.append(assigned_parcel["id"])
-                agent_arrival_times.append(round(candidate_arrival_time))
-                agent_departure_times.append(round(candidate_departure_time))
+                agent_route_parcels.append(assigned_parcel_data)
+                agent_route_stops_coords.append(list(assigned_parcel_data["coordinates_x_y"]))
+                agent_route_stop_ids.append(assigned_parcel_data["id"])
                 
-                current_capacity -= assigned_parcel["weight"]
-                current_location = list(assigned_parcel["coordinates_x_y"])
+                # Append calculated times for the selected parcel
+                agent_arrival_times.append(round(best_parcel_candidate_details["physical_arrival"]))
+                agent_departure_times.append(round(best_parcel_candidate_details["service_end"]))
+                
+                current_capacity -= assigned_parcel_data["weight"]
+                current_location = list(assigned_parcel_data["coordinates_x_y"])
+                # Update agent's current time to be the departure time from the just-assigned parcel
+                current_time = best_parcel_candidate_details["service_end"]
             else:
                 # No more parcels can be assigned to this agent
                 break
