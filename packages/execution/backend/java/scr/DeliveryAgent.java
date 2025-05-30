@@ -12,6 +12,10 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.json.JSONObject;
 import org.json.JSONArray;
+import java.time.LocalTime;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
@@ -108,7 +112,9 @@ public class DeliveryAgent extends Agent {
                     coordinates.add(new double[]{coord.getDouble(0), coord.getDouble(1)});
                 }
                 
-                });
+                }
+
+                JSONArray assignments = route.optJSONArray("parcels_assigned_details");
 
                 if (assignments == null || assignments.length() == 0) {
                     System.out.println("DA " + myAgent.getLocalName() + ": No specific parcel assignments with timings found in the route.");
