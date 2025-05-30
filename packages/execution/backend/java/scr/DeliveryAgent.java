@@ -146,40 +146,16 @@ public class DeliveryAgent extends Agent {
                         try {
                             arrivalTimeStr = stop.getString("arrival_time");
                             departureTimeStr = stop.getString("departure_time");
-                            LocalTime arrivalTime = LocalTime.parse(arrivalTimeStr, formatter);
-                            LocalTime departureTime = LocalTime.parse(departureTimeStr, formatter);
+                            final String finalParcelIdForOneShot = parcelId;
 
-                            long waitUntilArrivalMillis = Duration.between(agentCurrentSimulatedTime, arrivalTime).toMillis();
-                            if (waitUntilArrivalMillis < 0) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Scheduled arrival for " + parcelId + " at " + (arrivalTimeStr != null ? arrivalTimeStr : "UNKNOWN_ARRIVAL_TIME") + " is in the past. Arriving immediately.");
-                                waitUntilArrivalMillis = 0;
-                            }
-
-                            long stayDurationMillis = Duration.between(arrivalTime, departureTime).toMillis();
-                            if (stayDurationMillis <= 0) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Scheduled stay for " + parcelId + " is non-positive (" + stayDurationMillis + "ms). Setting to 1000ms.");
-                                stayDurationMillis = 1000; // Min 1 sec stay
-                            }
-
-                            final long finalWaitUntilArrival = waitUntilArrivalMillis;
-                            final long finalStayDuration = stayDurationMillis;
-                            final String finalArrivalTimeStrForInner = arrivalTimeStr;
-                            final String finalDepartureTimeStrForInner = departureTimeStr;
-
-                            addSubBehaviour(new WakerBehaviour(myAgent, finalWaitUntilArrival) {
-                                protected void onWake() {
-                                    System.out.println("DA " + myAgent.getLocalName() + ": Arrived at " + parcelId + " (parcel drop-off, scheduled " + finalArrivalTimeStrForInner + ")");
-
-                                    addSubBehaviour(new WakerBehaviour(myAgent, finalStayDuration) {
-                                        protected void onWake() {
-                                            System.out.println("DA " + myAgent.getLocalName() + ": Departed from " + parcelId + " (parcel drop-off, scheduled " + finalDepartureTimeStrForInner + ")");
-                                        }
-                                    });
+                            // SIMPLIFIED: Add OneShot to log visit
+                            addSubBehaviour(new OneShotBehaviour(myAgent) {
+                                public void action() {
+                                    System.out.println("DA " + myAgent.getLocalName() + ": Visited (OneShot) " + finalParcelIdForOneShot + 
+                                        " (Scheduled Arrival: " + arrivalTimeStr + 
+                                        ", Departure: " + departureTimeStr + ")");
                                 }
                             });
-                            // Update 'now' for the next iteration to be relative to current stop's departure
-                            agentCurrentSimulatedTime = departureTime;
-                            System.out.println("DA " + myAgent.getLocalName() + ": Updated simulated time to " + agentCurrentSimulatedTime + " after leaving " + parcelId);
 
                         } catch (DateTimeParseException e_parse) {
                             System.err.println("DA " + myAgent.getLocalName() + ": Error parsing time for parcel " + parcelId + 
