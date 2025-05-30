@@ -5,7 +5,6 @@ from packages.configuration.backend.state_management import DEFAULT_CONFIG_TEMPL
 from packages.configuration.backend.config_logic import clear_config_from_memory
 from packages.execution.backend import execution_logic
 from packages.optimisation.backend import optimisation_logic
-from packages.metrics.backend import metrics_calculator
 import os
 import time
 
@@ -87,7 +86,6 @@ def handle_simple_mode_start_workflow(ss):
     ss.optimisation_results = None
     ss.optimisation_run_complete = False
     ss.jade_simulated_routes_data = None
-    ss.performance_metrics = None # Clear previous metrics
 
     def _log_step(step_name, result_dict):
         if result_dict and isinstance(result_dict, dict) and 'message' in result_dict:
@@ -164,9 +162,6 @@ def handle_simple_mode_start_workflow(ss):
         _log_step("Step 8: Fetch Simulation Results", result_fetch_sim if result_fetch_sim else "No explicit status from fetch.")
 
     # --- Step 9: Stop JADE Platform ---
-    # Calculate metrics before stopping JADE, as optimisation_results are needed
-    if ss.get("optimisation_run_complete"):
-        metrics_calculator.calculate_and_store_basic_metrics(ss)
     if ss.get("jade_platform_running", False):
         result_stop = execution_logic.handle_stop_jade(ss)
         if result_stop is None:

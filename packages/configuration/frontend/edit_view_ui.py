@@ -52,6 +52,10 @@ def render_edit_view(ss):
         new_parcel_id = col_p_id.text_input("Parcel ID", key = "new_parcel_id")
         new_parcel_x = col_p_x.number_input("Parcel X", value = 0, key = "new_parcel_x", format = "%d")
         new_parcel_y = col_p_y.number_input("Parcel Y", value = 0, key = "new_parcel_y", format = "%d")
+        col_p_earliest, col_p_latest = streamlit.columns(2)
+        new_parcel_earliest = col_p_earliest.text_input("Earliest Delivery Time (optional)", key="new_parcel_earliest")
+        new_parcel_latest = col_p_latest.text_input("Latest Delivery Time (optional)", key="new_parcel_latest")
+
         new_parcel_weight = col_p_weight.number_input("Weight", value = 0, key = "new_parcel_weight", min_value = 0, format = "%d")
             
         if streamlit.button("Add parcel", key = "add_parcel_btn", use_container_width = True):
@@ -61,7 +65,9 @@ def render_edit_view(ss):
                 new_parcel_id, 
                 new_parcel_x, 
                 new_parcel_y, 
-                new_parcel_weight
+                new_parcel_weight, 
+                new_parcel_earliest.strip() or None,
+                new_parcel_latest.strip() or None
             )
         
         if ss.config_data["parcels"]:
@@ -88,6 +94,10 @@ def render_edit_view(ss):
         streamlit.markdown("---")
         col_a_id, col_a_cap_weight = streamlit.columns([2, 1])
         new_agent_id = col_a_id.text_input("Agent ID", key = "new_agent_id_simplified")
+        col_shift_start, col_shift_end = streamlit.columns(2)
+        new_agent_shift_start = col_shift_start.text_input("Shift Start Time (optional)", key="new_agent_shift_start")
+        new_agent_shift_end = col_shift_end.text_input("Shift End Time (optional)", key="new_agent_shift_end")
+
         new_agent_cap_weight = col_a_cap_weight.number_input("Capacity (weight)", value = 0, min_value = 0, format = "%d", key = "new_agent_cap_weight_simplified")
     
         if streamlit.button("Add agent", key = "add_agent_btn_simplified", use_container_width = True):
@@ -95,7 +105,9 @@ def render_edit_view(ss):
                 config_logic.add_delivery_agent,
                 ss,
                 new_agent_id,
-                new_agent_cap_weight
+                new_agent_cap_weight, 
+                new_agent_shift_start.strip() or None,
+                new_agent_shift_end.strip() or None
             )
 
         if ss.config_data["delivery_agents"]:

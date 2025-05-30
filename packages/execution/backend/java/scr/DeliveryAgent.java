@@ -92,10 +92,12 @@ public class DeliveryAgent extends Agent {
     }
 
     private class PerformDeliveryBehaviour extends SequentialBehaviour {
+        private String routeJsonString;
         public PerformDeliveryBehaviour(Agent a, String routeJson) {
             super(a);
+            this.routeJsonString = routeJson;
             try {
-                JSONObject route = new JSONObject(routeJson);
+                JSONObject route = new JSONObject(routeJsonString);
                 JSONArray stopIds = route.getJSONArray("route_stop_ids"); // e.g., ["Warehouse", "P001", "P002", "Warehouse"]
                 JSONArray stopCoords = route.getJSONArray("route_stop_coordinates");
 
@@ -113,29 +115,35 @@ public class DeliveryAgent extends Agent {
                     }
                 });
 
-                for (int i = 0; i < stopIds.length() - 1; i++) {
-                    final int segmentIndex = i;
-                    double[] fromCoord = coordinates.get(i);
-                    double[] toCoord = coordinates.get(i+1);
-                    
-                    // Calculate segment distance and time
-                    double distance = Math.sqrt(Math.pow(fromCoord[0] - toCoord[0], 2) 
-                                    + Math.pow(fromCoord[1] - toCoord[1], 2));
-                    long travelTime = (long)(distance * TIME_PER_DISTANCE_UNIT_MS);
+                LocalTime now = LocalTime.now(); // Cache once outside loop
 
-                    addSubBehaviour(new WakerBehaviour(myAgent, travelTime) {
+                for (int i = 0; i < assignments.length(); i++) {
+                    JSONObject stop = assignments.getJSONObject(i);
+                    String stopId = stop.getString("parcel_id");
+                    String arrivalTimeStr = stop.getString("arrival_time");
+                    String departureTimeStr = stop.getString("departure_time");
+
+                    final int stopIndex = i;
+
+                    LocalTime arrivalTime = LocalTime.parse(arrivalTimeStr, formatter);
+                    LocalTime departureTime = LocalTime.parse(departureTimeStr, formatter);
+
+                    long waitUntilArrival = Math.max(Duration.between(now, arrivalTime).toMillis(), 0);
+                    long stayDuration = Math.max(Duration.between(arrivalTime, departureTime).toMillis(), 1000);
+
+                    addSubBehaviour(new WakerBehaviour(myAgent, waitUntilArrival) {
                         protected void onWake() {
-                            String stopId = stopIds.getString(segmentIndex+1);
-                            System.out.println("DA " + myAgent.getLocalName() + ": Arrived at stop " + (segmentIndex+2) + "/" + stopIds.length() + ": " + stopId);
-                            
-                            if (!stopId.equals("Warehouse")) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Servicing stop " + stopId + ".");
-                            } else if (segmentIndex+1 == stopIds.length()-1) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Returned to Warehouse.");
-                            }
+                            System.out.println("DA " + myAgent.getLocalName() + ": Arrived at " + stopId + " (scheduled " + arrivalTimeStr + ")");
+
+                            addSubBehaviour(new WakerBehaviour(myAgent, stayDuration) {
+                                protected void onWake() {
+                                    System.out.println("DA " + myAgent.getLocalName() + ": Departed from " + stopId + " (scheduled " + departureTimeStr + ")");
+                                }
+                            });
                         }
                     });
                 }
+
 
                 addSubBehaviour(new OneShotBehaviour(myAgent) {
                     public void action() {
@@ -149,7 +157,7 @@ public class DeliveryAgent extends Agent {
 
                         JSONObject routeConfirmationPayload = new JSONObject();
                         routeConfirmationPayload.put("agent_id", myAgent.getLocalName());
-                        JSONObject originalRoute = new JSONObject(routeJson);
+                        JSONObject originalRoute = new JSONObject(routeJsonString);
                         JSONArray originalStopIds = originalRoute.getJSONArray("route_stop_ids");
                         routeConfirmationPayload.put("route_stop_ids", originalStopIds);
                         confirmationMsg.setContent(routeConfirmationPayload.toString());

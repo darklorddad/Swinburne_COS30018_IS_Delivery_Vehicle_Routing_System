@@ -335,7 +335,6 @@ def run_optimisation(config_data, params):
             "parcels_assigned_ids": [p["id"] for p in route],
             "parcels_assigned_details": route,
             "route_stop_ids": route_stop_ids,
-            "route_stop_coordinates": [warehouse_coords] + [p["coordinates_x_y"] for p in route] + ([warehouse_coords] if return_to_warehouse else []),
             "total_weight": sum(p["weight"] for p in route),
             "capacity_weight": agent["capacity_weight"],
             "total_distance": round(route_distance, 2),

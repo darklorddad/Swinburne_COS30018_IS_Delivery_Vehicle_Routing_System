@@ -219,7 +219,7 @@ def main():
 
         if ss.get("simple_mode", False):
             # Simple UI Mode: Two tabs - "Simplified Workflow" and "Settings"
-            tab_simple_workflow, tab_settings_simple = streamlit.tabs(["Workflow", "Settings"])
+            tab_simple_workflow, tab_settings_simple = streamlit.tabs(["Simplified Workflow", "Settings"])
             with tab_simple_workflow:
                 render_simple_mode_tab(ss)
             with tab_settings_simple:

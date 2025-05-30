@@ -1,6 +1,5 @@
 import streamlit
 import os
-import time
 from packages.configuration.backend import config_logic
 from packages.configuration.frontend.edit_view_ui import render_edit_view
 from packages.configuration.frontend.load_view_ui import render_load_view
@@ -10,7 +9,6 @@ from packages.execution.backend import execution_logic
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab
 from packages.optimisation.frontend.optimisation_ui_utils import render_optimisation_results_display
 from packages.configuration.frontend.ui_utils import display_operation_result
-from packages.metrics.frontend.metrics_display_ui import render_metrics_display
 from packages.simple.backend import simple_logic
 
 # New view for generating configuration in simple mode
@@ -237,12 +235,9 @@ def render_simple_mode_tab(ss):
                         streamlit.rerun() # Rerun to show spinner immediately
 
                 if ss.get("simple_workflow_is_running"):
-                    with streamlit.spinner("Please wait..."):
-                        start_time = time.time()
+                    with streamlit.spinner("Executing simplified workflow... Please wait."):
                         # Call the backend function that does the work
                         simple_logic.handle_simple_mode_start_workflow(ss) 
-                        end_time = time.time()
-                        ss.simple_workflow_duration = round(end_time - start_time, 2)
                         ss.simple_workflow_is_running = False # Clear flag when done
                         streamlit.rerun() # Rerun to remove spinner and show results/final status
 
@@ -261,10 +256,5 @@ def render_simple_mode_tab(ss):
                 # Visualisation section
                 # Visualisation section
                 if ss.get("optimisation_run_complete") and not ss.get("jade_platform_running"):
-                    # Display metrics separator
-                    streamlit.markdown("---")
-                    
-                    # Display calculated performance metrics
-                    render_metrics_display(ss, final_status)
-                    
+                    streamlit.markdown("---") # Separator above visualisation
                     render_visualisation_tab(ss)

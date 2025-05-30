@@ -30,12 +30,18 @@ def _remove_entity(ss, entities_key, entity_id_to_remove, entity_name_singular):
 
 # --- Parcel Management ---
 # Adds a new parcel to the configuration if the ID is unique.
-def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight):
+def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight, earliest_delivery=None, latest_delivery=None):
     parcel_data = {
         "id": parcel_id,
         "coordinates_x_y": [parcel_x, parcel_y],
         "weight": parcel_weight
     }
+    
+    if earliest_delivery:
+        parcel_data["earliest_delivery"] = earliest_delivery
+    if latest_delivery:
+        parcel_data["latest_delivery"] = latest_delivery
+
     return _add_entity(ss, "parcels", parcel_id, parcel_data, "Parcel")
 
 # Removes a parcel from the configuration by its ID.
@@ -45,16 +51,24 @@ def remove_parcel(ss, parcel_id_to_remove):
 
 # --- Delivery Agent Management ---
 # Adds a new delivery agent to the configuration if the ID is unique.
-def add_delivery_agent(ss, agent_id, capacity_weight):
+def add_delivery_agent(ss, agent_id, capacity_weight, shift_start=None, shift_end=None):
     agent_data = {
         "id": agent_id,
         "capacity_weight": capacity_weight
     }
+
+    # Add optional shift timing fields if provided
+    if shift_start:
+        agent_data["shift_start"] = shift_start
+    if shift_end:
+        agent_data["shift_end"] = shift_end
+
     return _add_entity(ss, "delivery_agents", agent_id, agent_data, "Agent")
 
 # Removes a delivery agent from the configuration by its ID.
 def remove_delivery_agent(ss, agent_id_to_remove):
     return _remove_entity(ss, "delivery_agents", agent_id_to_remove, "Agent")
+
 
 # --- General Settings in Edit Mode ---
 # Triggered by changes in the filename input widget.

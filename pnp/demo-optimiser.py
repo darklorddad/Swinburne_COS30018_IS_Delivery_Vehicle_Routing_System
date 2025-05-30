@@ -6,7 +6,7 @@ def get_params_schema():
         "parameters": [
             {
                 "name": "sort_parcels",
-                "label": "Sort parcels by",
+                "label": "Sort Parcels By",
                 "type": "selectbox",
                 "default": "none",
                 "options": ["none", "weight_asc", "weight_desc"],
@@ -14,23 +14,31 @@ def get_params_schema():
             },
             {
                 "name": "return_to_warehouse",
-                "label": "Return to warehouse",
+                "label": "Return to Warehouse",
                 "type": "boolean",
                 "default": True,
                 "help": "Whether vehicles must return to warehouse after deliveries"
             },
             {
                 "name": "distance_weight",
-                "label": "Distance weight",
+                "label": "Distance Weight",
                 "type": "float",
                 "default": 1.0,
                 "min": 0.1,
                 "max": 5.0,
                 "step": 0.1,
                 "help": "Weight given to distance vs capacity utilization"
+            },
+            {
+                "name": "service_time_per_stop_minutes",
+                "label": "Service Time (mins)",
+                "type": "number_input",
+                "default": 10,
+                "help": "Fixed time spent at each delivery location"
             }
         ]
     }
+
 
 def _calculate_distance(coord1, coord2):
     # Calculates Euclidean distance between two points.
