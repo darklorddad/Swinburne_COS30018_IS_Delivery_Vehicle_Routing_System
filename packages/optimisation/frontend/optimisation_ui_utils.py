@@ -34,11 +34,14 @@ def render_optimisation_results_display(results):
                 table_data = []
                 for p_detail in parcels_details:
                     coords = p_detail.get('coordinates_x_y', ['N/A', 'N/A'])
-                    table_data.append({
+                    parcel_entry = {
                         "id": p_detail.get('id', 'N/A'), 
                         "weight": p_detail.get('weight', 'N/A'), 
-                        "coordinates_x_y": coords 
-                    })
+                        "coordinates_x_y": coords,
+                        "arrival_time": p_detail.get('arrival_time', 'N/A'), # Display arrival time
+                        "departure_time": p_detail.get('departure_time', 'N/A') # Display departure time
+                    }
+                    table_data.append(parcel_entry)
                 if table_data:
                     streamlit.dataframe(table_data, use_container_width=True) 
             else:

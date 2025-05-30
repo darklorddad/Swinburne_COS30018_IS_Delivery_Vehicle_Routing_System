@@ -128,8 +128,14 @@ def run_script(ss, input_data_json_str, user_params):
         # Transform agent's 'agent_id' key to 'id' for compatibility
         if "delivery_agents" in optimisation_input_data and isinstance(optimisation_input_data["delivery_agents"], list):
             for agent_info in optimisation_input_data["delivery_agents"]:
-                if isinstance(agent_info, dict) and "agent_id" in agent_info and "id" not in agent_info:
-                    agent_info["id"] = agent_info.pop("agent_id")
+                if isinstance(agent_info, dict):
+                    if "id" in agent_info and "agent_id" in agent_info:
+                        # If both exist, 'id' (from MRA's perspective of daName) is preferred.
+                        # Remove 'agent_id' to avoid confusion if they were different, or redundancy if same.
+                        del agent_info["agent_id"]
+                    elif "agent_id" in agent_info and "id" not in agent_info:
+                        # This case should not happen due to MRA logic, but if it does, standardise to 'id'.
+                        agent_info["id"] = agent_info.pop("agent_id")
             
     except Exception as e:
         ss.optimisation_run_error = f"Error parsing input data JSON for script: {str(e)}"
