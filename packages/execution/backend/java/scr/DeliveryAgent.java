@@ -151,8 +151,7 @@ public class DeliveryAgent extends Agent {
 
                             long waitUntilArrivalMillis = Duration.between(agentCurrentSimulatedTime, arrivalTime).toMillis();
                             if (waitUntilArrivalMillis < 0) {
-                                final String finalArrivalTimeStrLog = arrivalTimeStr != null ? arrivalTimeStr : "UNKNOWN_ARRIVAL_TIME";
-                                System.out.println("DA " + myAgent.getLocalName() + ": Scheduled arrival for " + parcelId + " at " + finalArrivalTimeStrLog + " is in the past. Arriving immediately.");
+                                System.out.println("DA " + myAgent.getLocalName() + ": Scheduled arrival for " + parcelId + " at " + (arrivalTimeStr != null ? arrivalTimeStr : "UNKNOWN_ARRIVAL_TIME") + " is in the past. Arriving immediately.");
                                 waitUntilArrivalMillis = 0;
                             }
 
