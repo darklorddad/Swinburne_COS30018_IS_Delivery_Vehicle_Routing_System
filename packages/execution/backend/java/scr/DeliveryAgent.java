@@ -18,6 +18,7 @@ import java.util.Collections;
 
 public class DeliveryAgent extends Agent {
     private String agentInitialConfigJsonString;
+    private static final long SIMULATION_TIME_SCALE_DIVISOR = 600; // 1 simulated minute = 100ms real time
 
     private String formatTime(long minutesFromMidnight) {
         long hours = minutesFromMidnight / 60;
@@ -112,49 +113,81 @@ public class DeliveryAgent extends Agent {
                     coordinates.add(new double[]{coord.getDouble(0), coord.getDouble(1)});
                 }
                 
+                // Initial stop (usually Warehouse departure)
                 addSubBehaviour(new OneShotBehaviour(myAgent) {
                     public void action() {
                         System.out.println("DA " + myAgent.getLocalName() + ": Starting delivery for route. Stops: " + stopIds.toString());
                         String firstStopId = stopIds.getString(0);
                         long firstStopArrivalMinutes = arrivalTimes.getLong(0);
                         long firstStopDepartureMinutes = departureTimes.getLong(0);
-                        System.out.println("DA " + myAgent.getLocalName() + ": At " + firstStopId + 
-                                           ". Arrival: " + formatTime(firstStopArrivalMinutes) +
-                                           ", Departure: " + formatTime(firstStopDepartureMinutes));
+                        System.out.println("DA " + myAgent.getLocalName() + ": Starting at " + firstStopId +
+                                           ". Scheduled Arrival: " + formatTime(firstStopArrivalMinutes) +
+                                           ", Scheduled Departure: " + formatTime(firstStopDepartureMinutes));
                     }
                 });
 
-                for (int i = 0; i < stopIds.length() - 1; i++) {
-                    final int currentStop = i;
-                    final int nextStop = i + 1;
-                    
-                    long departureTime = departureTimes.getLong(currentStop);
-                    long arrivalTime = arrivalTimes.getLong(nextStop);
-                    long travelDurationMs = (arrivalTime - departureTime) * 60000;
-                    
-                    if (travelDurationMs < 0) {
-                        System.err.println("Negative travel time calculated. Setting to 0");
-                        travelDurationMs = 0;
+                // Iterate through each stop in the route to schedule travel TO it, and service AT it
+                for (int i = 0; i < stopIds.length(); i++) {
+                    final int currentStopIndex = i;
+                    final String currentStopId = stopIds.getString(currentStopIndex);
+
+                    // Travel Waker (for all stops except the first one)
+                    if (currentStopIndex > 0) {
+                        long departureTimeFromPrevious = departureTimes.getLong(currentStopIndex - 1);
+                        long arrivalTimeAtCurrent = arrivalTimes.getLong(currentStopIndex);
+                        long travelDurationMinutes = arrivalTimeAtCurrent - departureTimeFromPrevious;
+                        if (travelDurationMinutes < 0) {
+                            System.err.println("DA " + myAgent.getLocalName() + ": Negative travel time to " + currentStopId + ". Setting to 0.");
+                            travelDurationMinutes = 0;
+                        }
+                        long travelDurationMsScaled = (travelDurationMinutes * 1000) / SIMULATION_TIME_SCALE_DIVISOR;
+
+                        addSubBehaviour(new WakerBehaviour(myAgent, travelDurationMsScaled) {
+                            protected void onWake() {
+                                System.out.println("DA " + myAgent.getLocalName() + ": Arrived at stop " + (currentStopIndex + 1) + "/" + stopIds.length() +
+                                                   ": " + currentStopId + " at (simulated) " + formatTime(arrivalTimes.getLong(currentStopIndex)));
+                            }
+                        });
                     }
 
-                    addSubBehaviour(new WakerBehaviour(myAgent, travelDurationMs) {
-                        protected void onWake() {
-                            String stopId = stopIds.getString(nextStop);
-                            long arrivedAt = arrivalTimes.getLong(nextStop);
-                            long departAt = departureTimes.getLong(nextStop);
-                            
-                            System.out.println("DA " + myAgent.getLocalName() + ": Arrived at stop " + (nextStop+1) + "/" + stopIds.length() + 
-                                               ": " + stopId + " at " + formatTime(arrivedAt));
-                            
-                            if (!stopId.equalsIgnoreCase("Warehouse")) {
-                                long serviceDuration = departAt - arrivedAt;
-                                System.out.println("DA " + myAgent.getLocalName() + ": Servicing for " + serviceDuration + 
-                                                  " mins. Departs at " + formatTime(departAt));
-                            } else if (nextStop == stopIds.length()-1) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Returned to Warehouse at " + formatTime(arrivedAt));
+                    // Service/Waiting Waker for current stop
+                    long arrivalTimeAtCurrentStop = arrivalTimes.getLong(currentStopIndex);
+                    long departureTimeFromCurrentStop = departureTimes.getLong(currentStopIndex);
+                    long serviceAndWaitingDurationMinutes = departureTimeFromCurrentStop - arrivalTimeAtCurrentStop;
+
+                    if (serviceAndWaitingDurationMinutes < 0) {
+                        System.err.println("DA " + myAgent.getLocalName() + ": Negative service/wait time at " + currentStopId + ". Setting to 0.");
+                        serviceAndWaitingDurationMinutes = 0;
+                    }
+                    long serviceAndWaitingDurationMsScaled = (serviceAndWaitingDurationMinutes * 1000) / SIMULATION_TIME_SCALE_DIVISOR;
+
+                    // Log service/wait status
+                    addSubBehaviour(new OneShotBehaviour(myAgent) {
+                        public void action() {
+                            if (currentStopIndex == 0 && serviceAndWaitingDurationMinutes > 0) {
+                                System.out.println("DA " + myAgent.getLocalName() + ": Initial waiting/loading at " + currentStopId +
+                                                  " for " + serviceAndWaitingDurationMinutes + " min. Scheduled departure: " 
+                                                  + formatTime(departureTimes.getLong(currentStopIndex)));
+                            } else if (!currentStopId.equalsIgnoreCase("Warehouse")) {
+                                System.out.println("DA " + myAgent.getLocalName() + ": Servicing/waiting at " + currentStopId +
+                                                  " from (simulated) " + formatTime(arrivalTimes.getLong(currentStopIndex)) +
+                                                  " for " + serviceAndWaitingDurationMinutes + " min. Scheduled departure: " 
+                                                  + formatTime(departureTimes.getLong(currentStopIndex)));
                             }
                         }
                     });
+
+                    // Add wait behavior if needed
+                    if (serviceAndWaitingDurationMsScaled > 0) {
+                        addSubBehaviour(new WakerBehaviour(myAgent, serviceAndWaitingDurationMsScaled) {
+                            protected void onWake() {
+                                if (currentStopId.equalsIgnoreCase("Warehouse") && currentStopIndex == stopIds.length() - 1) {
+                                    System.out.println("DA " + myAgent.getLocalName() + ": Completed route at " + currentStopId +
+                                                      " at (simulated) " + formatTime(departureTimes.getLong(currentStopIndex)));
+                                }
+                            }
+                        });
+                    }
                 }
 
                 addSubBehaviour(new OneShotBehaviour(myAgent) {
