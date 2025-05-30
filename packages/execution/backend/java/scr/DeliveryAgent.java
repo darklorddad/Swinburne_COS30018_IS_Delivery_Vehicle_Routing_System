@@ -111,8 +111,13 @@ public class DeliveryAgent extends Agent {
                     JSONArray coord = stopCoords.getJSONArray(i);
                     coordinates.add(new double[]{coord.getDouble(0), coord.getDouble(1)});
                 }
-                
-                }
+
+                // Add initial route announcement
+                addSubBehaviour(new OneShotBehaviour(myAgent) {
+                    public void action() {
+                        System.out.println("DA " + myAgent.getLocalName() + ": Starting delivery route with stops: " + stopIds.toString());
+                    }
+                });
 
                 JSONArray assignments = route.optJSONArray("parcels_assigned_details");
 
