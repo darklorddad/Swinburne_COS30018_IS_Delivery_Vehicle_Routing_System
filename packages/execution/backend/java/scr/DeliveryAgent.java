@@ -92,12 +92,10 @@ public class DeliveryAgent extends Agent {
     }
 
     private class PerformDeliveryBehaviour extends SequentialBehaviour {
-        private String routeJsonString;
         public PerformDeliveryBehaviour(Agent a, String routeJson) {
             super(a);
-            this.routeJsonString = routeJson;
             try {
-                JSONObject route = new JSONObject(routeJsonString);
+                JSONObject route = new JSONObject(routeJson);
                 JSONArray stopIds = route.getJSONArray("route_stop_ids"); // e.g., ["Warehouse", "P001", "P002", "Warehouse"]
                 JSONArray stopCoords = route.getJSONArray("route_stop_coordinates");
 
@@ -151,7 +149,7 @@ public class DeliveryAgent extends Agent {
 
                         JSONObject routeConfirmationPayload = new JSONObject();
                         routeConfirmationPayload.put("agent_id", myAgent.getLocalName());
-                        JSONObject originalRoute = new JSONObject(routeJsonString);
+                        JSONObject originalRoute = new JSONObject(routeJson);
                         JSONArray originalStopIds = originalRoute.getJSONArray("route_stop_ids");
                         routeConfirmationPayload.put("route_stop_ids", originalStopIds);
                         confirmationMsg.setContent(routeConfirmationPayload.toString());

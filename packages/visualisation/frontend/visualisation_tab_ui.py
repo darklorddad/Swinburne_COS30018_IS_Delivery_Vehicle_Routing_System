@@ -1,6 +1,7 @@
 import streamlit
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors # For distinct route colors
+import matplotlib.colors as mcolors
+from matplotlib.patches import FancyArrowPatch  # For nice arrows
 
 # Helper function to get coordinates for a stop ID
 def _get_stop_coordinates(stop_id, config_data):
@@ -9,11 +10,10 @@ def _get_stop_coordinates(stop_id, config_data):
     for parcel in config_data.get("parcels", []):
         if parcel.get("id") == stop_id:
             return parcel.get("coordinates_x_y", [None, None])
-    return [None, None] # Should not happen if data is consistent
+    return [None, None]  # Should not happen if data is consistent
 
-# Renders the Visualisation tab.
+# Renders the Visualisation tab with arrows
 def render_visualisation_tab(ss):
-    
     simulated_jade_routes = ss.get("jade_simulated_routes_data")
 
     # Check if the routes exist
@@ -35,18 +35,17 @@ def render_visualisation_tab(ss):
         streamlit.warning("Configuration data is not available. Cannot render visualisation.")
         return
 
-    
-    if not simulated_jade_routes: # Handles the case of an empty list (e.g., JADE returned no routes)
+    if not simulated_jade_routes:  # Handles the case of an empty list
         streamlit.info("No simulated routes were received from JADE, or JADE reported no routes to display.")
-        if ss.get("jade_simulated_routes_message"): # Display message if any (e.g. "successfully fetched 0 routes")
-             streamlit.info(f"Details: {ss.jade_simulated_routes_message}")
+        if ss.get("jade_simulated_routes_message"):
+            streamlit.info(f"Details: {ss.jade_simulated_routes_message}")
         return
 
     fig, ax = plt.subplots(figsize=(10, 8))
 
     # Plot warehouse
     wh_coords = config_data.get("warehouse_coordinates_x_y", [0, 0])
-    ax.plot(wh_coords[0], wh_coords[1], 'ks', markersize=10, label='Warehouse (0,0)') # Black square
+    ax.plot(wh_coords[0], wh_coords[1], 'ks', markersize=10, label='Warehouse (0,0)')  # Black square
 
     # Plot all parcels
     parcel_coords_x = []
@@ -60,13 +59,12 @@ def render_visualisation_tab(ss):
             parcel_ids.append(parcel.get("id"))
             ax.text(coords[0] + 0.1, coords[1] + 0.1, parcel.get("id", ""), fontsize=9)
 
-    ax.plot(parcel_coords_x, parcel_coords_y, 'bo', markersize=5, label='Parcels') # Blue circles
+    ax.plot(parcel_coords_x, parcel_coords_y, 'bo', markersize=5, label='Parcels')  # Blue circles
 
     # Define a list of distinct colors for routes
-    # Using a subset of Tableau colors for good visual distinction
     route_colors = list(mcolors.TABLEAU_COLORS.values()) 
 
-    # Plot routes for each agent
+    # Plot routes for each agent with arrows
     for i, route_info in enumerate(simulated_jade_routes):
         agent_id = route_info.get("agent_id", f"Agent {i+1}")
         route_stop_ids = route_info.get("route_stop_ids", [])
@@ -82,16 +80,33 @@ def render_visualisation_tab(ss):
                 route_x.append(coords[0])
                 route_y.append(coords[1])
         
-        if route_x and route_y:
-            color = route_colors[i % len(route_colors)] # Cycle through colors
-            ax.plot(route_x, route_y, marker='.', linestyle='-', color=color, label=f"Route: {agent_id}", linewidth=2, markersize=8)
+        if len(route_x) > 1:
+            color = route_colors[i % len(route_colors)]
+            
+            # Plot the line
+            ax.plot(route_x, route_y, linestyle='-', color=color, 
+                   label=f"Route: {agent_id}", linewidth=2)
+            
+            # Add arrows along the route
+            for j in range(len(route_x)-1):
+                # Calculate arrow position (middle of the segment)
+                x_start, x_end = route_x[j], route_x[j+1]
+                y_start, y_end = route_y[j], route_y[j+1]
+                
+                # Create arrow
+                arrow = FancyArrowPatch(
+                    (x_start, y_start), (x_end, y_end),
+                    arrowstyle='->', color=color,
+                    mutation_scale=15, linewidth=2
+                )
+                ax.add_patch(arrow)
 
     ax.set_xlabel("X Coordinate")
     ax.set_ylabel("Y Coordinate")
     ax.set_title("Delivery Routes Visualisation")
-    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0.) # Legend outside plot
+    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0.)  # Legend outside plot
     ax.grid(True)
-    plt.tight_layout(rect=[0, 0, 0.85, 1]) # Adjust layout to make space for legend
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust layout to make space for legend
 
     streamlit.pyplot(fig)
-    plt.close(fig);
+    plt.close(fig)
