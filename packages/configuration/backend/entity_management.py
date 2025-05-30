@@ -30,11 +30,14 @@ def _remove_entity(ss, entities_key, entity_id_to_remove, entity_name_singular):
 
 # --- Parcel Management ---
 # Adds a new parcel to the configuration if the ID is unique.
-def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight):
+def add_parcel(ss, parcel_id, parcel_x, parcel_y, parcel_weight, tw_open, tw_close, service_time):
     parcel_data = {
         "id": parcel_id,
         "coordinates_x_y": [parcel_x, parcel_y],
-        "weight": parcel_weight
+        "weight": parcel_weight,
+        "time_window_open": int(tw_open),
+        "time_window_close": int(tw_close),
+        "service_time": int(service_time)
     }
     return _add_entity(ss, "parcels", parcel_id, parcel_data, "Parcel")
 
@@ -45,10 +48,12 @@ def remove_parcel(ss, parcel_id_to_remove):
 
 # --- Delivery Agent Management ---
 # Adds a new delivery agent to the configuration if the ID is unique.
-def add_delivery_agent(ss, agent_id, capacity_weight):
+def add_delivery_agent(ss, agent_id, capacity_weight, op_start, op_end):
     agent_data = {
         "id": agent_id,
-        "capacity_weight": capacity_weight
+        "capacity_weight": capacity_weight,
+        "operating_hours_start": int(op_start),
+        "operating_hours_end": int(op_end)
     }
     return _add_entity(ss, "delivery_agents", agent_id, agent_data, "Agent")
 
