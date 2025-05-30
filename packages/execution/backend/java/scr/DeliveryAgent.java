@@ -151,7 +151,8 @@ public class DeliveryAgent extends Agent {
 
                             long waitUntilArrivalMillis = Duration.between(agentCurrentSimulatedTime, arrivalTime).toMillis();
                             if (waitUntilArrivalMillis < 0) {
-                                System.out.println("DA " + myAgent.getLocalName() + ": Scheduled arrival for " + parcelId + " at " + arrivalTimeStr + " is in the past. Arriving immediately.");
+                                final String finalArrivalTimeStrLog = arrivalTimeStr != null ? arrivalTimeStr : "UNKNOWN_ARRIVAL_TIME";
+                                System.out.println("DA " + myAgent.getLocalName() + ": Scheduled arrival for " + parcelId + " at " + finalArrivalTimeStrLog + " is in the past. Arriving immediately.");
                                 waitUntilArrivalMillis = 0;
                             }
 
@@ -163,14 +164,16 @@ public class DeliveryAgent extends Agent {
 
                             final long finalWaitUntilArrival = waitUntilArrivalMillis;
                             final long finalStayDuration = stayDurationMillis;
+                            final String finalArrivalTimeStrForInner = arrivalTimeStr;
+                            final String finalDepartureTimeStrForInner = departureTimeStr;
 
                             addSubBehaviour(new WakerBehaviour(myAgent, finalWaitUntilArrival) {
                                 protected void onWake() {
-                                    System.out.println("DA " + myAgent.getLocalName() + ": Arrived at " + parcelId + " (parcel drop-off, scheduled " + arrivalTimeStr + ")");
+                                    System.out.println("DA " + myAgent.getLocalName() + ": Arrived at " + parcelId + " (parcel drop-off, scheduled " + finalArrivalTimeStrForInner + ")");
 
                                     addSubBehaviour(new WakerBehaviour(myAgent, finalStayDuration) {
                                         protected void onWake() {
-                                            System.out.println("DA " + myAgent.getLocalName() + ": Departed from " + parcelId + " (parcel drop-off, scheduled " + departureTimeStr + ")");
+                                            System.out.println("DA " + myAgent.getLocalName() + ": Departed from " + parcelId + " (parcel drop-off, scheduled " + finalDepartureTimeStrForInner + ")");
                                         }
                                     });
                                 }
