@@ -108,42 +108,62 @@ public class DeliveryAgent extends Agent {
                     coordinates.add(new double[]{coord.getDouble(0), coord.getDouble(1)});
                 }
                 
-                addSubBehaviour(new OneShotBehaviour(myAgent) {
-                    public void action() {
-                        System.out.println("DA " + myAgent.getLocalName() + ": Starting delivery for route. Stops: " + stopIds.toString());
-                        System.out.println("DA " + myAgent.getLocalName() + ": At stop " + stopIds.getString(0));
-                    }
                 });
 
-                LocalTime now = LocalTime.now(); // Cache once outside loop
+                if (assignments == null || assignments.length() == 0) {
+                    System.out.println("DA " + myAgent.getLocalName() + ": No specific parcel assignments with timings found in the route.");
+                } else {
+                    DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_TIME; // Initialize formatter
+                    LocalTime now = LocalTime.now(); // Cache current time
 
-                for (int i = 0; i < assignments.length(); i++) {
-                    JSONObject stop = assignments.getJSONObject(i);
-                    String stopId = stop.getString("parcel_id");
-                    String arrivalTimeStr = stop.getString("arrival_time");
-                    String departureTimeStr = stop.getString("departure_time");
+                    for (int i = 0; i < assignments.length(); i++) {
+                        JSONObject stop = assignments.getJSONObject(i);
+                        final String parcelId = stop.getString("id"); // Corrected from "parcel_id"
+                        final String arrivalTimeStr = stop.getString("arrival_time");
+                        final String departureTimeStr = stop.getString("departure_time");
 
-                    final int stopIndex = i;
+                        try {
+                            LocalTime arrivalTime = LocalTime.parse(arrivalTimeStr, formatter);
+                            LocalTime departureTime = LocalTime.parse(departureTimeStr, formatter);
 
-                    LocalTime arrivalTime = LocalTime.parse(arrivalTimeStr, formatter);
-                    LocalTime departureTime = LocalTime.parse(departureTimeStr, formatter);
+                            long waitUntilArrivalMillis = Duration.between(now, arrivalTime).toMillis();
+                            if (waitUntilArrivalMillis < 0) {
+                                System.out.println("DA " + myAgent.getLocalName() + ": Scheduled arrival for " + parcelId + " at " + arrivalTimeStr + " is in the past. Arriving immediately.");
+                                waitUntilArrivalMillis = 0;
+                            }
 
-                    long waitUntilArrival = Math.max(Duration.between(now, arrivalTime).toMillis(), 0);
-                    long stayDuration = Math.max(Duration.between(arrivalTime, departureTime).toMillis(), 1000);
+                            long stayDurationMillis = Duration.between(arrivalTime, departureTime).toMillis();
+                            if (stayDurationMillis <= 0) {
+                                System.out.println("DA " + myAgent.getLocalName() + ": Scheduled stay for " + parcelId + " is non-positive (" + stayDurationMillis + "ms). Setting to 1000ms.");
+                                stayDurationMillis = 1000; // Min 1 sec stay
+                            }
 
-                    addSubBehaviour(new WakerBehaviour(myAgent, waitUntilArrival) {
-                        protected void onWake() {
-                            System.out.println("DA " + myAgent.getLocalName() + ": Arrived at " + stopId + " (scheduled " + arrivalTimeStr + ")");
+                            final long finalWaitUntilArrival = waitUntilArrivalMillis;
+                            final long finalStayDuration = stayDurationMillis;
 
-                            addSubBehaviour(new WakerBehaviour(myAgent, stayDuration) {
+                            addSubBehaviour(new WakerBehaviour(myAgent, finalWaitUntilArrival) {
                                 protected void onWake() {
-                                    System.out.println("DA " + myAgent.getLocalName() + ": Departed from " + stopId + " (scheduled " + departureTimeStr + ")");
+                                    System.out.println("DA " + myAgent.getLocalName() + ": Arrived at " + parcelId + " (parcel drop-off, scheduled " + arrivalTimeStr + ")");
+
+                                    addSubBehaviour(new WakerBehaviour(myAgent, finalStayDuration) {
+                                        protected void onWake() {
+                                            System.out.println("DA " + myAgent.getLocalName() + ": Departed from " + parcelId + " (parcel drop-off, scheduled " + departureTimeStr + ")");
+                                        }
+                                    });
                                 }
                             });
-                        }
-                    });
-                }
+                            // Update 'now' for the next iteration to be relative to current stop's departure
+                            now = departureTime; 
 
+                        } catch (DateTimeParseException e_parse) {
+                            System.err.println("DA " + myAgent.getLocalName() + ": Error parsing time for parcel " + parcelId + 
+                                           " (arrival: " + arrivalTimeStr + ", departure: " + departureTimeStr + ") - " + e_parse.getMessage());
+                        } catch (Exception e_json) {
+                             System.err.println("DA " + myAgent.getLocalName() + ": Error accessing time fields for parcel " + parcelId + 
+                                           " in JSON object: " + stop.toString() + " - " + e_json.getMessage());
+                        }
+                    }
+                }
 
                 addSubBehaviour(new OneShotBehaviour(myAgent) {
                     public void action() {
@@ -158,8 +178,12 @@ public class DeliveryAgent extends Agent {
                         JSONObject routeConfirmationPayload = new JSONObject();
                         routeConfirmationPayload.put("agent_id", myAgent.getLocalName());
                         JSONObject originalRoute = new JSONObject(routeJsonString);
-                        JSONArray originalStopIds = originalRoute.getJSONArray("route_stop_ids");
-                        routeConfirmationPayload.put("route_stop_ids", originalStopIds);
+                        JSONArray originalStopIdsConfirm = originalRoute.optJSONArray("route_stop_ids");
+                        if (originalStopIdsConfirm != null) {
+                             routeConfirmationPayload.put("route_stop_ids", originalStopIdsConfirm);
+                        } else {
+                            routeConfirmationPayload.put("route_stop_ids", new JSONArray()); 
+                        }
                         confirmationMsg.setContent(routeConfirmationPayload.toString());
                         myAgent.send(confirmationMsg);
                         System.out.println("DA " + myAgent.getLocalName() + ": Sent delivery confirmation to MRA.");
