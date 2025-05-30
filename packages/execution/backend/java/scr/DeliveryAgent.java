@@ -140,10 +140,12 @@ public class DeliveryAgent extends Agent {
                     for (int i = 0; i < assignments.length(); i++) {
                         JSONObject stop = assignments.getJSONObject(i);
                         final String parcelId = stop.getString("id"); // Corrected from "parcel_id"
+                        String arrivalTimeStr = null;
+                        String departureTimeStr = null;
 
                         try {
-                            final String arrivalTimeStr = stop.getString("arrival_time"); 
-                            final String departureTimeStr = stop.getString("departure_time");
+                            arrivalTimeStr = stop.getString("arrival_time");
+                            departureTimeStr = stop.getString("departure_time");
                             LocalTime arrivalTime = LocalTime.parse(arrivalTimeStr, formatter);
                             LocalTime departureTime = LocalTime.parse(departureTimeStr, formatter);
 
