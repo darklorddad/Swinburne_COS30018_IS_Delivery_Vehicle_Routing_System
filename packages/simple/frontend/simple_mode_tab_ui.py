@@ -236,7 +236,7 @@ def render_simple_mode_tab(ss):
                         streamlit.rerun() # Rerun to show spinner immediately
 
                 if ss.get("simple_workflow_is_running"):
-                    with streamlit.spinner("Executing simplified workflow... Please wait."):
+                    with streamlit.spinner("Please wait..."):
                         start_time = time.time()
                         # Call the backend function that does the work
                         simple_logic.handle_simple_mode_start_workflow(ss) 
