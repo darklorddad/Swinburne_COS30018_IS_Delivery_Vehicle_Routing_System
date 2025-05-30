@@ -3,53 +3,57 @@
   "parcels": [
     {
       "id": "P001",
-      "coordinates_x_y": [
-        2,
-        3
-      ],
-      "weight": 1
+      "coordinates_x_y": [2, 3],
+      "weight": 1,
+      "time_window_open": 540,
+      "time_window_close": 720,
+      "service_time": 10
     },
     {
       "id": "P002",
-      "coordinates_x_y": [
-        -1,
-        4
-      ],
-      "weight": 1
+      "coordinates_x_y": [-1, 4],
+      "weight": 1,
+      "time_window_open": 600,
+      "time_window_close": 840,
+      "service_time": 15
     },
     {
       "id": "P003",
-      "coordinates_x_y": [
-        5,
-        -2
-      ],
-      "weight": 1
+      "coordinates_x_y": [5, -2],
+      "weight": 1,
+      "time_window_open": 500,
+      "time_window_close": 900,
+      "service_time": 10
     },
     {
       "id": "P004",
-      "coordinates_x_y": [
-        -3,
-        -1
-      ],
-      "weight": 1
+      "coordinates_x_y": [-3, -1],
+      "weight": 1,
+      "time_window_open": 700,
+      "time_window_close": 1000,
+      "service_time": 5
     },
     {
       "id": "P005",
-      "coordinates_x_y": [
-        1,
-        1
-      ],
-      "weight": 1
+      "coordinates_x_y": [1, 1],
+      "weight": 1,
+      "time_window_open": 480,
+      "time_window_close": 1020,
+      "service_time": 20
     }
   ],
   "delivery_agents": [
     {
       "id": "DA01",
-      "capacity_weight": 3
+      "capacity_weight": 3,
+      "operating_hours_start": 480,
+      "operating_hours_end": 1080
     },
     {
       "id": "DA02",
-      "capacity_weight": 2
+      "capacity_weight": 2,
+      "operating_hours_start": 500,
+      "operating_hours_end": 1000
     }
   ]
 }

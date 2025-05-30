@@ -45,17 +45,26 @@ def generate_quick_config(ss, num_parcels, num_agents, config_name="generated-co
 
     # Generate parcels
     for i in range(num_parcels):
+        tw_open = random.randint(480, 960) # e.g., 8 AM to 4 PM
+        tw_close = random.randint(tw_open + 60, 1080) # At least 1 hour window, up to 6 PM
         new_config["parcels"].append({
-            "id": f"P{str(i+1).zfill(3)}",
+            "id": f"P{str(i+1).zfill(3)}", 
             "coordinates_x_y": [random.randint(-20, 20), random.randint(-20, 20)],
-            "weight": random.randint(1, 20)
+            "weight": random.randint(1, 20),
+            "time_window_open": tw_open,
+            "time_window_close": tw_close,
+            "service_time": random.choice([5, 10, 15, 20])
         })
 
     # Generate delivery agents
     for i in range(num_agents):
+        op_start = random.randint(420, 540) # e.g., 7 AM to 9 AM
+        op_end = random.randint(960, 1140) # e.g., 4 PM to 7 PM
         new_config["delivery_agents"].append({
             "id": f"DA{str(i+1).zfill(2)}",
-            "capacity_weight": random.choice([50, 75, 100])
+            "capacity_weight": random.choice([50, 75, 100]),
+            "operating_hours_start": op_start,
+            "operating_hours_end": op_end
         })
     
     new_config["warehouse_coordinates_x_y"] = [0,0] # Keep warehouse at default

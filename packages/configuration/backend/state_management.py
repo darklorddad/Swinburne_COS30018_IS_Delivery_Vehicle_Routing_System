@@ -7,11 +7,11 @@ DEFAULT_CONFIG_TEMPLATE = {
     "warehouse_coordinates_x_y": [0, 0], # Default warehouse coordinates [X, Y].
     "parcels": [
         # Example parcel structure:
-        # { "id": "P001", "coordinates_x_y": [2, 3], "weight": 10 }
+        # { "id": "P001", "coordinates_x_y": [2, 3], "weight": 10, "time_window_open": 540, "time_window_close": 720, "service_time": 15 }
     ],
     "delivery_agents": [
         # Example delivery agent structure:
-        # { "id": "DA01", "capacity_weight": 100 }
+        # { "id": "DA01", "capacity_weight": 100, "operating_hours_start": 480, "operating_hours_end": 1080 }
     ]
 }
 
