@@ -2,6 +2,7 @@ import json
 import math
 import copy
 import requests # For synchronous HTTP requests
+import time # For retry delay
 
 def get_params_schema():
     return {
@@ -279,7 +280,7 @@ def run_optimisation(config_data, params):
     parcels_cfg = config_data.get("parcels", [])
     agents_cfg = config_data.get("delivery_agents", [])
 
-    api_token = params.get("chutes_api_token")
+    api_token = params.get("openrouter_api_key")
     llm_model = params.get("llm_model_name")
     max_tokens = params.get("llm_max_tokens_response")
     temperature = params.get("llm_temperature")
@@ -301,9 +302,23 @@ def run_optimisation(config_data, params):
     print("LLM Optimiser: Sending prompt to LLM...")
     # print(f"LLM Prompt:\n{prompt[:500]}...\n...\n{prompt[-500:]}") # Log snippet of prompt
 
-    llm_response_data = _invoke_llm_sync(api_token, llm_model, prompt, max_tokens, temperature)
+    max_retries = 3
+    retry_delay = 5  # seconds
+    llm_response_data = None
+    
+    for attempt in range(max_retries):
+        try:
+            llm_response_data = _invoke_llm_sync(api_token, llm_model, prompt, max_tokens, temperature)
+            break  # Exit loop if successful
+        except Exception as e:
+            print(f"LLM API attempt {attempt + 1} failed: {str(e)}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                llm_response_data = {"error": f"All {max_retries} attempts failed"}
 
-    if "error" in llm_response_data:
+    if not llm_response_data or "error" in llm_response_data:
         error_msg = llm_response_data["error"]
         raw_content_msg = ""
         if "raw_content" in llm_response_data: # If LLM gave non-JSON text
