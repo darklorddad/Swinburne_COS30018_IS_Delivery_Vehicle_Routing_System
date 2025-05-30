@@ -10,6 +10,7 @@ from packages.execution.backend import execution_logic
 from packages.visualisation.frontend.visualisation_tab_ui import render_visualisation_tab
 from packages.optimisation.frontend.optimisation_ui_utils import render_optimisation_results_display
 from packages.configuration.frontend.ui_utils import display_operation_result
+from packages.metrics.frontend.metrics_display_ui import render_metrics_display
 from packages.simple.backend import simple_logic
 
 # New view for generating configuration in simple mode
@@ -263,27 +264,7 @@ def render_simple_mode_tab(ss):
                     # Display metrics separator
                     streamlit.markdown("---")
                     
-                    # Display calculated performance metrics if available and workflow was successful
-                    if ss.get("performance_metrics") and final_status and final_status.get('type') == 'success':
-                        metrics = ss.performance_metrics
-                        if "error" in metrics:
-                            streamlit.error(f"Metrics Calculation Error: {metrics['error']}")
-                        else:
-                            # Prepare data for table display including duration
-                            metrics_table_data = []
-                            if ss.get("simple_workflow_duration"):
-                                metrics_table_data.append({
-                                    "Metric": "Total Workflow Duration",
-                                    "Value": f"{ss.simple_workflow_duration} seconds"
-                                })
-                            for key, value in metrics.items():
-                                # Nicer looking labels for the table
-                                label = key.replace("_", " ").title()
-                                metrics_table_data.append({"Metric": label, "Value": value})
-                        
-                            if metrics_table_data:
-                                streamlit.dataframe(metrics_table_data, 
-                                                 use_container_width=True, 
-                                                 hide_index=True)
+                    # Display calculated performance metrics
+                    render_metrics_display(ss, final_status)
                     
                     render_visualisation_tab(ss)
