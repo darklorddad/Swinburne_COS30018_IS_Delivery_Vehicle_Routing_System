@@ -57,12 +57,14 @@ def render_edit_optimisation_parameters_view(ss):
                 val = current_value if isinstance(current_value, (float, int)) else param_info.get("default", 0.0)
                 step = param_info.get("step", 0.01)
                 fmt = "%.5f" if step < 0.001 else ("%.3f" if step < 0.01 else "%.2f")
+                min_val = float(param_info.get("min")) if "min" in param_info else None
+                max_val = float(param_info.get("max")) if "max" in param_info else None
                 temp_val = streamlit.number_input(
                     label, value=float(val),
-                    min_value=param_info.get("min"), max_value=param_info.get("max"),
-                    step=step, format=fmt, help=help_text, key=widget_key
+                    min_value=min_val, max_value=max_val,
+                    step=float(step), format=fmt, help=help_text, key=widget_key
                 )
-                ss.optimisation_script_user_values[name] = temp_val
+                ss.optimisation_script_user_values[name] = float(temp_val)
             elif ptype == "boolean":
                 val = current_value if isinstance(current_value, bool) else param_info.get("default", False)
                 temp_val = streamlit.checkbox(
