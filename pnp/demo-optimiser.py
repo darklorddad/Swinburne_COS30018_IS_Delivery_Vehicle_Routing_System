@@ -64,15 +64,17 @@ def run_optimisation(config_data, params):
 
     for agent in delivery_agents:
         current_capacity = agent["capacity_weight"]
-        current_location = list(warehouse_coords)
-        agent_route_parcels = []
-        agent_route_stops_coords = [list(warehouse_coords)]
-        agent_route_stop_ids = ["Warehouse"]
-        agent_op_start_time = agent.get("operating_hours_start", 0)
-        agent_op_end_time = agent.get("operating_hours_end", 1439)
+        current_location = list(warehouse_coords) # Use a mutable copy
+        # Agent's time starts at their operating_hours_start
+        agent_op_start_time = agent.get("operating_hours_start", 0) # Default to 0 (midnight) if not specified
+        agent_op_end_time = agent.get("operating_hours_end", 1439) # Default to 1439 (23:59)
         current_time = agent_op_start_time
-        agent_arrival_times = [current_time]
-        agent_departure_times = [current_time]
+
+        agent_route_parcels = [] # List of parcel objects for this agent
+        agent_route_stops_coords = [list(warehouse_coords)] # List of coordinates for distance calculation
+        agent_route_stop_ids = ["Warehouse"] # List of IDs for display
+        agent_arrival_times = [current_time] # Arrival at warehouse is op_start_time
+        agent_departure_times = [current_time] # Departure from warehouse is also op_start_time initially
 
         while True:
             best_parcel_candidate = None
