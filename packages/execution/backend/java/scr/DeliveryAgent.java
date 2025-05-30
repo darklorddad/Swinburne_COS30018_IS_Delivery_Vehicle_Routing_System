@@ -146,14 +146,16 @@ public class DeliveryAgent extends Agent {
                         try {
                             arrivalTimeStr = stop.getString("arrival_time");
                             departureTimeStr = stop.getString("departure_time");
-                            final String finalParcelIdForOneShot = parcelId;
+                            final String finalParcelIdForInner = parcelId;
+                            final String finalArrivalTimeStrForInner = arrivalTimeStr;
+                            final String finalDepartureTimeStrForInner = departureTimeStr;
 
                             // SIMPLIFIED: Add OneShot to log visit
                             addSubBehaviour(new OneShotBehaviour(myAgent) {
                                 public void action() {
-                                    System.out.println("DA " + myAgent.getLocalName() + ": Visited (OneShot) " + finalParcelIdForOneShot + 
-                                        " (Scheduled Arrival: " + arrivalTimeStr + 
-                                        ", Departure: " + departureTimeStr + ")");
+                                    System.out.println("DA " + myAgent.getLocalName() + ": Visited (OneShot) " + finalParcelIdForInner + 
+                                        " (Scheduled Arrival: " + finalArrivalTimeStrForInner + 
+                                        ", Departure: " + finalDepartureTimeStrForInner + ")");
                                 }
                             });
 
