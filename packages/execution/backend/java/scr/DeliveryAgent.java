@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Collections;
 
 public class DeliveryAgent extends Agent {
-    private static final long TIME_PER_DISTANCE_UNIT_MS = 0;
     private String agentInitialConfigJsonString; // Field to store config
 
     protected void setup() {
@@ -109,7 +108,12 @@ public class DeliveryAgent extends Agent {
                 addSubBehaviour(new OneShotBehaviour(myAgent) {
                     public void action() {
                         System.out.println("DA " + myAgent.getLocalName() + ": Starting delivery for route. Stops: " + stopIds.toString());
-                        System.out.println("DA " + myAgent.getLocalName() + ": At stop " + stopIds.getString(0));
+                        String firstStopId = stopIds.getString(0);
+                        long firstStopArrivalMinutes = arrivalTimes.getLong(0);
+                        long firstStopDepartureMinutes = departureTimes.getLong(0);
+                        System.out.println("DA " + myAgent.getLocalName() + ": At " + firstStopId + 
+                                           ". Arrival: " + formatTime(firstStopArrivalMinutes) +
+                                           ", Departure: " + formatTime(firstStopDepartureMinutes));
                     }
                 });
 

@@ -20,14 +20,23 @@ def get_params_schema():
                 "help": "Whether vehicles must return to warehouse after deliveries"
             },
             {
-                "name": "distance_weight",
-                "label": "Distance weight",
+                "name": "time_per_distance_unit",
+                "label": "Time per distance unit (minutes)",
                 "type": "float",
-                "default": 1.0,
+                "default": 2.0,
                 "min": 0.1,
-                "max": 5.0,
+                "max": 10.0,
                 "step": 0.1,
-                "help": "Weight given to distance vs capacity utilization"
+                "help": "Minutes taken to travel one unit of distance"
+            },
+            {
+                "name": "default_service_time",
+                "label": "Default service time at stop (minutes)", 
+                "type": "integer",
+                "default": 10,
+                "min": 0,
+                "step": 1,
+                "help": "Default time spent at each parcel stop for service"
             }
         ]
     }
@@ -48,14 +57,22 @@ def run_optimisation(config_data, params):
 
     optimised_routes = []
     parcels_assigned_globally = set()
-    distance_weight = params.get("distance_weight", 1.0)
+    time_per_dist_unit = params.get("time_per_distance_unit", 2.0)
+    default_service_time = params.get("default_service_time", 10)
+    return_to_warehouse_flag = params.get("return_to_warehouse", True)
+    sort_parcels_option = params.get("sort_parcels", "none")
 
     for agent in delivery_agents:
         current_capacity = agent["capacity_weight"]
-        current_location = list(warehouse_coords) # Use a mutable copy
-        agent_route_parcels = [] # List of parcel objects for this agent
-        agent_route_stops_coords = [list(warehouse_coords)] # List of coordinates for distance calculation
-        agent_route_stop_ids = ["Warehouse"] # List of IDs for display
+        current_location = list(warehouse_coords)
+        agent_route_parcels = []
+        agent_route_stops_coords = [list(warehouse_coords)]
+        agent_route_stop_ids = ["Warehouse"]
+        agent_op_start_time = agent.get("operating_hours_start", 0)
+        agent_op_end_time = agent.get("operating_hours_end", 1439)
+        current_time = agent_op_start_time
+        agent_arrival_times = [current_time]
+        agent_departure_times = [current_time]
 
         while True:
             best_parcel_candidate = None
@@ -65,18 +82,37 @@ def run_optimisation(config_data, params):
             # Find the nearest, eligible, unassigned parcel
             for i, parcel_data in enumerate(unassigned_parcels):
                 if parcel_data["weight"] <= current_capacity:
-                    # Calculate weighted distance score
-                    raw_dist = _calculate_distance(current_location, parcel_data["coordinates_x_y"])
-                    dist_score = raw_dist * distance_weight
+                    parcel_coords = parcel_data["coordinates_x_y"]
+                    dist_to_parcel = _calculate_distance(current_location, parcel_coords)
+                    travel_time = dist_to_parcel * time_per_dist_unit
+
+                    arrival_at_parcel = current_time + travel_time
+                    parcel_tw_open = parcel_data.get("time_window_open", 0)
+                    parcel_tw_close = parcel_data.get("time_window_close", 1439)
+                    parcel_service_time = parcel_data.get("service_time", default_service_time)
+
+                    service_start_time = max(arrival_at_parcel, parcel_tw_open)
+                    service_end_time = service_start_time + parcel_service_time
+
+                    feasible = True
+                    if service_end_time > parcel_tw_close:
+                        feasible = False
+                    if service_end_time > agent_op_end_time:
+                        feasible = False
                     
-                    # Add inverse capacity utilization to prefer vehicles with more remaining capacity
-                    capacity_utilization = (agent["capacity_weight"] - current_capacity) / agent["capacity_weight"]
-                    score = dist_score * (1 + capacity_utilization)
-                    
-                    if score < min_dist_candidate:
-                        min_dist_candidate = score
+                    if return_to_warehouse_flag:
+                        dist_from_parcel_to_wh = _calculate_distance(parcel_coords, warehouse_coords)
+                        travel_time_to_wh = dist_from_parcel_to_wh * time_per_dist_unit
+                        arrival_at_wh_after_parcel = service_end_time + travel_time_to_wh
+                        if arrival_at_wh_after_parcel > agent_op_end_time:
+                            feasible = False
+
+                    if feasible and dist_to_parcel < min_dist_candidate:
+                        min_dist_candidate = dist_to_parcel
                         best_parcel_candidate = parcel_data
                         best_parcel_idx = i
+                        candidate_arrival_time = service_start_time
+                        candidate_departure_time = service_end_time
             
             if best_parcel_candidate:
                 # Assign the best found parcel
