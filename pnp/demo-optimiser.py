@@ -133,6 +133,11 @@ def run_optimisation(config_data, params):
         if params.get("return_to_warehouse", True):
             agent_route_stops_coords.append(list(warehouse_coords))
             agent_route_stop_ids.append("Warehouse")
+            dist_to_wh = _calculate_distance(current_location, warehouse_coords)
+            travel_time_to_wh = dist_to_wh * time_per_dist_unit
+            arrival_at_wh = current_time + travel_time_to_wh
+            agent_arrival_times.append(round(arrival_at_wh))
+            agent_departure_times.append(round(arrival_at_wh)) # Arrival and departure are same for final WH
 
         # Calculate total distance for the agent's route
         total_distance = 0
@@ -149,6 +154,8 @@ def run_optimisation(config_data, params):
                 "total_weight": sum(p["weight"] for p in agent_route_parcels),
                 "capacity_weight": agent["capacity_weight"],
                 "total_distance": round(total_distance, 2),
+                "arrival_times": agent_arrival_times,
+                "departure_times": agent_departure_times
             })
 
     # Remaining unassigned parcels (those not in parcels_assigned_globally)
