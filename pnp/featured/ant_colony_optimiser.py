@@ -155,11 +155,23 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_or_g
         p_tw_open = p_obj.get("time_window_open", 0)
         p_tw_close = p_obj.get("time_window_close", 1439)
 
+        # Special case for first parcel in empty route
+        if current_load == 0 and route_start_time > p_tw_close:
+            reason = f"First parcel {p_id} TW close {p_tw_close} before route start {route_start_time}"
+            print(f"    [DEBUG FEASIBILITY] {reason}")
+            return False, {"reason": reason}
+
         current_load += p_weight
         if current_load > vehicle_capacity:
             reason = f"Capacity exceeded - Current: {current_load}, Max: {vehicle_capacity}"
             print(f"    [DEBUG FEASIBILITY] Capacity check failed: {reason}")
-            return False, {"reason": reason} 
+            return False, {"reason": reason}
+
+        dist_to_parcel = _calculate_distance(current_location, p_coords)
+        if dist_to_parcel <= 0.001:  # Prevent division by zero in probabilities
+            reason = f"Location overlap for parcel {p_id}"
+            print(f"    [DEBUG FEASIBILITY] {reason}")
+            return False, {"reason": reason}
 
         dist_to_parcel = _calculate_distance(current_location, p_coords)
         total_distance += dist_to_parcel
