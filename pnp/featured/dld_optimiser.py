@@ -120,7 +120,7 @@ def _build_llm_prompt(warehouse_coords, parcels, delivery_agents):
     prompt += "Focus on assigning all parcels if possible, respecting agent capacities. The order of parcels within each agent's route should be logical (e.g., somewhat geographically clustered or forming a reasonable path).\n"
     return prompt
 
-def _invoke_llm_sync(api_token, model_name, prompt_content):
+def _invoke_llm_sync(api_token, model_name, prompt_content, temperature=0.5, max_tokens=2048):
     if not api_token:
         return {"error": "LLM API key is missing. Please configure it in parameters."}
 
@@ -132,7 +132,9 @@ def _invoke_llm_sync(api_token, model_name, prompt_content):
     }
     body = {
         "model": model_name,
-        "messages": [{"role": "user", "content": prompt_content}]
+        "messages": [{"role": "user", "content": prompt_content}],
+        "temperature": temperature,
+        "max_tokens": max_tokens
     }
 
     try:
@@ -188,7 +190,9 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
     Calculates detailed schedule for a given sequence of parcels for a specific agent.
     Checks feasibility against agent's capacity, operating hours, and parcel time windows.
     """
-    should_return_to_warehouse = True  # always return to warehouse
+    should_return_to_warehouse = params.get("return_to_warehouse", True)
+    time_per_dist_unit = params.get("time_per_distance_unit", 1.0)
+    default_service_time = params.get("default_service_time", 10)
 
     agent_capacity = agent_config["capacity_weight"]
     agent_op_start = agent_config.get("operating_hours_start", 0) # Default if missing
@@ -231,7 +235,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
 
         dist_to_parcel = _calculate_distance(current_location, p_coords)
         total_distance += dist_to_parcel
-        travel_time = dist_to_parcel * 1.0  # Fixed travel time calculation (1 min per distance unit)
+        travel_time = dist_to_parcel * time_per_dist_unit
         
         arrival_at_parcel = current_time + travel_time
         service_start_time = max(arrival_at_parcel, p_tw_open)
@@ -253,7 +257,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
     if should_return_to_warehouse:
         dist_to_warehouse = _calculate_distance(current_location, warehouse_coords)
         total_distance += dist_to_warehouse
-        travel_time_to_wh = dist_to_warehouse * 1.0  # Fixed travel time calculation (1 min per distance unit)
+        travel_time_to_wh = dist_to_warehouse * time_per_dist_unit
         arrival_at_warehouse_final = current_time + travel_time_to_wh
 
         if arrival_at_warehouse_final > agent_op_end: return False, {"reason": "Return to WH after agent op end"}
@@ -301,7 +305,9 @@ def run_optimisation(config_data, params):
     
     for attempt in range(max_retries):
         try:
-            llm_response_data = _invoke_llm_sync(api_token, llm_model, prompt)
+            llm_temperature = params.get("llm_temperature", 0.5)
+            llm_max_tokens = params.get("llm_max_tokens", 2048)
+            llm_response_data = _invoke_llm_sync(api_token, llm_model, prompt, llm_temperature, llm_max_tokens)
             break  # Exit loop if successful
         except Exception as e:
             print(f"LLM API attempt {attempt + 1} failed: {str(e)}")
