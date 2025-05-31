@@ -156,22 +156,47 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
             
             llm_full_content_str = response_data["choices"][0]["message"]["content"]
             
-            # Attempt 1: Try to find a JSON object between {}
+            # Attempt 1: Try to parse entire content as JSON (most strict)
+            try:
+                print(f"LLM: Attempting direct JSON parse of: {llm_full_content_str[:200]}...")
+                return json.loads(llm_full_content_str)
+            except json.JSONDecodeError as e_direct:
+                print(f"LLM: Failed direct JSON parse: {e_direct}")
+
+            # Attempt 2: Try to find a JSON object between {}
             try:
                 json_start = llm_full_content_str.find("{")
                 json_end = llm_full_content_str.rfind("}") + 1
+                if json_start == -1 or json_end == 0:
+                    raise ValueError("No JSON brackets found")
                 json_str = llm_full_content_str[json_start:json_end]
+                print(f"LLM: Attempting extracted JSON parse: {json_str[:200]}...")
                 return json.loads(json_str)
-            
-            # Attempt 2: If direct extraction fails, try markdown block
-            except (ValueError, json.JSONDecodeError):
-                try:
-                    if "```json" in llm_full_content_str:
-                        json_block = llm_full_content_str.split("```json")[1].split("```")[0].strip()
-                        return json.loads(json_block)
-                except (IndexError, json.JSONDecodeError) as e_json_block:
-                    print(f"LLM: Failed to extract JSON: {e_json_block}. Content: {llm_full_content_str[:300]}")
-                    return {"error": "LLM response content not valid JSON", "raw_content": llm_full_content_str}
+            except (ValueError, json.JSONDecodeError) as e_extract:
+                print(f"LLM: Failed extracted JSON parse: {e_extract}")
+
+            # Attempt 3: Try markdown block
+            try:
+                if "```json" in llm_full_content_str:
+                    parts = llm_full_content_str.split("```json")
+                    if len(parts) < 2:
+                        raise ValueError("Incomplete markdown block")
+                    json_block = parts[1].split("```")[0].strip()
+                    print(f"LLM: Attempting markdown JSON parse: {json_block[:200]}...")
+                    return json.loads(json_block)
+            except (IndexError, ValueError, json.JSONDecodeError) as e_markdown:
+                print(f"LLM: Failed markdown JSON parse: {e_markdown}")
+
+            print(f"LLM: All parsing attempts failed. Full content (truncated): {llm_full_content_str[:500]}...")
+            return {
+                "error": "LLM response content not valid JSON", 
+                "raw_content": llm_full_content_str,
+                "parse_attempts": [
+                    {"method": "direct", "error": str(e_direct)},
+                    {"method": "extracted", "error": str(e_extract)},
+                    {"method": "markdown", "error": str(e_markdown)}
+                ]
+            }
         else:
             print(f"LLM: Response format unexpected: {response_data}")
             return {"error": "LLM response format unexpected", "raw_response": response_data}
@@ -342,13 +367,22 @@ def run_optimisation(config_data, params):
             else:
                 llm_response_data = {"error": f"All {max_retries} attempts failed"}
 
-    if not llm_response_data or "error" in llm_response_data:
-        error_msg = llm_response_data["error"]
-        raw_content_msg = ""
-        if "raw_content" in llm_response_data: # If LLM gave non-JSON text
-            raw_content_msg = f" LLM's raw output (partial): '{llm_response_data['raw_content'][:200]}...'"
-        elif "raw_response" in llm_response_data: # If API gave completely unexpected structure
-             raw_content_msg = f" LLM's raw API response: '{str(llm_response_data['raw_response'])[:200]}...'"
+    error_msg = "Unknown error during LLM processing"
+    raw_content_msg = ""
+
+    if not llm_response_data:
+        error_msg = "LLM response data is empty"
+    elif isinstance(llm_response_data, str):
+        error_msg = f"LLM returned raw string instead of JSON. Content: {llm_response_data[:200]}..."
+        raw_content_msg = llm_response_data
+    elif isinstance(llm_response_data, dict):
+        error_msg = llm_response_data.get("error", "Unknown error in LLM response")
+        if "raw_content" in llm_response_data:
+            raw_content_msg = f" Raw content: {llm_response_data['raw_content'][:200]}..."
+        if "parse_attempts" in llm_response_data:
+            error_msg += f" (Parse attempts: {llm_response_data['parse_attempts']})"
+    else:
+        error_msg = f"Unexpected LLM response type: {type(llm_response_data)}"
         return {
             "status": "error",
             "message": f"LLM API call failed or returned unusable data: {error_msg}.{raw_content_msg}",
