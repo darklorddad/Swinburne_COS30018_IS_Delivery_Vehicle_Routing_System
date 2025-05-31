@@ -388,12 +388,22 @@ def run_optimisation(config_data, params):
     agent_map = {a["id"]: a for a in agents_cfg}   # For quick lookup
 
     for llm_route_proposal in llm_proposed_routes:
+        # Add robust type checking before processing route proposal
+        if not isinstance(llm_route_proposal, dict):
+            print(f"LLM Optimiser: Skipping invalid route proposal (expected dict, got {type(llm_route_proposal)}): {llm_route_proposal}")
+            continue
+            
         agent_id = llm_route_proposal.get("agent_id")
         proposed_parcel_ids_for_agent = llm_route_proposal.get("parcels_assigned_ids", [])
 
-        if not agent_id or not isinstance(proposed_parcel_ids_for_agent, list):
-            print(f"LLM Optimiser: Skipping invalid route proposal from LLM: {llm_route_proposal}")
+        # Verify both agent_id exists and parcels_assigned_ids is a list
+        if not agent_id or not isinstance(agent_id, str):
+            print(f"LLM Optimiser: Skipping route with missing/invalid agent_id: {llm_route_proposal}")
             continue
+            
+        if not isinstance(proposed_parcel_ids_for_agent, list):
+            print(f"LLM Optimiser: parcels_assigned_ids is not a list in route for agent {agent_id}. Converting to list.")
+            proposed_parcel_ids_for_agent = [proposed_parcel_ids_for_agent] if proposed_parcel_ids_for_agent else []
         
         agent_config = agent_map.get(agent_id)
         if not agent_config:
