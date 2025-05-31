@@ -212,11 +212,14 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
         return {"error": f"Unexpected error during LLM API call: {str(e)}"}
 
 
-def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_config, warehouse_coords, params, parcel_map_for_lookup):
+def _calculate_route_schedule_and_feasibility(parcel_objects_for_agent, agent_config, warehouse_coords, params, parcel_map_for_lookup):
     """
     (Copied and adapted from other optimisers - ensures consistency)
     Calculates detailed schedule for a given sequence of parcels for a specific agent.
     Checks feasibility against agent's capacity, operating hours, and parcel time windows.
+
+    This version now takes a list of parcel objects and sorts them by time_window_open
+    as a simple local re-ordering heuristic before detailed scheduling.
     """
     should_return_to_warehouse = params.get("return_to_warehouse", True)
     time_per_dist_unit = params.get("time_per_distance_unit", 1.0)
@@ -236,7 +239,11 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
     current_load = 0
     total_distance = 0.0
 
-    if not ordered_parcel_objects:
+    # Simple local re-ordering: Sort parcels for this agent by their time window open.
+    # More sophisticated local search (e.g., 2-opt) could be applied here.
+    locally_ordered_parcels = sorted(parcel_objects_for_agent, key=lambda p: p.get("time_window_open", 0))
+
+    if not locally_ordered_parcels: # Changed from ordered_parcel_objects
         if should_return_to_warehouse:
              pass # Already initialized
         else:
@@ -246,11 +253,8 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
                 "total_distance": 0.0, "total_load": 0.0
             }
 
-    for p_obj_id in ordered_parcel_objects: # Expecting list of parcel IDs here from LLM
-        p_obj = parcel_map_for_lookup.get(p_obj_id)
-        if not p_obj:
-            print(f"Warning: Parcel ID '{p_obj_id}' from LLM not found in config_data. Skipping.")
-            continue # Skip if parcel ID is invalid
+    for p_obj in locally_ordered_parcels: # Iterate over the locally re-ordered parcel objects
+        # p_obj is already the full parcel object. No need for parcel_map_for_lookup here.
 
         p_coords = p_obj["coordinates_x_y"]
         p_weight = p_obj["weight"]
@@ -301,6 +305,12 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
         "total_distance": round(total_distance, 2), "total_load": current_load
     }
 
+
+def format_time(minutes_from_midnight):
+    if minutes_from_midnight is None: return "N/A"
+    hours = int(minutes_from_midnight // 60)
+    minutes = int(minutes_from_midnight % 60)
+    return f"{hours:02d}:{minutes:02d}"
 
 def run_optimisation(config_data, params):
     warehouse_coords = config_data.get("warehouse_coordinates_x_y", [0, 0])
