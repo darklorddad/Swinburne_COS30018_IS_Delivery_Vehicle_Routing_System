@@ -171,7 +171,8 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_or_g
         actual_service_start_time = max(physical_arrival_at_parcel, p_tw_open)
 
         if actual_service_start_time > p_tw_close: # Cannot start service if arrival (or TW open) is already past TW close
-            return False, {} 
+            reason = f"TW violation - Arrival: {physical_arrival_at_parcel}, TW: {p_tw_open}-{p_tw_close}"
+            return False, {"reason": reason}
 
         actual_service_end_time = actual_service_start_time + p_service_time
 
@@ -460,10 +461,13 @@ def run_optimisation(config_data, params):
                 parcel_map 
             )
             if is_feasible_for_agent:
+                print(f"    -> FEASIBLE - Assigned to agent {agent_config['id']}")
                 # Simple greedy: assign to first feasible agent
                 best_agent_for_route = agent_config
                 best_schedule_details_for_agent = schedule_details
                 break 
+            else:
+                print(f"    -> INFEASIBLE - Reason: {schedule_details.get('reason', 'Unknown')}")
 
         if best_agent_for_route and best_schedule_details_for_agent:
             assigned_agent_id = best_agent_for_route["id"]
