@@ -113,6 +113,7 @@ def _build_llm_prompt(warehouse_coords, parcels, delivery_agents):
     prompt += "```\n\n"
     prompt += "Based on the provided data, generate the VRP solution in the specified JSON format.\n"
     prompt += "Focus on assigning all parcels if possible, respecting agent capacities. The order of parcels within each agent's route should be logical (e.g., somewhat geographically clustered or forming a reasonable path).\n"
+    prompt += "\nIMPORTANT: Your response must be ONLY the raw JSON object, without any additional text, explanations, or markdown formatting before or after it. Start with '{' and end with '}'.\n"
     return prompt
 
 def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, temperature=1.0, max_tokens=2048, site_url=None, site_name=None):
@@ -153,23 +154,24 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
            response_data["choices"][0].get("message") and \
            response_data["choices"][0]["message"].get("content"):
             
-            llm_content_str = response_data["choices"][0]["message"]["content"]
+            llm_full_content_str = response_data["choices"][0]["message"]["content"]
             
-            # Try to extract JSON from markdown code block if present
-            if "```json" in llm_content_str:
-                try:
-                    json_block = llm_content_str.split("```json")[1].split("```")[0].strip()
-                    return json.loads(json_block)
-                except (IndexError, json.JSONDecodeError) as e_json_block:
-                    print(f"LLM: Failed to extract/parse JSON from markdown block: {e_json_block}. Content: {llm_content_str[:300]}")
-                    # Fallback to trying to parse the whole string if block extraction fails
-            
-            # Try to parse the whole content as JSON (if no markdown or block extraction failed)
+            # Attempt 1: Try to find a JSON object between {}
             try:
-                return json.loads(llm_content_str)
-            except json.JSONDecodeError as e_json_full:
-                print(f"LLM: Response content was not valid JSON: {e_json_full}. Content: {llm_content_str[:300]}")
-                return {"error": "LLM response content not valid JSON", "raw_content": llm_content_str}
+                json_start = llm_full_content_str.find("{")
+                json_end = llm_full_content_str.rfind("}") + 1
+                json_str = llm_full_content_str[json_start:json_end]
+                return json.loads(json_str)
+            
+            # Attempt 2: If direct extraction fails, try markdown block
+            except (ValueError, json.JSONDecodeError):
+                try:
+                    if "```json" in llm_full_content_str:
+                        json_block = llm_full_content_str.split("```json")[1].split("```")[0].strip()
+                        return json.loads(json_block)
+                except (IndexError, json.JSONDecodeError) as e_json_block:
+                    print(f"LLM: Failed to extract JSON: {e_json_block}. Content: {llm_full_content_str[:300]}")
+                    return {"error": "LLM response content not valid JSON", "raw_content": llm_full_content_str}
         else:
             print(f"LLM: Response format unexpected: {response_data}")
             return {"error": "LLM response format unexpected", "raw_response": response_data}
