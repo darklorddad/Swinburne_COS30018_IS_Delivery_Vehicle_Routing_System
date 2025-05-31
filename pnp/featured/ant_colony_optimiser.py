@@ -296,8 +296,12 @@ def run_optimisation(config_data, params):
     global_best_unassigned_count = num_parcels + 1
 
 
+    print(f"ACO: Starting optimization with {num_iterations} iterations and {num_ants} ants")
     for iteration in range(num_iterations):
         iteration_solutions = [] # Store solutions (list of routes, cost) from all ants this iteration
+
+        if iteration == 0 or (iteration+1) % 10 == 0:
+            print(f"\nACO: Iteration {iteration+1}/{num_iterations}")
 
         for ant_idx in range(num_ants):
             ant_parcels_to_visit = set(parcel_idx_to_id.keys()) # Set of parcel indices (1 to N)
@@ -325,6 +329,8 @@ def run_optimisation(config_data, params):
                             eligible_next_parcel_indices.append(p_idx)
                     
                     if not eligible_next_parcel_indices:
+                        if iteration == 0:
+                            print(f"  Ant {ant_idx}: No eligible parcels left to add to route")
                         break # Cannot add more parcels to this route
 
                     # Calculate probabilities
@@ -383,6 +389,8 @@ def run_optimisation(config_data, params):
                     if not ant_parcels_to_visit: # All parcels assigned
                         pass
                     else: # Parcels remaining, but cannot form a new route from WH
+                        if iteration == 0:
+                            print(f"  Ant {ant_idx}: Could not start new route with remaining parcels: {ant_parcels_to_visit}")
                         break # Stop trying to build routes for this ant
 
 
@@ -412,6 +420,11 @@ def run_optimisation(config_data, params):
                     u, v = path_indices[i], path_indices[i+1]
                     pheromone_matrix[u][v] += pheromone_to_add
                     pheromone_matrix[v][u] += pheromone_to_add # Symmetric
+
+        # Log iteration results
+        if iteration == 0 or (iteration+1) % 10 == 0:
+            best_iter_unassigned = min(sol["unassigned_count"] for sol in iteration_solutions) if iteration_solutions else num_parcels
+            print(f"ACO: Iter {iteration+1}: Best unassigned={best_iter_unassigned}/{num_parcels}")
 
         # Update global best solution
         # Prioritize fewer unassigned parcels, then lower cost
