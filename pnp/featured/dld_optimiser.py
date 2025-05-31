@@ -12,7 +12,7 @@ def get_params_schema():
                 "label": "OpenRouter API Key",
                 "type": "string",
                 "default": "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",
-                "help": "API Key for OpenRouter.ai. DO NOT COMMIT ACTUAL KEYS."
+                "help": "API Key for OpenRouter."
             },
             {
                 "name": "llm_model_name", 
