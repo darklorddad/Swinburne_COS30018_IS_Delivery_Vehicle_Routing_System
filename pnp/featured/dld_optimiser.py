@@ -173,7 +173,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
 
         p_coords = p_obj["coordinates_x_y"]
         p_weight = p_obj["weight"]
-        p_service_time = p_obj.get("service_time", 10)  # default 10 minutes per stop
+        p_service_time = p_obj.get("service_time", 10)  # Fixed service time (10 min default)
         p_tw_open = p_obj.get("time_window_open", 0)
         p_tw_close = p_obj.get("time_window_close", 1439)
 
@@ -182,7 +182,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
 
         dist_to_parcel = _calculate_distance(current_location, p_coords)
         total_distance += dist_to_parcel
-        travel_time = dist_to_parcel * 1.0  # 1.0 min per distance unit
+        travel_time = dist_to_parcel * 1.0  # Fixed travel time calculation (1 min per distance unit)
         
         arrival_at_parcel = current_time + travel_time
         service_start_time = max(arrival_at_parcel, p_tw_open)
@@ -204,7 +204,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
     if should_return_to_warehouse:
         dist_to_warehouse = _calculate_distance(current_location, warehouse_coords)
         total_distance += dist_to_warehouse
-        travel_time_to_wh = dist_to_warehouse * 1.0  # 1.0 min per distance unit
+        travel_time_to_wh = dist_to_warehouse * 1.0  # Fixed travel time calculation (1 min per distance unit)
         arrival_at_warehouse_final = current_time + travel_time_to_wh
 
         if arrival_at_warehouse_final > agent_op_end: return False, {"reason": "Return to WH after agent op end"}
