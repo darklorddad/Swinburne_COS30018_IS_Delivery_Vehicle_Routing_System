@@ -11,32 +11,32 @@ def get_params_schema():
                 "name": "llm_api_key",
                 "label": "LLM API Key",
                 "type": "string",
-                "default": "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",
+                "default": "",  # Empty by default for security
                 "help": "API Key for accessing the LLM service."
             },
             {
                 "name": "llm_model_name", 
                 "label": "LLM Model Name",
                 "type": "string",
-                "default": "deepseek/deepseek-chat-v3-0324:free",
-                "help": "The LLM model to use on OpenRouter (e.g., deepseek/deepseek-chat-v3-0324:free)."
+                "default": "default-model",
+                "help": "The LLM model to use for routing optimization."
             },
             {
                 "name": "llm_max_tokens_response",
                 "label": "LLM Max Tokens (Response)",
                 "type": "integer",
-                "default": 2048, # Increased for potentially large JSON
-                "min": 256,
-                "max": 4096,
+                "default": 1024,
+                "min": 128,
+                "max": 8192,
                 "help": "Maximum number of tokens the LLM should generate in its response."
             },
             {
                 "name": "llm_temperature",
                 "label": "LLM Temperature",
                 "type": "float",
-                "default": 0.3, # Lower temperature for more deterministic/structured output
+                "default": 0.7,
                 "min": 0.0,
-                "max": 1.5,
+                "max": 2.0,
                 "step": 0.1,
                 "help": "Controls randomness. Lower is more deterministic."
             },
