@@ -158,6 +158,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_or_g
         current_load += p_weight
         if current_load > vehicle_capacity:
             reason = f"Capacity exceeded - Current: {current_load}, Max: {vehicle_capacity}"
+            print(f"    [DEBUG FEASIBILITY] Capacity check failed: {reason}")
             return False, {"reason": reason} 
 
         dist_to_parcel = _calculate_distance(current_location, p_coords)
@@ -172,6 +173,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_or_g
 
         if actual_service_start_time > p_tw_close: # Cannot start service if arrival (or TW open) is already past TW close
             reason = f"TW violation - Arrival: {physical_arrival_at_parcel}, TW: {p_tw_open}-{p_tw_close}"
+            print(f"    [DEBUG FEASIBILITY] Time Window check failed: {reason}")
             return False, {"reason": reason}
 
         actual_service_end_time = actual_service_start_time + p_service_time
@@ -328,13 +330,17 @@ def run_optimisation(config_data, params):
                             temp_route_parcels, generic_constraints, warehouse_coords, params, parcel_map
                         )
                         if iteration == 0 and ant_idx == 0 and not is_feasible_addition:
-                            print(f"    [DEBUG] Could not add parcel {p_idx} to empty route. Reason: {feasibility_details.get('reason', 'Unknown')}")
+                            parcel_obj = parcel_map[parcel_idx_to_id[p_idx]]
+                            print(f"    [DEBUG] Could not add parcel {p_idx} ({parcel_obj['id']}) to empty route.")
+                            print(f"    [DEBUG] Parcel details: weight={parcel_obj['weight']}, coords={parcel_obj['coordinates_x_y']}, TW={parcel_obj.get('time_window_open')}-{parcel_obj.get('time_window_close')}")
+                            print(f"    [DEBUG] Fail reason: {feasibility_details.get('reason', 'Unknown')}")
                         if is_feasible_addition:
                             eligible_next_parcel_indices.append(p_idx)
                     
                     if not eligible_next_parcel_indices:
                         if iteration == 0:
                             print(f"  Ant {ant_idx}: No eligible parcels left to add to route. Current route has {len(current_single_route_parcel_objects)} parcels.")
+                        print(f"    [DEBUG] No eligible parcels to add. Current route weight: {sum(p['weight'] for p in current_single_route_parcel_objects)}")
                         break # Cannot add more parcels to this route
 
                     # Calculate probabilities
