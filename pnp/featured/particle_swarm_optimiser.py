@@ -2,6 +2,12 @@ import math
 import random
 import copy
 
+# --- Schema Default Constants (for adaptive logic) ---
+SCHEMA_DEFAULT_NUM_ITERATIONS = 100
+SCHEMA_DEFAULT_NUM_PARTICLES = 30 
+SCHEMA_DEFAULT_GENERIC_CAPACITY_PSO = 100
+SCHEMA_DEFAULT_GENERIC_DURATION_PSO = 720  # Matches the updated schema default
+
 def get_params_schema():
     return {
         "parameters": [
@@ -278,15 +284,33 @@ def run_optimisation(config_data, params):
 
     if not all_parcels_list_orig:
         return {"status": "success", "message": "No parcels to deliver.", "optimised_routes": [], "unassigned_parcels": [], "unassigned_parcels_details": []}
-    if not delivery_agents:
+    if not delivery_agents_cfg_list:
         return {"status": "success", "message": "No delivery agents available.", "optimised_routes": [], "unassigned_parcels": [p["id"] for p in all_parcels_list_orig], "unassigned_parcels_details": all_parcels_list_orig}
 
-    num_dimensions = len(all_parcels_list_orig) # Each dimension corresponds to a parcel's random key
+    num_parcels = len(all_parcels_list_orig)
+    num_dimensions = num_parcels # Each dimension corresponds to a parcel's random key
     parcel_map = {p["id"]: p for p in all_parcels_list_orig}
 
-    # PSO Parameters
-    num_iterations = params.get("num_iterations", 100)
-    num_particles = params.get("num_particles", 30)
+    # --- Adaptive PSO Parameters ---
+    # Number of Iterations
+    user_num_iterations = params.get("num_iterations", SCHEMA_DEFAULT_NUM_ITERATIONS)
+    effective_num_iterations = user_num_iterations
+    if abs(user_num_iterations - SCHEMA_DEFAULT_NUM_ITERATIONS) < 1e-5: # If user left at default
+        # Adaptive rule: base + scale with num_parcels. Min 50, Max 500.
+        effective_num_iterations = max(50, SCHEMA_DEFAULT_NUM_ITERATIONS + int(num_parcels * 1.5))
+        effective_num_iterations = min(effective_num_iterations, 500)
+        print(f"PSO: Adapting num_iterations. User/Default: {user_num_iterations}, Effective: {effective_num_iterations} (for {num_parcels} parcels)")
+
+    # Number of Particles
+    user_num_particles = params.get("num_particles", SCHEMA_DEFAULT_NUM_PARTICLES)
+    effective_num_particles = user_num_particles
+    if abs(user_num_particles - SCHEMA_DEFAULT_NUM_PARTICLES) < 1e-5: # If user left at default
+        # Adaptive rule: base + scale with num_parcels. Min 10, Max 80.
+        effective_num_particles = max(10, SCHEMA_DEFAULT_NUM_PARTICLES + int(num_parcels * 0.4))
+        effective_num_particles = min(effective_num_particles, 80)
+        print(f"PSO: Adapting num_particles. User/Default: {user_num_particles}, Effective: {effective_num_particles} (for {num_parcels} parcels)")
+
+    # Other core PSO parameters (could also be made adaptive if desired)
     w_inertia = params.get("inertia_weight_w", 0.7)
     c1_cognitive = params.get("cognitive_c1", 1.5)
     c2_social = params.get("social_c2", 1.5)
@@ -323,14 +347,15 @@ def run_optimisation(config_data, params):
         "generic_max_route_duration": effective_generic_max_route_duration_pso
     }
 
-    # Initialize swarm
-    swarm = [Particle(num_dimensions, pos_min_val, pos_max_val, max_velocity_factor) for _ in range(num_particles)]
+    # Initialize swarm using effective_num_particles
+    swarm = [Particle(num_dimensions, pos_min_val, pos_max_val, max_velocity_factor) for _ in range(effective_num_particles)]
     
     gbest_position = None
     gbest_fitness = (float('inf'), float('inf')) # (unassigned_count, total_distance)
     gbest_routes_parcels = [] # List of lists of parcel objects for the global best solution
 
-    for iteration in range(num_iterations):
+    # Main PSO loop using effective_num_iterations
+    for iteration in range(effective_num_iterations):
         for particle in swarm:
             # Decode particle's position (random keys) into routes and evaluate fitness
             fitness, routes_p_objs, _ = _decode_particle_to_routes_and_evaluate(
@@ -434,7 +459,7 @@ def run_optimisation(config_data, params):
         
         final_unassigned_parcel_ids = [p["id"] for p in all_parcels_list_orig if p["id"] not in assigned_parcels_globally_ids]
         final_unassigned_parcels_details = [copy.deepcopy(parcel_map[p_id]) for p_id in final_unassigned_parcel_ids]
-        message = (f"PSO completed. Iterations: {iteration+1}/{num_iterations}. "
+        message = (f"PSO completed. Iterations: {effective_num_iterations}. "
                    f"Best solution: {gbest_fitness[0]} unassigned, {gbest_fitness[1]:.2f} distance. "
                    f"Final unassigned after agent assignment: {len(final_unassigned_parcel_ids)}")
 
