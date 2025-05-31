@@ -2,6 +2,11 @@ import math
 import random
 import copy
 
+# Define constants for schema default values to check against for adaptive behavior
+SCHEMA_DEFAULT_INITIAL_PHEROMONE = 0.1
+SCHEMA_DEFAULT_PHEROMONE_DEPOSIT = 100.0
+SCHEMA_DEFAULT_ANTS_FACTOR = 0.5
+
 def get_params_schema():
     return {
         "parameters": [
@@ -58,7 +63,7 @@ def get_params_schema():
                 "name": "pheromone_deposit_amount",
                 "label": "Pheromone Deposit Amount (Q)",
                 "type": "float",
-                "default": 100.0,
+                "default": SCHEMA_DEFAULT_PHEROMONE_DEPOSIT,
                 "min": 1.0,
                 "help": "Constant Q used in pheromone update rule."
             },
@@ -66,7 +71,7 @@ def get_params_schema():
                 "name": "initial_pheromone_value",
                 "label": "Initial Pheromone Value",
                 "type": "float",
-                "default": 0.1,
+                "default": SCHEMA_DEFAULT_INITIAL_PHEROMONE,
                 "min": 0.001,
                 "help": "Small initial value for pheromone trails."
             },
@@ -257,14 +262,30 @@ def run_optimisation(config_data, params):
 
     # ACO Parameters
     num_iterations = params.get("num_iterations", 50)
-    # Calculate num_ants based on factor and num_parcels, ensure at least 1
-    num_ants = max(1, int(params.get("num_ants_per_iteration_factor", 0.5) * num_parcels))
+    
+    # Adaptive Number of Ants (already somewhat adaptive)
+    num_ants_factor = params.get("num_ants_per_iteration_factor", SCHEMA_DEFAULT_ANTS_FACTOR)
+    num_ants = max(1, int(num_ants_factor * num_parcels))
 
     alpha = params.get("alpha", 1.0) # Pheromone influence
     beta = params.get("beta", 2.0)   # Heuristic influence
     evaporation_rate = params.get("evaporation_rate", 0.1)
-    pheromone_deposit_q = params.get("pheromone_deposit_amount", 100.0)
-    initial_pheromone = params.get("initial_pheromone_value", 0.1)
+
+    # Adaptive Pheromone Deposit Amount (Q)
+    user_pheromone_deposit_q = params.get("pheromone_deposit_amount", SCHEMA_DEFAULT_PHEROMONE_DEPOSIT)
+    effective_pheromone_deposit_q = user_pheromone_deposit_q
+    if abs(user_pheromone_deposit_q - SCHEMA_DEFAULT_PHEROMONE_DEPOSIT) < 1e-5: # If user left it at default
+        # Scale Q based on num_parcels. If 10 parcels is typical for default Q, scale linearly.
+        effective_pheromone_deposit_q = SCHEMA_DEFAULT_PHEROMONE_DEPOSIT * (num_parcels / 10.0)
+        effective_pheromone_deposit_q = max(1.0, effective_pheromone_deposit_q) # Ensure Q is at least 1.0
+        print(f"ACO: Adapting Q. User/Default Q: {user_pheromone_deposit_q}, Effective Q: {effective_pheromone_deposit_q} (based on {num_parcels} parcels)")
+    
+    # Adaptive Initial Pheromone
+    user_initial_phenomone = params.get("initial_pheromone_value", SCHEMA_DEFAULT_INITIAL_PHEROMONE)
+    effective_initial_pheromone = user_initial_phenomone
+    if abs(user_initial_phenomone - SCHEMA_DEFAULT_INITIAL_PHEROMONE) < 1e-5: # If user left it at default
+        effective_initial_pheromone = 1.0 / num_nodes if num_nodes > 0 else SCHEMA_DEFAULT_INITIAL_PHEROMONE
+        print(f"ACO: Adapting Initial Pheromone. User/Default: {user_initial_phenomone}, Effective: {effective_initial_pheromone} (based on {num_nodes} nodes)")
     
     # Determine effective generic capacity for ACO route building phase
     # It's capped by the user-defined parameter and the max capacity of actual agents
@@ -320,7 +341,7 @@ def run_optimisation(config_data, params):
             dist_matrix[i][j] = dist_matrix[j][i] = dist
 
     # Initialize pheromone matrix
-    pheromone_matrix = [[initial_pheromone] * num_nodes for _ in range(num_nodes)]
+    pheromone_matrix = [[effective_initial_pheromone] * num_nodes for _ in range(num_nodes)]
 
     global_best_solution_routes_parcels = [] # List of lists of parcel objects
     global_best_solution_cost = float('inf')
@@ -446,7 +467,7 @@ def run_optimisation(config_data, params):
         # 2. Deposition (based on all ants' solutions this iteration)
         for sol in iteration_solutions:
             if sol["cost"] == 0: continue # Avoid division by zero for empty solutions
-            pheromone_to_add = pheromone_deposit_q / sol["cost"]
+            pheromone_to_add = effective_pheromone_deposit_q / sol["cost"]
             for route_p_list in sol["routes_parcels"]:
                 path_indices = [0] # Start at WH
                 for p_obj in route_p_list:
