@@ -227,7 +227,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
 
     # Simple local re-ordering: Sort parcels for this agent by their time window open.
     # More sophisticated local search (e.g., 2-opt) could be applied here.
-    locally_ordered_parcels = sorted(parcel_objects_for_agent, key=lambda p: p.get("time_window_open", 0))
+    locally_ordered_parcels = sorted(ordered_parcel_objects, key=lambda p: p.get("time_window_open", 0))
 
     if not locally_ordered_parcels: # Changed from ordered_parcel_objects
         if should_return_to_warehouse:
