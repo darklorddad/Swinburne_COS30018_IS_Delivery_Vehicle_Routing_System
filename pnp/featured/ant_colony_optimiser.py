@@ -284,16 +284,31 @@ def run_optimisation(config_data, params):
     # Ensure it's at least 1 if actual_max_agent_capacity was 0 for some reason.
     effective_generic_capacity_for_ants = min(user_set_generic_capacity, actual_max_agent_capacity)
     if effective_generic_capacity_for_ants <= 0: # If user set 0 or agents had 0 cap
-        effective_generic_capacity_for_ants = 1 # Fallback to a minimal capacity
+        effective_generic_capacity_for_ants = 1 # Fallback to a minimal capacity if calculation results in <=0
 
     print(f"ACO: User generic capacity param: {user_set_generic_capacity}, Actual max agent capacity: {actual_max_agent_capacity}, Effective generic capacity for ants: {effective_generic_capacity_for_ants}")
 
+    # Adaptive generic_max_route_duration
+    adaptive_min_duration = 0
+    for p in all_parcels_list:
+        adaptive_min_duration = max(adaptive_min_duration, p.get('time_window_close', 0))
+    for a in delivery_agents:
+        adaptive_min_duration = max(adaptive_min_duration, a.get('operating_hours_end', 0))
+    
+    if adaptive_min_duration == 0: # Fallback if no times defined in config
+        adaptive_min_duration = 1440 # Default to 24 hours in minutes
+
+    user_set_generic_duration = params.get("generic_max_route_duration", 1200) # Use the schema default if not in params
+    effective_generic_max_route_duration = max(user_set_generic_duration, adaptive_min_duration)
+
+    print(f"ACO: User generic_max_route_duration: {user_set_generic_duration}, Calculated adaptive_minimum_duration: {adaptive_min_duration}, Effective generic_max_route_duration for ants: {effective_generic_max_route_duration}")
+
     generic_constraints = {
         "generic_vehicle_capacity": effective_generic_capacity_for_ants, # Use the calculated effective capacity
-        "generic_max_route_duration": params.get("generic_max_route_duration", 480)
+        "generic_max_route_duration": effective_generic_max_route_duration
     }
     print(f"ACO: Generic constraints for ants: Capacity={generic_constraints['generic_vehicle_capacity']}, "
-          f"MaxDuration={generic_constraints['generic_max_route_duration']}")
+          f"MaxDuration={generic_constraints['generic_max_route_duration']} (Adaptive)")
 
     # Initialize distance matrix
     dist_matrix = [[0.0] * num_nodes for _ in range(num_nodes)]
