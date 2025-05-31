@@ -112,8 +112,10 @@ def _calculate_distance(coord1, coord2):
 def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_or_generic_constraints, warehouse_coords, params, parcel_map_for_lookup):
     """
     Calculates schedule for a sequence of parcels against specific agent or generic constraints.
-    Returns: (is_feasible, schedule_details_dict)
+    Returns: (is_feasible, schedule_details_dict) where schedule_details_dict contains "reason" key 
+             explaining feasibility status
     """
+    reason = "Feasible"  # Default success reason
     time_per_dist_unit = params.get("time_per_distance_unit", 2.0)
     default_service_time = params.get("default_service_time", 10)
 
@@ -155,7 +157,8 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_or_g
 
         current_load += p_weight
         if current_load > vehicle_capacity:
-            return False, {} # Exceeds capacity
+            reason = f"Capacity exceeded - Current: {current_load}, Max: {vehicle_capacity}"
+            return False, {"reason": reason} 
 
         dist_to_parcel = _calculate_distance(current_location, p_coords)
         total_distance += dist_to_parcel
@@ -422,6 +425,7 @@ def run_optimisation(config_data, params):
                     global_best_solution_routes_parcels = sol["routes_parcels"]
     
     # --- Assignment of globally best routes to specific delivery agents ---
+    print(f"\nACO: Starting agent assignment with {len(global_best_solution_routes_parcels)} best routes")
     optimised_routes_output = []
     assigned_parcels_globally_ids = set()
     
@@ -439,9 +443,14 @@ def run_optimisation(config_data, params):
         best_agent_for_route = None
         best_schedule_details_for_agent = None
 
+        print(f"\nACO: Trying to assign route with parcels: {[p['id'] for p in route_parcel_obj_list]}")
         for agent_config in delivery_agents:
             if agent_config["id"] in used_agent_ids:
+                print(f"  - Skipping agent {agent_config['id']} (already assigned)")
                 continue
+            print(f"  - Checking agent {agent_config['id']} "
+                  f"(Capacity: {agent_config['capacity_weight']}, "
+                  f"Hours: {agent_config.get('operating_hours_start', 0)}-{agent_config.get('operating_hours_end', 1440)})")
 
             is_feasible_for_agent, schedule_details = _calculate_route_schedule_and_feasibility(
                 route_parcel_obj_list,
