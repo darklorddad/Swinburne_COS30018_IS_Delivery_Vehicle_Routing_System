@@ -156,11 +156,14 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
             
             llm_full_content_str = response_data["choices"][0]["message"]["content"]
             
+            parse_errors = {}
+            
             # Attempt 1: Try to parse entire content as JSON (most strict)
             try:
                 print(f"LLM: Attempting direct JSON parse of: {llm_full_content_str[:200]}...")
                 return json.loads(llm_full_content_str)
             except json.JSONDecodeError as e_direct:
+                parse_errors["direct"] = str(e_direct)
                 print(f"LLM: Failed direct JSON parse: {e_direct}")
 
             # Attempt 2: Try to find a JSON object between {}
@@ -173,6 +176,7 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
                 print(f"LLM: Attempting extracted JSON parse: {json_str[:200]}...")
                 return json.loads(json_str)
             except (ValueError, json.JSONDecodeError) as e_extract:
+                parse_errors["extracted"] = str(e_extract)
                 print(f"LLM: Failed extracted JSON parse: {e_extract}")
 
             # Attempt 3: Try markdown block
@@ -185,6 +189,7 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
                     print(f"LLM: Attempting markdown JSON parse: {json_block[:200]}...")
                     return json.loads(json_block)
             except (IndexError, ValueError, json.JSONDecodeError) as e_markdown:
+                parse_errors["markdown"] = str(e_markdown)
                 print(f"LLM: Failed markdown JSON parse: {e_markdown}")
 
             print(f"LLM: All parsing attempts failed. Full content (truncated): {llm_full_content_str[:500]}...")
@@ -192,9 +197,9 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
                 "error": "LLM response content not valid JSON", 
                 "raw_content": llm_full_content_str,
                 "parse_attempts": [
-                    {"method": "direct", "error": str(e_direct)},
-                    {"method": "extracted", "error": str(e_extract)},
-                    {"method": "markdown", "error": str(e_markdown)}
+                    {"method": "direct", "error": parse_errors.get("direct", "Unknown error")},
+                    {"method": "extracted", "error": parse_errors.get("extracted", "Unknown error")},
+                    {"method": "markdown", "error": parse_errors.get("markdown", "Unknown error")}
                 ]
             }
         else:
