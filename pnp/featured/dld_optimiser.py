@@ -83,9 +83,7 @@ def _invoke_llm_sync(api_token, model_name, prompt_content):
     }
     body = {
         "model": model_name,
-        "messages": [{"role": "user", "content": prompt_content}],
-        "max_tokens": 1024,
-        "temperature": 0.7
+        "messages": [{"role": "user", "content": prompt_content}]
     }
 
     try:
@@ -141,8 +139,6 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
     Calculates detailed schedule for a given sequence of parcels for a specific agent.
     Checks feasibility against agent's capacity, operating hours, and parcel time windows.
     """
-    time_per_dist_unit = 1.0  # minutes per distance unit
-    default_service_time = 10  # minutes per stop 
     should_return_to_warehouse = True  # always return to warehouse
 
     agent_capacity = agent_config["capacity_weight"]
@@ -177,7 +173,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
 
         p_coords = p_obj["coordinates_x_y"]
         p_weight = p_obj["weight"]
-        p_service_time = p_obj.get("service_time", default_service_time)
+        p_service_time = p_obj.get("service_time", 10)  # default 10 minutes per stop
         p_tw_open = p_obj.get("time_window_open", 0)
         p_tw_close = p_obj.get("time_window_close", 1439)
 
@@ -186,7 +182,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
 
         dist_to_parcel = _calculate_distance(current_location, p_coords)
         total_distance += dist_to_parcel
-        travel_time = dist_to_parcel * time_per_dist_unit
+        travel_time = dist_to_parcel * 1.0  # 1.0 min per distance unit
         
         arrival_at_parcel = current_time + travel_time
         service_start_time = max(arrival_at_parcel, p_tw_open)
