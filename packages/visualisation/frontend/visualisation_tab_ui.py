@@ -45,7 +45,7 @@ def render_visualisation_tab(ss):
 
     # Plot warehouse
     wh_coords = config_data.get("warehouse_coordinates_x_y", [0, 0])
-    ax.plot(wh_coords[0], wh_coords[1], 'ks', markersize=10, label='Warehouse (0,0)')  # Black square
+    ax.plot(wh_coords[0], wh_coords[1], 'ks', markersize=10, label='Warehouse (0, 0)')  # Black square
 
     # Plot all parcels
     parcel_coords_x = []
@@ -101,8 +101,8 @@ def render_visualisation_tab(ss):
                 )
                 ax.add_patch(arrow)
 
-    ax.set_xlabel("X Coordinate")
-    ax.set_ylabel("Y Coordinate")
+    ax.set_xlabel("X coordinate")
+    ax.set_ylabel("Y coordinate")
     ax.set_title("Delivery Routes Visualisation")
     ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0.)  # Legend outside plot
     ax.grid(True)
