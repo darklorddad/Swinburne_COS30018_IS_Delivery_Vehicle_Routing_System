@@ -94,7 +94,8 @@ def _calculate_distance(coord1, coord2):
 def _build_llm_prompt(warehouse_coords, parcels, delivery_agents):
     prompt = "You are an expert logistics planner. Your task is to solve a Vehicle Routing Problem (VRP).\n"
     prompt += "You need to assign parcels to delivery agents and suggest an order for deliveries for each agent.\n"
-    prompt += "Adhere to agent capacity constraints and try to respect parcel time windows and agent operating hours, though final scheduling will be done by another system.\n\n"
+    prompt += "Adhere to agent capacity constraints and try to respect parcel time windows and agent operating hours, though final scheduling will be done by another system.\n"
+    prompt += "If a parcel cannot be assigned to any agent while respecting constraints, list it under 'unassigned_parcels_ids'.\n\n"
 
     prompt += "VRP Instance Data:\n"
     prompt += f"1. Warehouse Coordinates: {warehouse_coords}\n\n"
