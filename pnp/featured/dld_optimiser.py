@@ -8,61 +8,11 @@ def get_params_schema():
     return {
         "parameters": [
             {
-                "name": "llm_api_key",
-                "label": "LLM API Key",
-                "type": "string",
-                "default": "",  # Empty by default for security
-                "help": "API Key for accessing the LLM service."
-            },
-            {
                 "name": "llm_model_name", 
                 "label": "LLM Model Name",
                 "type": "string",
                 "default": "default-model",
                 "help": "The LLM model to use for routing optimization."
-            },
-            {
-                "name": "llm_max_tokens_response",
-                "label": "LLM Max Tokens (Response)",
-                "type": "integer",
-                "default": 1024,
-                "min": 128,
-                "max": 8192,
-                "help": "Maximum number of tokens the LLM should generate in its response."
-            },
-            {
-                "name": "llm_temperature",
-                "label": "LLM Temperature",
-                "type": "float",
-                "default": 0.7,
-                "min": 0.0,
-                "max": 2.0,
-                "step": 0.1,
-                "help": "Controls randomness. Lower is more deterministic."
-            },
-            {
-                "name": "time_per_distance_unit",
-                "label": "Time per distance unit (minutes)",
-                "type": "float",
-                "default": 1.0,
-                "min": 0.1,
-                "step": 0.1,
-                "help": "Minutes taken to travel one unit of distance (for post-processing)."
-            },
-            {
-                "name": "default_service_time",
-                "label": "Default service time (minutes)",
-                "type": "integer",
-                "default": 10,
-                "min": 0,
-                "help": "Default time spent at each parcel stop (for post-processing)."
-            },
-            {
-                "name": "return_to_warehouse",
-                "label": "Return to Warehouse",
-                "type": "boolean",
-                "default": True,
-                "help": "Whether vehicles must return to warehouse (for post-processing)."
             }
         ]
     }
@@ -121,7 +71,7 @@ def _build_llm_prompt(warehouse_coords, parcels, delivery_agents):
     prompt += "Focus on assigning all parcels if possible, respecting agent capacities. The order of parcels within each agent's route should be logical (e.g., somewhat geographically clustered or forming a reasonable path).\n"
     return prompt
 
-def _invoke_llm_sync(api_token, model_name, prompt_content, max_tokens, temperature):
+def _invoke_llm_sync(api_token, model_name, prompt_content):
     if not api_token:
         return {"error": "LLM API key is missing. Please configure it in parameters."}
 
@@ -134,8 +84,8 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, max_tokens, temperat
     body = {
         "model": model_name,
         "messages": [{"role": "user", "content": prompt_content}],
-        "max_tokens": max_tokens,
-        "temperature": temperature
+        "max_tokens": 1024,
+        "temperature": 0.7
     }
 
     try:
@@ -191,9 +141,9 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
     Calculates detailed schedule for a given sequence of parcels for a specific agent.
     Checks feasibility against agent's capacity, operating hours, and parcel time windows.
     """
-    time_per_dist_unit = params.get("time_per_distance_unit", 1.0)
-    default_service_time = params.get("default_service_time", 10)
-    should_return_to_warehouse = params.get("return_to_warehouse", True)
+    time_per_dist_unit = 1.0  # minutes per distance unit
+    default_service_time = 10  # minutes per stop 
+    should_return_to_warehouse = True  # always return to warehouse
 
     agent_capacity = agent_config["capacity_weight"]
     agent_op_start = agent_config.get("operating_hours_start", 0) # Default if missing
@@ -281,9 +231,7 @@ def run_optimisation(config_data, params):
     agents_cfg = config_data.get("delivery_agents", [])
 
     api_token = "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"
-    llm_model = params.get("llm_model_name")
-    max_tokens = params.get("llm_max_tokens_response")
-    temperature = params.get("llm_temperature")
+    llm_model = params.get("llm_model_name", "default-model")
 
     if not parcels_cfg:
         return {
@@ -308,7 +256,7 @@ def run_optimisation(config_data, params):
     
     for attempt in range(max_retries):
         try:
-            llm_response_data = _invoke_llm_sync(api_token, llm_model, prompt, max_tokens, temperature)
+            llm_response_data = _invoke_llm_sync(api_token, llm_model, prompt)
             break  # Exit loop if successful
         except Exception as e:
             print(f"LLM API attempt {attempt + 1} failed: {str(e)}")
