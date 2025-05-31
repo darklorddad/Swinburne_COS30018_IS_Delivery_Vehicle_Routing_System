@@ -278,6 +278,8 @@ def run_optimisation(config_data, params):
         "generic_vehicle_capacity": effective_generic_capacity_for_ants, # Use the calculated effective capacity
         "generic_max_route_duration": params.get("generic_max_route_duration", 480)
     }
+    print(f"ACO: Generic constraints for ants: Capacity={generic_constraints['generic_vehicle_capacity']}, "
+          f"MaxDuration={generic_constraints['generic_max_route_duration']}")
 
     # Initialize distance matrix
     dist_matrix = [[0.0] * num_nodes for _ in range(num_nodes)]
@@ -322,15 +324,17 @@ def run_optimisation(config_data, params):
                         temp_route_parcels = current_single_route_parcel_objects + [parcel_obj]
                         
                         # Check feasibility with generic constraints
-                        is_feasible_addition, _ = _calculate_route_schedule_and_feasibility(
+                        is_feasible_addition, feasibility_details = _calculate_route_schedule_and_feasibility(
                             temp_route_parcels, generic_constraints, warehouse_coords, params, parcel_map
                         )
+                        if iteration == 0 and ant_idx == 0 and not is_feasible_addition:
+                            print(f"    [DEBUG] Could not add parcel {p_idx} to empty route. Reason: {feasibility_details.get('reason', 'Unknown')}")
                         if is_feasible_addition:
                             eligible_next_parcel_indices.append(p_idx)
                     
                     if not eligible_next_parcel_indices:
                         if iteration == 0:
-                            print(f"  Ant {ant_idx}: No eligible parcels left to add to route")
+                            print(f"  Ant {ant_idx}: No eligible parcels left to add to route. Current route has {len(current_single_route_parcel_objects)} parcels.")
                         break # Cannot add more parcels to this route
 
                     # Calculate probabilities
