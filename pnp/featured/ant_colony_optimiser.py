@@ -248,9 +248,31 @@ def run_optimisation(config_data, params):
     pheromone_deposit_q = params.get("pheromone_deposit_amount", 100.0)
     initial_pheromone = params.get("initial_pheromone_value", 0.1)
     
+    # Determine effective generic capacity for ACO route building phase
+    # It's capped by the user-defined parameter and the max capacity of actual agents
+    user_set_generic_capacity = params.get("generic_vehicle_capacity", 100) # Default from schema if not set
+    
+    actual_max_agent_capacity = 0
+    if delivery_agents: # Should always be true due to check above, but good for safety
+        capacities = [agent.get("capacity_weight", 0) for agent in delivery_agents]
+        if capacities:
+            actual_max_agent_capacity = max(capacities)
+        else: # No agents have capacity defined, fallback (unlikely if config is valid)
+            actual_max_agent_capacity = user_set_generic_capacity 
+    else: # Should not be reached due to earlier return
+        actual_max_agent_capacity = user_set_generic_capacity
+
+    # Ants will build routes using a capacity that is the smaller of user's param and actual max agent capacity
+    # Ensure it's at least 1 if actual_max_agent_capacity was 0 for some reason.
+    effective_generic_capacity_for_ants = min(user_set_generic_capacity, actual_max_agent_capacity)
+    if effective_generic_capacity_for_ants <= 0: # If user set 0 or agents had 0 cap
+        effective_generic_capacity_for_ants = 1 # Fallback to a minimal capacity
+
+    print(f"ACO: User generic capacity param: {user_set_generic_capacity}, Actual max agent capacity: {actual_max_agent_capacity}, Effective generic capacity for ants: {effective_generic_capacity_for_ants}")
+
     generic_constraints = {
-        "generic_vehicle_capacity": params["generic_vehicle_capacity"],
-        "generic_max_route_duration": params["generic_max_route_duration"]
+        "generic_vehicle_capacity": effective_generic_capacity_for_ants, # Use the calculated effective capacity
+        "generic_max_route_duration": params.get("generic_max_route_duration", 480)
     }
 
     # Initialize distance matrix
