@@ -307,8 +307,11 @@ def run_optimisation(config_data, params):
     parcels_cfg = config_data.get("parcels", [])
     agents_cfg = config_data.get("delivery_agents", [])
 
-    api_token = "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"
+    api_token = params.get("llm_api_key", "YOUR_API_KEY_HERE")
     llm_model = params.get("llm_model_name", "default-model")
+    api_endpoint_url = params.get("llm_api_endpoint_url", "https://openrouter.ai/api/v1/chat/completions")
+    site_url = params.get("openrouter_site_url")
+    site_name = params.get("openrouter_site_name")
 
     if not parcels_cfg:
         return {
@@ -335,7 +338,16 @@ def run_optimisation(config_data, params):
         try:
             llm_temperature = params.get("llm_temperature", 0.5)
             llm_max_tokens = params.get("llm_max_tokens", 2048)
-            llm_response_data = _invoke_llm_sync(api_token, llm_model, prompt, llm_temperature, llm_max_tokens)
+            llm_response_data = _invoke_llm_sync(
+                api_token,
+                llm_model,
+                prompt,
+                api_endpoint_url,
+                llm_temperature,
+                llm_max_tokens,
+                site_url,
+                site_name
+            )
             break  # Exit loop if successful
         except Exception as e:
             print(f"LLM API attempt {attempt + 1} failed: {str(e)}")
