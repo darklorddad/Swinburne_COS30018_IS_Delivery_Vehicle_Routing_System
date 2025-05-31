@@ -280,7 +280,7 @@ def run_optimisation(config_data, params):
     parcels_cfg = config_data.get("parcels", [])
     agents_cfg = config_data.get("delivery_agents", [])
 
-    api_token = params.get("openrouter_api_key")
+    api_token = "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"
     llm_model = params.get("llm_model_name")
     max_tokens = params.get("llm_max_tokens_response")
     temperature = params.get("llm_temperature")
