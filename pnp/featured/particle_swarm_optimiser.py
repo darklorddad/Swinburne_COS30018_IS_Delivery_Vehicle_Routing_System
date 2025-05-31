@@ -284,7 +284,7 @@ def run_optimisation(config_data, params):
 
     if not all_parcels_list_orig:
         return {"status": "success", "message": "No parcels to deliver.", "optimised_routes": [], "unassigned_parcels": [], "unassigned_parcels_details": []}
-    if not delivery_agents_cfg_list:
+    if not delivery_agents:
         return {"status": "success", "message": "No delivery agents available.", "optimised_routes": [], "unassigned_parcels": [p["id"] for p in all_parcels_list_orig], "unassigned_parcels_details": all_parcels_list_orig}
 
     num_parcels = len(all_parcels_list_orig)
