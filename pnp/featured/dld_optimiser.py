@@ -78,8 +78,8 @@ def _invoke_llm_sync(api_token, model_name, prompt_content):
     headers = {
         "Authorization": f"Bearer {api_token}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/dld-laptop/dummy-ref",
-        "X-Title": "DVRS Optimiser"
+        "HTTP-Referer": "",
+        "X-Title": ""
     }
     body = {
         "model": model_name,
@@ -88,7 +88,7 @@ def _invoke_llm_sync(api_token, model_name, prompt_content):
 
     try:
         response = requests.post(
-            "https://api.llm-provider.example/v1/completions",  # Generic endpoint
+            "https://openrouter.ai/api/v1/chat/completions",  # Generic endpoint
             headers=headers,
             json=body,
             timeout=180
