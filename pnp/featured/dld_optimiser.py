@@ -1,5 +1,6 @@
 import json
 import math
+import re
 import copy
 import requests # For synchronous HTTP requests
 import time # For retry delay
@@ -155,52 +156,27 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
            response_data["choices"][0]["message"].get("content"):
             
             llm_full_content_str = response_data["choices"][0]["message"]["content"]
+            print(f"LLM: Raw full content received:\n{llm_full_content_str}\n--------------------")
             
-            parse_errors = {}
+            # Attempt to extract JSON using regex (handles both ```json blocks and raw JSON)
+            json_pattern = r"```(?:json)?\s*(\{.*?\})\s*```|(\{.*?\})"
+            match = re.search(json_pattern, llm_full_content_str, re.DOTALL)
             
-            # Attempt 1: Try to parse entire content as JSON (most strict)
-            try:
-                print(f"LLM: Attempting direct JSON parse of: {llm_full_content_str[:200]}...")
-                return json.loads(llm_full_content_str)
-            except json.JSONDecodeError as e_direct:
-                parse_errors["direct"] = str(e_direct)
-                print(f"LLM: Failed direct JSON parse: {e_direct}")
-
-            # Attempt 2: Try to find a JSON object between {}
-            try:
-                json_start = llm_full_content_str.find("{")
-                json_end = llm_full_content_str.rfind("}") + 1
-                if json_start == -1 or json_end == 0:
-                    raise ValueError("No JSON brackets found")
-                json_str = llm_full_content_str[json_start:json_end]
-                print(f"LLM: Attempting extracted JSON parse: {json_str[:200]}...")
-                return json.loads(json_str)
-            except (ValueError, json.JSONDecodeError) as e_extract:
-                parse_errors["extracted"] = str(e_extract)
-                print(f"LLM: Failed extracted JSON parse: {e_extract}")
-
-            # Attempt 3: Try markdown block
-            try:
-                if "```json" in llm_full_content_str:
-                    parts = llm_full_content_str.split("```json")
-                    if len(parts) < 2:
-                        raise ValueError("Incomplete markdown block")
-                    json_block = parts[1].split("```")[0].strip()
-                    print(f"LLM: Attempting markdown JSON parse: {json_block[:200]}...")
-                    return json.loads(json_block)
-            except (IndexError, ValueError, json.JSONDecodeError) as e_markdown:
-                parse_errors["markdown"] = str(e_markdown)
-                print(f"LLM: Failed markdown JSON parse: {e_markdown}")
-
-            print(f"LLM: All parsing attempts failed. Full content (truncated): {llm_full_content_str[:500]}...")
+            if match:
+                # Use first non-empty group (prefer explicit json block if exists)
+                json_str = match.group(1) or match.group(2)
+                if json_str:
+                    try:
+                        print(f"LLM: Attempting to parse extracted JSON:\n{json_str[:200]}...")
+                        return json.loads(json_str)
+                    except json.JSONDecodeError as e:
+                        print(f"LLM: JSON parse failed for extracted string: {e}\nExtracted content:\n{json_str[:300]}...")
+            
+            print(f"LLM: Could not find/parse JSON in response. Full content (truncated):\n{llm_full_content_str[:500]}...")
             return {
-                "error": "LLM response content not valid JSON", 
+                "error": "LLM response content not valid JSON",
                 "raw_content": llm_full_content_str,
-                "parse_attempts": [
-                    {"method": "direct", "error": parse_errors.get("direct", "Unknown error")},
-                    {"method": "extracted", "error": parse_errors.get("extracted", "Unknown error")},
-                    {"method": "markdown", "error": parse_errors.get("markdown", "Unknown error")}
-                ]
+                "parse_attempt": "regex extraction failed" 
             }
         else:
             print(f"LLM: Response format unexpected: {response_data}")
