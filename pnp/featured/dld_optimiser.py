@@ -8,11 +8,11 @@ def get_params_schema():
     return {
         "parameters": [
             {
-                "name": "openrouter_api_key",
-                "label": "OpenRouter API Key",
+                "name": "llm_api_key",
+                "label": "LLM API Key",
                 "type": "string",
                 "default": "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",
-                "help": "API Key for OpenRouter."
+                "help": "API Key for accessing the LLM service."
             },
             {
                 "name": "llm_model_name", 
@@ -123,7 +123,7 @@ def _build_llm_prompt(warehouse_coords, parcels, delivery_agents):
 
 def _invoke_llm_sync(api_token, model_name, prompt_content, max_tokens, temperature):
     if not api_token:
-        return {"error": "OpenRouter API key is missing. Please configure it in parameters."}
+        return {"error": "LLM API key is missing. Please configure it in parameters."}
 
     headers = {
         "Authorization": f"Bearer {api_token}",
@@ -140,7 +140,7 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, max_tokens, temperat
 
     try:
         response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            "https://api.llm-provider.example/v1/completions",  # Generic endpoint
             headers=headers,
             json=body,
             timeout=180
@@ -299,7 +299,7 @@ def run_optimisation(config_data, params):
 
     prompt = _build_llm_prompt(warehouse_coords, parcels_cfg, agents_cfg)
     
-    print("LLM Optimiser: Sending prompt to LLM...")
+    print("Optimiser: Sending prompt to routing assistant...")
     # print(f"LLM Prompt:\n{prompt[:500]}...\n...\n{prompt[-500:]}") # Log snippet of prompt
 
     max_retries = 3
