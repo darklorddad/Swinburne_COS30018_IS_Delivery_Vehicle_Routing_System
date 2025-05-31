@@ -9,39 +9,11 @@ def get_params_schema():
         "parameters": [
             {
                 "name": "llm_model_name", 
-                "label": "LLM Model Name (OpenRouter)",
+                "label": "Model",
                 "type": "selectbox",
                 "default": "deepseek/deepseek-chat-v3-0324:free",
                 "options": ["deepseek/deepseek-chat-v3-0324:free", "deepseek/deepseek-r1-0528:free", "deepseek/deepseek-r1-0528-qwen3-8b:free"],
-                "help": "Select the OpenRouter model. Ensure you have access/credits if selecting a non-free model."
-            },
-            {
-                "name": "llm_api_endpoint_url",
-                "label": "LLM API Endpoint URL",
-                "type": "string",
-                "default": "https://openrouter.ai/api/v1/chat/completions",
-                "help": "The full base URL for the LLM API chat completions endpoint."
-            },
-            {
-                "name": "llm_api_key",
-                "label": "LLM API Key (OpenRouter)",
-                "type": "string",
-                "default": "YOUR_API_KEY_HERE",
-                "help": "Your OpenRouter API key. This will be treated as sensitive."
-            },
-            {
-                "name": "openrouter_site_url",
-                "label": "OpenRouter HTTP Referer (Optional)",
-                "type": "string",
-                "default": "https://github.com/dld-laptop/dvrs",
-                "help": "Optional. Your site URL for rankings on openrouter.ai."
-            },
-            {
-                "name": "openrouter_site_name",
-                "label": "OpenRouter X-Title (Optional)",
-                "type": "string",
-                "default": "DVRS Optimiser",
-                "help": "Optional. Your site name/title for rankings on openrouter.ai."
+                "help": "Select the model to use for optimization."
             },
             {
                 "name": "llm_temperature",
@@ -318,11 +290,11 @@ def run_optimisation(config_data, params):
     parcels_cfg = config_data.get("parcels", [])
     agents_cfg = config_data.get("delivery_agents", [])
 
-    api_token = params.get("llm_api_key", "YOUR_API_KEY_HERE")
-    llm_model = params.get("llm_model_name", "default-model")
-    api_endpoint_url = params.get("llm_api_endpoint_url", "https://openrouter.ai/api/v1/chat/completions")
-    site_url = params.get("openrouter_site_url")
-    site_name = params.get("openrouter_site_name")
+    api_token = "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"
+    llm_model = params.get("llm_model_name", "deepseek/deepseek-chat-v3-0324:free")
+    api_endpoint_url = "https://openrouter.ai/api/v1/chat/completions"
+    site_url = ""
+    site_name = ""
 
     if not parcels_cfg:
         return {
