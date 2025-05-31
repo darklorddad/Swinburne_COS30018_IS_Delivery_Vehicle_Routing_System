@@ -171,6 +171,11 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
                         return json.loads(json_str)
                     except json.JSONDecodeError as e:
                         print(f"LLM: JSON parse failed for extracted string: {e}\nExtracted content:\n{json_str[:300]}...")
+                        return {
+                            "error": f"LLM response content not valid JSON after extraction: {e}",
+                            "raw_content": llm_full_content_str,
+                            "parse_attempt": "json.loads failed on extracted content"
+                        }
             
             print(f"LLM: Could not find/parse JSON in response. Full content (truncated):\n{llm_full_content_str[:500]}...")
             return {
@@ -193,7 +198,7 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, te
         return {"error": f"Unexpected error during LLM API call: {str(e)}"}
 
 
-def _calculate_route_schedule_and_feasibility(parcel_objects_for_agent, agent_config, warehouse_coords, params, parcel_map_for_lookup):
+def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_config, warehouse_coords, params, parcel_map_for_lookup):
     """
     (Copied and adapted from other optimisers - ensures consistency)
     Calculates detailed schedule for a given sequence of parcels for a specific agent.
@@ -376,8 +381,8 @@ def run_optimisation(config_data, params):
     llm_proposed_routes = llm_response_data.get("optimised_routes", [])
     llm_unassigned_ids = llm_response_data.get("unassigned_parcels_ids", [])
     
-    # If LLM response is empty or invalid structure
-    if not llm_response_data or not isinstance(llm_response_data, dict):
+    # If LLM response is empty or invalid structure or contains error
+    if not llm_response_data or not isinstance(llm_response_data, dict) or "error" in llm_response_data:
         return {
             "status": "error",
             "message": "LLM returned empty or invalid response format",
@@ -435,7 +440,7 @@ def run_optimisation(config_data, params):
 
 
         is_feasible, route_details = _calculate_route_schedule_and_feasibility(
-            valid_parcel_ids_for_route, # Pass IDs, scheduler will look up full objects
+            parcels_to_schedule_for_agent, # Pass full parcel objects
             agent_config,
             warehouse_coords,
             params,
