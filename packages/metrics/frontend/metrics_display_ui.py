@@ -14,13 +14,12 @@ def render_metrics_display(ss, final_status):
         else:
             # Include workflow duration if available
             if ss.get("simple_workflow_duration"):
-                streamlit.subheader("Workflow Performance")
+                streamlit.markdown("---")
                 streamlit.dataframe(
                     [{"Metric": "Total Workflow Duration", "Value": f"{ss.simple_workflow_duration} seconds"}],
                     use_container_width=True,
                     hide_index=True
                 )
-                streamlit.markdown("---")
 
             # Input Summary
             input_summary_metrics = [
@@ -32,12 +31,11 @@ def render_metrics_display(ss, final_status):
                 if key in metrics:
                     input_summary_data.append({"Metric": label, "Value": str(metrics[key])})
             if input_summary_data:
-                streamlit.subheader("Input Summary")
+                streamlit.markdown("---")
                 streamlit.dataframe(input_summary_data, 
                     use_container_width=True, 
                     hide_index=True
                 )
-                streamlit.markdown("---")
 
             # Optimisation Effectiveness
             effectiveness_metrics = [
@@ -50,12 +48,11 @@ def render_metrics_display(ss, final_status):
                 if key in metrics:
                     effectiveness_data.append({"Metric": label, "Value": str(metrics[key])})
             if effectiveness_data:
-                streamlit.subheader("Optimisation Effectiveness")
+                streamlit.markdown("---")
                 streamlit.dataframe(effectiveness_data,
                     use_container_width=True,
                     hide_index=True
                 )
-                streamlit.markdown("---")
 
             # Optimisation Efficiency
             efficiency_metrics = [
@@ -67,7 +64,7 @@ def render_metrics_display(ss, final_status):
                 if key in metrics:
                     efficiency_data.append({"Metric": label, "Value": str(metrics[key])})
             if efficiency_data:
-                streamlit.subheader("Optimisation Efficiency")
+                streamlit.markdown("---")
                 streamlit.dataframe(efficiency_data,
                     use_container_width=True,
                     hide_index=True
