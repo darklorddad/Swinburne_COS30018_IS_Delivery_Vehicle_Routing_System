@@ -9,27 +9,49 @@ def get_params_schema():
         "parameters": [
             {
                 "name": "llm_model_name", 
-                "label": "LLM Model Name",
+                "label": "LLM Model Name (OpenRouter)",
+                "type": "selectbox",
+                "default": "deepseek/deepseek-chat:free",
+                "options": ["deepseek/deepseek-chat:free", "deepseek/deepseek-coder-v2:free", "openai/gpt-4o"],
+                "help": "Select the OpenRouter model. Ensure you have access/credits if selecting a non-free model."
+            },
+            {
+                "name": "llm_api_endpoint_url",
+                "label": "LLM API Endpoint URL",
                 "type": "string",
-                "default": "default-model",
-                "help": "The LLM model to use for routing optimization."
+                "default": "https://openrouter.ai/api/v1/chat/completions",
+                "help": "The full base URL for the LLM API chat completions endpoint."
             },
             {
                 "name": "llm_api_key",
-                "label": "LLM API Key",
+                "label": "LLM API Key (OpenRouter)",
                 "type": "string",
-                "default": "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",
-                "help": "API key for LLM service access."
+                "default": "YOUR_API_KEY_HERE",
+                "help": "Your OpenRouter API key. This will be treated as sensitive."
+            },
+            {
+                "name": "openrouter_site_url",
+                "label": "OpenRouter HTTP Referer (Optional)",
+                "type": "string",
+                "default": "https://github.com/dld-laptop/dvrs",
+                "help": "Optional. Your site URL for rankings on openrouter.ai."
+            },
+            {
+                "name": "openrouter_site_name",
+                "label": "OpenRouter X-Title (Optional)",
+                "type": "string",
+                "default": "DVRS Optimiser",
+                "help": "Optional. Your site name/title for rankings on openrouter.ai."
             },
             {
                 "name": "llm_temperature",
                 "label": "LLM Temperature",
                 "type": "float",
-                "default": 0.5,
+                "default": 1.0,
                 "min": 0.0,
                 "max": 2.0,
                 "step": 0.1,
-                "help": "Controls randomness. Lower is more deterministic."
+                "help": "Controls randomness in LLM output. Lower values are more deterministic."
             },
             {
                 "name": "llm_max_tokens", 
@@ -120,16 +142,22 @@ def _build_llm_prompt(warehouse_coords, parcels, delivery_agents):
     prompt += "Focus on assigning all parcels if possible, respecting agent capacities. The order of parcels within each agent's route should be logical (e.g., somewhat geographically clustered or forming a reasonable path).\n"
     return prompt
 
-def _invoke_llm_sync(api_token, model_name, prompt_content, temperature=0.5, max_tokens=2048):
+def _invoke_llm_sync(api_token, model_name, prompt_content, api_endpoint_url, temperature=1.0, max_tokens=2048, site_url=None, site_name=None):
     if not api_token:
         return {"error": "LLM API key is missing. Please configure it in parameters."}
 
+    if not api_token.startswith("Bearer "):
+        api_token = f"Bearer {api_token}"
+    
     headers = {
-        "Authorization": f"Bearer {api_token}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "",
-        "X-Title": ""
+        "Authorization": api_token,
+        "Content-Type": "application/json"
     }
+    
+    if site_url:
+        headers["HTTP-Referer"] = site_url
+    if site_name:
+        headers["X-Title"] = site_name
     body = {
         "model": model_name,
         "messages": [{"role": "user", "content": prompt_content}],
@@ -139,7 +167,7 @@ def _invoke_llm_sync(api_token, model_name, prompt_content, temperature=0.5, max
 
     try:
         response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",  # Generic endpoint
+            api_endpoint_url,
             headers=headers,
             json=body,
             timeout=180
