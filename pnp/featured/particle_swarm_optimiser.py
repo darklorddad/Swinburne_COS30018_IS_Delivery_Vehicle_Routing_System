@@ -215,7 +215,7 @@ def _decode_particle_to_routes_and_evaluate(particle_position_keys, # List of ra
             # Check if adding this parcel is feasible for the current_route_parcels
             temp_candidate_route = current_route_parcels + [p_obj_to_try]
             is_feasible_addition, _ = _calculate_route_schedule_and_feasibility(
-                temp_candidate_route, generic_constraints, warehouse_coords, params, parcel_map_for_lookup
+                temp_candidate_route, effective_generic_constraints_for_decode, warehouse_coords, params, parcel_map_for_lookup
             )
             if is_feasible_addition:
                 current_route_parcels.append(p_obj_to_try)
@@ -228,7 +228,7 @@ def _decode_particle_to_routes_and_evaluate(particle_position_keys, # List of ra
         if current_route_parcels: # A valid route was formed
             # Final calculation for this route's details
             _, route_details = _calculate_route_schedule_and_feasibility(
-                current_route_parcels, generic_constraints, warehouse_coords, params, parcel_map_for_lookup
+                current_route_parcels, effective_generic_constraints_for_decode, warehouse_coords, params, parcel_map_for_lookup
             )
             routes_formed_parcels.append(current_route_parcels) # Store list of parcel objects
             total_distance_for_solution += route_details["total_distance"]
