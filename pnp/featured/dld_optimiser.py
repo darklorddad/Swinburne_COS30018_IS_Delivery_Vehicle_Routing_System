@@ -204,7 +204,7 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, agent_conf
     if should_return_to_warehouse:
         dist_to_warehouse = _calculate_distance(current_location, warehouse_coords)
         total_distance += dist_to_warehouse
-        travel_time_to_wh = dist_to_warehouse * time_per_dist_unit
+        travel_time_to_wh = dist_to_warehouse * 1.0  # 1.0 min per distance unit
         arrival_at_warehouse_final = current_time + travel_time_to_wh
 
         if arrival_at_warehouse_final > agent_op_end: return False, {"reason": "Return to WH after agent op end"}
