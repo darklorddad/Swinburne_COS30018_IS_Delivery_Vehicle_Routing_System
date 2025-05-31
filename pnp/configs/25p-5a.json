@@ -1,62 +1,237 @@
 {
-  "WAREHOUSE_COORDS": [0, 0],
-  "AGENTS": [
+  "warehouse_coordinates_x_y": [0, 0],
+  "parcels": [
     {
-      "capacity": 15,
-      "velocity": 1.0,
-      "start_coords": [10, 10],
-      "return_to_warehouse": true
+      "id": "P001",
+      "coordinates_x_y": [2, 3],
+      "weight": 2,
+      "time_window_open": 0,
+      "time_window_close": 100,
+      "service_time": 5
     },
     {
-      "capacity": 12,
-      "velocity": 1.2,
-      "start_coords": [-5, 5],
-      "return_to_warehouse": false
+      "id": "P002",
+      "coordinates_x_y": [5, 7],
+      "weight": 3,
+      "time_window_open": 0,
+      "time_window_close": 120,
+      "service_time": 5
     },
     {
-      "capacity": 18,
-      "velocity": 0.9,
-      "start_coords": [5, -5],
-      "return_to_warehouse": true
+      "id": "P003",
+      "coordinates_x_y": [-3, 2],
+      "weight": 1,
+      "time_window_open": 30,
+      "time_window_close": 90,
+      "service_time": 5
     },
     {
-      "capacity": 10,
-      "velocity": 1.5,
-      "start_coords": [-10, -10],
-      "return_to_warehouse": false
+      "id": "P004",
+      "coordinates_x_y": [-4, -1],
+      "weight": 4,
+      "time_window_open": 20,
+      "time_window_close": 80,
+      "service_time": 5
     },
     {
-      "capacity": 20,
-      "velocity": 0.8,
-      "start_coords": [0, 15],
-      "return_to_warehouse": true
+      "id": "P005",
+      "coordinates_x_y": [1, -5],
+      "weight": 2,
+      "time_window_open": 40,
+      "time_window_close": 100,
+      "service_time": 5
+    },
+    {
+      "id": "P006",
+      "coordinates_x_y": [8, 3],
+      "weight": 1,
+      "time_window_open": 10,
+      "time_window_close": 50,
+      "service_time": 5
+    },
+    {
+      "id": "P007",
+      "coordinates_x_y": [-2, -6],
+      "weight": 3,
+      "time_window_open": 60,
+      "time_window_close": 120,
+      "service_time": 5
+    },
+    {
+      "id": "P008",
+      "coordinates_x_y": [4, 2],
+      "weight": 5,
+      "time_window_open": 0,
+      "time_window_close": 60,
+      "service_time": 5
+    },
+    {
+      "id": "P009",
+      "coordinates_x_y": [-7, 3],
+      "weight": 2,
+      "time_window_open": 40,
+      "time_window_close": 90,
+      "service_time": 5
+    },
+    {
+      "id": "P010",
+      "coordinates_x_y": [3, -4],
+      "weight": 1,
+      "time_window_open": 30,
+      "time_window_close": 80,
+      "service_time": 5
+    },
+    {
+      "id": "P011",
+      "coordinates_x_y": [-5, -2],
+      "weight": 3,
+      "time_window_open": 20,
+      "time_window_close": 70,
+      "service_time": 5
+    },
+    {
+      "id": "P012",
+      "coordinates_x_y": [6, 1],
+      "weight": 4,
+      "time_window_open": 50,
+      "time_window_close": 110,
+      "service_time": 5
+    },
+    {
+      "id": "P013",
+      "coordinates_x_y": [-1, 5],
+      "weight": 2,
+      "time_window_open": 10,
+      "time_window_close": 90,
+      "service_time": 5
+    },
+    {
+      "id": "P014",
+      "coordinates_x_y": [2, -7],
+      "weight": 1,
+      "time_window_open": 80,
+      "time_window_close": 140,
+      "service_time": 5
+    },
+    {
+      "id": "P015",
+      "coordinates_x_y": [-3, -4],
+      "weight": 5,
+      "time_window_open": 40,
+      "time_window_close": 100,
+      "service_time": 5
+    },
+    {
+      "id": "P016",
+      "coordinates_x_y": [7, 4],
+      "weight": 2,
+      "time_window_open": 30,
+      "time_window_close": 70,
+      "service_time": 5
+    },
+    {
+      "id": "P017",
+      "coordinates_x_y": [-6, 1],
+      "weight": 3,
+      "time_window_open": 60,
+      "time_window_close": 120,
+      "service_time": 5
+    },
+    {
+      "id": "P018",
+      "coordinates_x_y": [4, -3],
+      "weight": 1,
+      "time_window_open": 20,
+      "time_window_close": 80,
+      "service_time": 5
+    },
+    {
+      "id": "P019",
+      "coordinates_x_y": [-2, 8],
+      "weight": 4,
+      "time_window_open": 0,
+      "time_window_close": 100,
+      "service_time": 5
+    },
+    {
+      "id": "P020",
+      "coordinates_x_y": [5, -6],
+      "weight": 2,
+      "time_window_open": 50,
+      "time_window_close": 110,
+      "service_time": 5
+    },
+    {
+      "id": "P021",
+      "coordinates_x_y": [-8, -3],
+      "weight": 5,
+      "time_window_open": 30,
+      "time_window_close": 90,
+      "service_time": 5
+    },
+    {
+      "id": "P022",
+      "coordinates_x_y": [3, 6],
+      "weight": 1,
+      "time_window_open": 10,
+      "time_window_close": 70,
+      "service_time": 5
+    },
+    {
+      "id": "P023",
+      "coordinates_x_y": [-1, -8],
+      "weight": 3,
+      "time_window_open": 20,
+      "time_window_close": 80,
+      "service_time": 5
+    },
+    {
+      "id": "P024",
+      "coordinates_x_y": [6, -2],
+      "weight": 2,
+      "time_window_open": 40,
+      "time_window_close": 100,
+      "service_time": 5
+    },
+    {
+      "id": "P025",
+      "coordinates_x_y": [-4, 7],
+      "weight": 4,
+      "time_window_open": 50,
+      "time_window_close": 120,
+      "service_time": 5
     }
   ],
-  "PARCELS": [
-    {"coords": [2, 3], "weight": 2, "delivery_window": [0, 100]},
-    {"coords": [5, 7], "weight": 3, "delivery_window": [0, 120]},
-    {"coords": [-3, 2], "weight": 1, "delivery_window": [30, 90]},
-    {"coords": [-4, -1], "weight": 4, "delivery_window": [20, 80]},
-    {"coords": [1, -5], "weight": 2, "delivery_window": [40, 100]},
-    {"coords": [8, 3], "weight": 1, "delivery_window": [10, 50]},
-    {"coords": [-2, -6], "weight": 3, "delivery_window": [60, 120]},
-    {"coords": [4, 2], "weight": 5, "delivery_window": [0, 60]},
-    {"coords": [-7, 3], "weight": 2, "delivery_window": [40, 90]},
-    {"coords": [3, -4], "weight": 1, "delivery_window": [30, 80]},
-    {"coords": [-5, -2], "weight": 3, "delivery_window": [20, 70]},
-    {"coords": [6, 1], "weight": 4, "delivery_window": [50, 110]},
-    {"coords": [-1, 5], "weight": 2, "delivery_window": [10, 90]},
-    {"coords": [2, -7], "weight": 1, "delivery_window": [80, 140]},
-    {"coords": [-3, -4], "weight": 5, "delivery_window": [40, 100]},
-    {"coords": [7, 4], "weight": 2, "delivery_window": [30, 70]},
-    {"coords": [-6, 1], "weight": 3, "delivery_window": [60, 120]},
-    {"coords": [4, -3], "weight": 1, "delivery_window": [20, 80]},
-    {"coords": [-2, 8], "weight": 4, "delivery_window": [0, 100]},
-    {"coords": [5, -6], "weight": 2, "delivery_window": [50, 110]},
-    {"coords": [-8, -3], "weight": 5, "delivery_window": [30, 90]},
-    {"coords": [3, 6], "weight": 1, "delivery_window": [10, 70]},
-    {"coords": [-1, -8], "weight": 3, "delivery_window": [20, 80]},
-    {"coords": [6, -2], "weight": 2, "delivery_window": [40, 100]},
-    {"coords": [-4, 7], "weight": 4, "delivery_window": [50, 120]}
+  "delivery_agents": [
+    {
+      "id": "DA01",
+      "capacity_weight": 15,
+      "operating_hours_start": 0,
+      "operating_hours_end": 140
+    },
+    {
+      "id": "DA02",
+      "capacity_weight": 12,
+      "operating_hours_start": 0,
+      "operating_hours_end": 140
+    },
+    {
+      "id": "DA03",
+      "capacity_weight": 18,
+      "operating_hours_start": 0,
+      "operating_hours_end": 140
+    },
+    {
+      "id": "DA04",
+      "capacity_weight": 10,
+      "operating_hours_start": 0,
+      "operating_hours_end": 140
+    },
+    {
+      "id": "DA05",
+      "capacity_weight": 20,
+      "operating_hours_start": 0,
+      "operating_hours_end": 140
+    }
   ]
 }
