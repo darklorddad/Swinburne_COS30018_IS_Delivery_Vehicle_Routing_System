@@ -92,7 +92,7 @@ def get_params_schema():
                 "name": "generic_max_route_duration",
                 "label": "Generic Max Route Duration (for PSO, minutes)",
                 "type": "integer",
-                "default": 480, # 8 hours
+                "default": 720, # 12 hours, made more accommodating
                 "min": 30,
                 "help": "Maximum duration for a route (warehouse-to-warehouse) during PSO's internal route building."
             }
@@ -185,7 +185,8 @@ def _calculate_route_schedule_and_feasibility(ordered_parcel_objects, # List of 
 
 def _decode_particle_to_routes_and_evaluate(particle_position_keys, # List of random keys
                                             all_parcel_objects_original_order, # To map sorted keys back to parcels
-                                            warehouse_coords, params, parcel_map_for_lookup):
+                                            warehouse_coords, params, parcel_map_for_lookup,
+                                            effective_generic_constraints_for_decode): # New argument
     """
     Decodes a particle's random key position into a set of routes using generic constraints.
     Returns: (fitness_tuple, list_of_routes_of_parcel_objects, list_of_unassigned_parcel_objects)
@@ -195,10 +196,6 @@ def _decode_particle_to_routes_and_evaluate(particle_position_keys, # List of ra
     keyed_parcels = sorted(zip(particle_position_keys, all_parcel_objects_original_order), key=lambda x: x[0])
     parcel_permutation = [p_obj for key, p_obj in keyed_parcels]
 
-    generic_constraints = {
-        "generic_vehicle_capacity": params["generic_vehicle_capacity"],
-        "generic_max_route_duration": params["generic_max_route_duration"]
-    }
 
     routes_formed_parcels = [] # List of lists of parcel objects
     parcels_assigned_in_solution = set()
@@ -297,6 +294,35 @@ def run_optimisation(config_data, params):
 
     pos_min_val, pos_max_val = 0.0, 1.0 # Range for random keys
 
+    # --- Determine effective generic constraints for PSO decoding ---
+    user_set_generic_duration_pso = params.get("generic_max_route_duration", 720) # Default from updated PSO schema
+
+    adaptive_min_duration_needed = 0
+    if all_parcels_list_orig:
+        latest_tw_close = 0
+        for p_obj in all_parcels_list_orig:
+            latest_tw_close = max(latest_tw_close, p_obj.get("time_window_close", 0))
+        adaptive_min_duration_needed = latest_tw_close + 120 # Add a 2-hour buffer for service/travel
+    else:
+        adaptive_min_duration_needed = user_set_generic_duration_pso
+
+    effective_generic_max_route_duration_pso = max(user_set_generic_duration_pso, adaptive_min_duration_needed)
+
+    user_set_generic_capacity_pso = params.get("generic_vehicle_capacity", 100)
+    actual_max_agent_capacity_pso = 1
+    if delivery_agents:
+        agent_caps = [da.get("capacity_weight", 1) for da in delivery_agents if isinstance(da, dict)]
+        if agent_caps:
+            actual_max_agent_capacity_pso = max(agent_caps) if agent_caps else 1
+    
+    effective_generic_capacity_pso = min(user_set_generic_capacity_pso, actual_max_agent_capacity_pso)
+    if effective_generic_capacity_pso <= 0: effective_generic_capacity_pso = 1
+
+    effective_generic_constraints = {
+        "generic_vehicle_capacity": effective_generic_capacity_pso,
+        "generic_max_route_duration": effective_generic_max_route_duration_pso
+    }
+
     # Initialize swarm
     swarm = [Particle(num_dimensions, pos_min_val, pos_max_val, max_velocity_factor) for _ in range(num_particles)]
     
@@ -308,7 +334,8 @@ def run_optimisation(config_data, params):
         for particle in swarm:
             # Decode particle's position (random keys) into routes and evaluate fitness
             fitness, routes_p_objs, _ = _decode_particle_to_routes_and_evaluate(
-                particle.position, all_parcels_list_orig, warehouse_coords, params, parcel_map
+                particle.position, all_parcels_list_orig, warehouse_coords, params, parcel_map,
+                effective_generic_constraints
             )
             particle.current_fitness = fitness
             particle.current_routes_parcels = routes_p_objs
@@ -327,7 +354,8 @@ def run_optimisation(config_data, params):
                 # Store the routes corresponding to this gbest
                 # Need to re-decode pbest_position because current_routes_parcels is from current_position
                 _, gbest_routes_parcels, _ = _decode_particle_to_routes_and_evaluate(
-                    gbest_position, all_parcels_list_orig, warehouse_coords, params, parcel_map
+                    gbest_position, all_parcels_list_orig, warehouse_coords, params, parcel_map,
+                    effective_generic_constraints
                 )
 
         if gbest_position is None: # Should only happen if all particles failed to assign any parcel on first iter
