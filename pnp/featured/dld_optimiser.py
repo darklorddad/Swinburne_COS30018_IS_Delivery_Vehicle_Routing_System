@@ -13,6 +13,55 @@ def get_params_schema():
                 "type": "string",
                 "default": "default-model",
                 "help": "The LLM model to use for routing optimization."
+            },
+            {
+                "name": "llm_api_key",
+                "label": "LLM API Key",
+                "type": "string",
+                "default": "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",
+                "help": "API key for LLM service access."
+            },
+            {
+                "name": "llm_temperature",
+                "label": "LLM Temperature",
+                "type": "float",
+                "default": 0.5,
+                "min": 0.0,
+                "max": 2.0,
+                "step": 0.1,
+                "help": "Controls randomness. Lower is more deterministic."
+            },
+            {
+                "name": "llm_max_tokens", 
+                "label": "LLM Max Tokens",
+                "type": "integer",
+                "default": 2048,
+                "min": 256, 
+                "max": 4096,
+                "help": "Maximum tokens in LLM response."
+            },
+            {
+                "name": "time_per_distance_unit",
+                "label": "Time per distance unit",
+                "type": "float",
+                "default": 1.0,
+                "min": 0.1,
+                "help": "Minutes per distance unit for scheduling."
+            },
+            {
+                "name": "default_service_time",
+                "label": "Default service time",
+                "type": "integer",
+                "default": 10,
+                "min": 1,
+                "help": "Default minutes per delivery stop."
+            },
+            {
+                "name": "return_to_warehouse",
+                "label": "Return to warehouse",
+                "type": "boolean",
+                "default": True,
+                "help": "Whether vehicles must return to warehouse."
             }
         ]
     }
