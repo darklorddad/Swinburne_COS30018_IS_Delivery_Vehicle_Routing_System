@@ -11,8 +11,8 @@ def get_params_schema():
                 "name": "llm_model_name", 
                 "label": "LLM Model Name (OpenRouter)",
                 "type": "selectbox",
-                "default": "deepseek/deepseek-chat:free",
-                "options": ["deepseek/deepseek-chat:free", "deepseek/deepseek-coder-v2:free", "openai/gpt-4o"],
+                "default": "deepseek/deepseek-chat-v3-0324:free",
+                "options": ["deepseek/deepseek-chat-v3-0324:free", "deepseek/deepseek-r1-0528:free", "deepseek/deepseek-r1-0528-qwen3-8b:free"],
                 "help": "Select the OpenRouter model. Ensure you have access/credits if selecting a non-free model."
             },
             {
